@@ -1,15 +1,12 @@
 import styles from '@/styles/Home.module.css'
-
 /* MUI */
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-/* NavBar - wallet component */
-import NavBar from '@/components/NavBar'
 /* Fetch data */
-import {fetchAPI} from '@/lib/api';
-/* NEXT */
 import { useRouter } from 'next/router';
-/* CardContent */
+import {MainnetAPI} from '@/lib/api';
+/* Components */
+import NavBar from '@/components/NavBar'
 import CardContent from '@/components/CardContent'
 
 
@@ -34,7 +31,7 @@ export default function TokenId({data}) {
 export async function getStaticPaths() {
     /* Call an external API endpoint to get all tokens */
     const [data] = await Promise.all([
-        await fetchAPI("/fa2tokens?limit=10")
+        await MainnetAPI("/fa2tokens?limit=10")
       ])
     /* Get the paths we want to pre-render based on contract and tokenId */
     const paths = data.tokens.map((token) => ({
@@ -55,7 +52,7 @@ export async function getStaticPaths() {
 export async function getStaticProps({ params }) {
   // console.log(params.tokenId)
   const [data] = await Promise.all([
-    await fetchAPI(`/fa2tokens/${params.contract}/${params.tokenId}`)
+    await MainnetAPI(`/fa2tokens/${params.contract}/${params.tokenId}`)
   ])
   /* Pass data to the page via props */
   return { props: { data } };

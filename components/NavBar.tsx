@@ -75,7 +75,7 @@ export default function NavBar() {
                             if (userAddress && !isNaN(userBalance)) {
                                 return (
                                     <>                    
-                                        <Box p={2} sx={{cursor:"pointer", color: "royalblue"}} ><Link href={{pathname:"/mywallet",query:{data:userAddress}}} as="/mywallet">My Wallet</Link></Box>      
+                                        <Box p={2} sx={{cursor:"pointer", color:"#000"}} ><Link href={{pathname:"/mywallet",query:{data:userAddress}}} as="/mywallet">My wallet</Link></Box>      
                                         <DisconnectButton
                                             wallet={wallet}
                                             setPublicToken={setPublicToken}

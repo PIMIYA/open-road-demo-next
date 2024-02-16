@@ -1,15 +1,37 @@
-import styles from "@/styles/Home.module.css";
+/* NEXT */
+import Link from "next/link";
+import dynamic from "next/dynamic";
+/* Routing */
+import { useRouter } from "next/router";
 /* MUI */
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
+import { styled } from "@mui/material/styles";
+import Paper from "@mui/material/Paper";
+import Grid from "@mui/material/Unstable_Grid2";
 /* Fetch data */
 import { MainnetAPI } from "@/lib/api";
 /* Components */
-import NavBar from "@/components/NavBar";
-import CardGrid from "@/components/CardGrid";
+// import NavBar from "@/components/NavBar";
+const NavBar = dynamic(() => import("@/components/navBar"), {
+  ssr: false,
+});
+import SelectedTokenCardGrid from "@/components/selectedTokenCardGrid";
+import Pagination from "@/components/pagination";
+import { useState } from "react";
+import { paginate } from "@/lib/paginate";
 
 export default function Home({ data }) {
   // console.log(data.tokens)
+
+  /* Pagination */
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
+  const onPageChange = (page) => {
+    setCurrentPage(page);
+  };
+  const paginatedPosts = paginate(data.tokens, currentPage, pageSize);
+
   return (
     <>
       <Container maxWidth="lg">
@@ -18,24 +40,26 @@ export default function Home({ data }) {
           p={6}
           sx={{
             textAlign: "center",
-            fontSize: "1.5rem",
-            textTransform: "capitalize",
           }}
         >
           fa2 tokens minted on akaSwap
         </Box>
         {!data && <div>A moment please...</div>}
-        <CardGrid data={data} />
+        <SelectedTokenCardGrid data={paginatedPosts} />
+        <Pagination
+          items={data.tokens.length} // 24
+          currentPage={currentPage} // 1
+          pageSize={pageSize} // 6
+          onPageChange={onPageChange}
+        />
       </Container>
     </>
   );
 }
 
 export async function getServerSideProps() {
-  const [data] = await Promise.all([await MainnetAPI("/fa2tokens?limit=10")]);
-
-  return {
-    props: { data },
-    //revalidate: 1,
-  };
+  // Fetch data from external API
+  const [data] = await Promise.all([await MainnetAPI(`/fa2tokens?limit=24`)]);
+  // Pass data to the page via props
+  return { props: { data } };
 }

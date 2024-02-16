@@ -1,4 +1,6 @@
-import React from "react";
+/* NEXT */
+import dynamic from "next/dynamic";
+import styles from "@/styles/CardContent.module.css";
 /* MUI */
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
@@ -9,89 +11,140 @@ import Grid from "@mui/material/Unstable_Grid2";
 import { useRouter } from "next/router";
 import { TestnetAPI } from "@/lib/api";
 import { WalletRoleAPI } from "@/lib/api";
+import { AkaDropAPI } from "@/lib/api";
 /* Components */
-import NavBar from "@/components/NavBar";
-import WalletCreations from "@/components/WalletCreations";
-import AccountRecords from "@/components/AccountRecords";
+// import NavBar from "@/components/NavBar";
+const NavBar = dynamic(() => import("@/components/navBar"), {
+  ssr: false,
+});
+import PoolsCreationCardGrid from "@/components/poolsCreationCardGrid";
+import ClaimsTokenCardGrid from "@/components/claimsTokenCardGrid";
 
-/* Style Grid Item */
-const Item = styled(Paper)(({ theme }) => ({
-  backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
-  ...theme.typography.body2,
-  padding: theme.spacing(1),
-  textAlign: "center",
-  color: theme.palette.text.secondary,
-}));
-
-export default function Mywallet({ creations, records, role }) {
+export default function MyWallet({ role, pools, claims }) {
   /* Receive data from NavBar */
   const router = useRouter();
   const address = router.query;
-
-  // console.log(creations)
-  // console.log(role);
+  /* Fake wallet address for test claim from akaDrop */
+  // const address = { data: "tz28X7QEXciMxDA1QF8jLp21FuqpqiHrRVZq" };
+  // console.log(address);
 
   return (
     <>
       <Container maxWidth="lg">
         <NavBar />
-        <Box pt={6} sx={{ textAlign: "center", fontSize: "1.5rem" }}>
-          <Box pb={2}>
+        {/* Wallet Info */}
+        <Box pt={6} sx={{ textAlign: "center" }}>
+          <Box pb={0} component="span" className={styles.fw700}>
             {!address.data
               ? "please connect your wallet"
               : "My wallet address: "}
           </Box>
-          <Box pb={4}>{address.data}</Box>
+          <Box pb={0} component="span">
+            {address.data}
+          </Box>
         </Box>
-        <Box pt={0} sx={{ textAlign: "center", fontSize: "1.5rem" }}>
-          {address.data && role.length == 0 ? (
-            "一般大眾"
-          ) : (
-            <Box>
-              {role.map((r, index) => (
-                <Box key={index}>
-                  <Box>permission: {r.permission}</Box>
-                  <Box>team: {r.team}</Box>
-                </Box>
-              ))}
-            </Box>
-          )}
-        </Box>
-        {address.data && (
+        {address.data ? (
           <>
-            <Box pb={4}>
-              {/* 不是一般大眾才會看到 */}
-              {!role.length == 0 && creations && (
+            <Box pt={0} sx={{ textAlign: "center" }}>
+              {role.length == 0 ? (
+                /* 一般大眾 */
+                <Box>
+                  <Box component="span" className={styles.fw700}>
+                    Role:
+                  </Box>
+                  <Box component="span" className={styles.fw700}>
+                    一般大眾
+                  </Box>
+                </Box>
+              ) : (
+                /* 活動方 */
                 <>
-                  <WalletCreations creations={creations} />
-                </>
-              )}
-            </Box>
-            <Box>
-              {records && (
-                <>
-                  <AccountRecords records={records} />
+                  <Box>
+                    <Box component="span" className={styles.fw700}>
+                      Role:
+                    </Box>
+                    <Box component="span" className={styles.fw700}>
+                      活動方
+                    </Box>
+                  </Box>
+                  <Box>
+                    <Box component="span" className={styles.fw700}>
+                      Team:
+                    </Box>
+                    <Box component="span">
+                      {role.map((r, index) => (
+                        <Box key={index} component="span" ml={1}>
+                          {r.team}
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
                 </>
               )}
             </Box>
           </>
-        )}
+        ) : null}
+
+        {/* Wallet Creations and Records */}
+        {address.data ? (
+          <>
+            <Box pb={4} pt={8}>
+              {!role.length == 0 ? (
+                /* 活動方 */
+                <>
+                  <Box>
+                    {pools.count > 0 ? (
+                      <>
+                        <PoolsCreationCardGrid pools={pools} />
+                      </>
+                    ) : (
+                      "please create a drop first."
+                    )}
+                  </Box>
+                  <Box pt={6}>
+                    {claims.count > 0 ? (
+                      <>
+                        <ClaimsTokenCardGrid claims={claims} />
+                      </>
+                    ) : (
+                      "you do not claim anything yet."
+                    )}
+                  </Box>
+                </>
+              ) : (
+                /* 一般大眾*/
+                <>
+                  {claims.count > 0 ? (
+                    <>
+                      <ClaimsTokenCardGrid claims={claims} />
+                    </>
+                  ) : (
+                    "you do not claim anything yet."
+                  )}
+                </>
+              )}
+              <></>
+            </Box>
+          </>
+        ) : null}
       </Container>
     </>
   );
 }
 
 export async function getServerSideProps(context) {
-  const address = context.query;
-  // console.log(address.data)
-  const [creations, records, role] = await Promise.all([
-    await TestnetAPI(`/accounts/${address.data}/creations`),
-    await TestnetAPI(`/accounts/${address.data}/records`),
+  const address = await context.query;
+  /* Fake wallet address for test claim from akaDrop */
+  // const address = { data: "tz28X7QEXciMxDA1QF8jLp21FuqpqiHrRVZq" };
+  // console.log(address);
+
+  const [role, pools, claims] = await Promise.all([
     await WalletRoleAPI(`/${address.data}`),
+    await AkaDropAPI(`/${address.data}/pools?offset=0&limit=10`),
+    await AkaDropAPI(`/${address.data}/claims?offset=0&limit=10`),
   ]);
 
   return {
-    props: { creations, records, role },
-    //revalidate: 1,
+    props: { role, pools, claims },
   };
 }

@@ -10,11 +10,10 @@ const nextConfig = {
   //   ignoreBuildErrors: true,
   // },
 
-
   // webpack: (config) => {
   //   config.resolve.fallback = { 
   //     ...config.resolve.fallback,
-      
+
   //     fs: false,
   //     // path: false 
   //   };
@@ -26,28 +25,27 @@ const nextConfig = {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
-
         fs: false,
       };
     }
-
     return config;
   },
 
-  // async headers() {
-  //   return [
-  //     {
-  //       source: "/_next/:path*",
-  //       headers: [
-  //         {
-  //           key: "Access-Control-Allow-Origin",
-  //           value: "http://localhost:3000",
-  //         },
-  //       ],
-  //     },
-  //   ];
-  // },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'assets.akaswap.com',
+        port: '',
+        pathname: '/ipfs/**',
+      },
+    ],
+  },
+
+  env: {
+    WalletRoleURL: process.env.WalletRoleURL,
+    AkaDropURL: process.env.AkaDropURL,
+  },
 
 }
-
 module.exports = nextConfig

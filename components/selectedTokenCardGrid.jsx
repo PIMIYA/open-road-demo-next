@@ -15,19 +15,19 @@ import Link from "next/link";
 
 /* Style Grid Item */
 const Item = styled(Paper)(({ theme }) => ({
-  backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
+  // backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
   ...theme.typography.body2,
   padding: theme.spacing(1),
   textAlign: "center",
   color: theme.palette.text.secondary,
 }));
 
-export default function CardGrid({ data }) {
+export default function SelectedTokenCardGrid({ data }) {
   return (
     <>
       <Grid container spacing={4} columns={{ xs: 4, sm: 8, md: 12 }}>
         {data &&
-          data.tokens.map(
+          data.map(
             ({
               tokenId,
               name,
@@ -40,8 +40,8 @@ export default function CardGrid({ data }) {
               <Grid key={tokenId} xs={4} sm={4} md={4}>
                 <Item>
                   <Link
-                    href="/tokens/[contract]/[tokenId]"
-                    as={`/tokens/${contract}/${tokenId}`}
+                    href="/selectedTokens/[contract]/[tokenId]"
+                    as={`/selectedTokens/${contract}/${tokenId}`}
                   >
                     <Card sx={{ maxWidth: 380 }}>
                       <CardMedia
@@ -54,7 +54,11 @@ export default function CardGrid({ data }) {
                         )}`}
                       />
                       <CardContent>
-                        <Typography gutterBottom variant="h5" component="div">
+                        <Typography
+                          gutterBottom
+                          variant="body2"
+                          component="div"
+                        >
                           {name}
                         </Typography>
                         <Typography
@@ -64,29 +68,24 @@ export default function CardGrid({ data }) {
                         >
                           Edition of {amount}
                         </Typography>
-                        <Typography
-                          gutterBottom
-                          fontSize="12px"
-                          color="text.secondary"
-                        >
-                          {creators &&
-                            creators.map((creator, index) => (
-                              <Box key={index} component="span">
-                                by {creator}
-                              </Box>
-                            ))}
-                        </Typography>
-                        <Typography fontSize="12px" color="text.secondary">
-                          {tags.length > 0 ? "tags:" : ""}
-                          <Box component="span">
-                            {tags &&
-                              tags.map((tag, index) => (
-                                <Box key={index} component="span" ml={1}>
-                                  {tag}
-                                </Box>
-                              ))}
+                        <Box sx={{ fontSize: "12px", color: "text.secondary" }}>
+                          {/* <Box>
+                              {creators &&
+                                creators.map((creator, index) => (
+                                  <Box key={index} ml={0}>
+                                    {creator}
+                                  </Box>
+                                ))}
+                            </Box> */}
+                          <Box
+                            sx={{
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {creators[0]}
                           </Box>
-                        </Typography>
+                        </Box>
                       </CardContent>
                     </Card>
                   </Link>

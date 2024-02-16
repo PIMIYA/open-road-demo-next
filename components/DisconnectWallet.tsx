@@ -7,12 +7,11 @@ import { TezosToolkit } from "@taquito/taquito";
 import { useRouter } from "next/router";
 
 
-
 interface ButtonProps {
   wallet: BeaconWallet | null;
-  setPublicToken: Dispatch<SetStateAction<string | null>>;
+  // setPublicToken: Dispatch<SetStateAction<string | null>>;
   setUserAddress: Dispatch<SetStateAction<string>>;
-  setUserBalance: Dispatch<SetStateAction<number>>;
+  // setUserBalance: Dispatch<SetStateAction<number>>;
   setWallet: Dispatch<SetStateAction<any>>;
   setTezos: Dispatch<SetStateAction<TezosToolkit>>;
   setBeaconConnection: Dispatch<SetStateAction<boolean>>;
@@ -20,28 +19,51 @@ interface ButtonProps {
 
 const DisconnectButton = ({
   wallet,
-  setPublicToken,
+  // setPublicToken,
   setUserAddress,
-  setUserBalance,
+  // setUserBalance,
   setWallet,
   setTezos,
   setBeaconConnection,
 }: ButtonProps): JSX.Element => {
   /* Routing - Navigate programmatically */
-  const router = useRouter();
+  // const router = useRouter();
+  // const query = router.query;
+  // const walletState = query.wallet;
+
   const disconnectWallet = async (): Promise<void> => {
     if (wallet) {
       await wallet.clearActiveAccount();
-      /* Routing - Navigate to Home page */
-      await router.push("/");
+
+      /* Routing - Conditional routing when hit disconnect btn*/
+      // if (walletState) {
+      //   console.log("just logout")
+      //   router.push({
+      //     pathname: '/audience/[wallet]',
+      //     query: { wallet: walletState, login:"false" },                                                                                         
+      //   })
+      // } else if (!walletState) {
+      //   console.log("go back to home")
+      //   router.push({
+      //     pathname: '/',                                                                                        
+      //   })
+      // }
+      
+
     }
     setUserAddress("");
-    setUserBalance(0);
+    // setUserBalance(0);
     setWallet(null);
     const tezosTK = new TezosToolkit("https://ghostnet.ecadinfra.com");
     setTezos(tezosTK);
     setBeaconConnection(false);
-    setPublicToken(null);
+    // setPublicToken(null);
+
+    // // eslint-disable-next-line no-floating-promises
+    // router.push({
+    //   pathname: '/',                                                                                        
+    // })
+    
   };
 
   return (

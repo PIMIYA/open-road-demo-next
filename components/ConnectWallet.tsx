@@ -8,42 +8,44 @@ import {
   BeaconEvent,
   defaultEventCallbacks,
 } from "@airgap/beacon-dapp";
+/* Routing */
+import { useRouter } from "next/router";
 
 type ButtonProps = {
   Tezos: TezosToolkit;
-  setContract: Dispatch<SetStateAction<any>>;
+  // setContract: Dispatch<SetStateAction<any>>;
   setWallet: Dispatch<SetStateAction<any>>;
   setUserAddress: Dispatch<SetStateAction<string>>;
-  setUserBalance: Dispatch<SetStateAction<number>>;
-  setStorage: Dispatch<SetStateAction<number>>;
-  contractAddress: string;
+  // setUserBalance: Dispatch<SetStateAction<number>>;
+  // setStorage: Dispatch<SetStateAction<number>>;
+  // contractAddress: string;
   setBeaconConnection: Dispatch<SetStateAction<boolean>>;
-  setPublicToken: Dispatch<SetStateAction<string | null>>;
+  // setPublicToken: Dispatch<SetStateAction<string | null>>;
   wallet: BeaconWallet;
 };
 
 const ConnectButton = ({
   Tezos,
-  setContract,
+  // setContract,
   setWallet,
   setUserAddress,
-  setUserBalance,
-  setStorage,
-  contractAddress,
+  // setUserBalance,
+  // setStorage,
+  // contractAddress,
   setBeaconConnection,
-  setPublicToken,
+  // setPublicToken,
   wallet,
 }: ButtonProps): JSX.Element => {
   const setup = async (userAddress: string): Promise<void> => {
     setUserAddress(userAddress);
     // updates balance
-    const balance = await Tezos.tz.getBalance(userAddress);
-    setUserBalance(balance.toNumber());
+    // const balance = await Tezos.tz.getBalance(userAddress);
+    // setUserBalance(balance.toNumber());
     // creates contract instance
-    const contract = await Tezos.wallet.at(contractAddress);
-    const storage: any = await contract.storage();
-    setContract(contract);
-    setStorage(storage.toNumber());
+    // const contract = await Tezos.wallet.at(contractAddress);
+    // const storage: any = await contract.storage();
+    // setContract(contract);
+    // setStorage(storage.toNumber());
   };
 
   const connectWallet = async (): Promise<void> => {

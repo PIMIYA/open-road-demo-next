@@ -27,6 +27,7 @@ export default function MyWallet({ role, pools, claims }) {
   /* Fake wallet address for test claim from akaDrop */
   // const address = { data: "tz28X7QEXciMxDA1QF8jLp21FuqpqiHrRVZq" };
   // console.log(address);
+  // test commend
 
   return (
     <>

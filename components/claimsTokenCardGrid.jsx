@@ -64,7 +64,7 @@ export default function ClaimsTokenCardGrid({ claims }) {
         setData(data);
         setLoading(false);
       });
-  }, []);
+  }, [claimTokenURLs]);
 
   if (isLoading) return <p>Loading...</p>;
   if (!data) return <p>No profile data</p>;

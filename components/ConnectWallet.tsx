@@ -79,11 +79,11 @@ const ConnectButton = ({
       const activeAccount = await wallet.client.getActiveAccount();
       if (activeAccount) {
         const userAddress = await wallet.getPKH();
-        await setup(userAddress);
+        await setUserAddress(userAddress);
         setBeaconConnection(true);
       }
     })();
-  }, []);
+  }, [ Tezos, setBeaconConnection, setWallet, setUserAddress ]);
 
   return (
     <div className="buttons">

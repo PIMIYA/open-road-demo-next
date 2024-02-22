@@ -70,7 +70,7 @@ export default function PoolsCreationCardGrid({ pools }) {
         setData(data);
         setLoading(false);
       });
-  }, []);
+  }, [poolURLs]);
 
   if (isLoading) return <p>Loading...</p>;
   if (!data) return <p>No profile data</p>;

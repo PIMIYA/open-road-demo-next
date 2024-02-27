@@ -34,3 +34,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+#ignore .env file
+.env
+
+#ignore bun.lockb file
+bun.lockb

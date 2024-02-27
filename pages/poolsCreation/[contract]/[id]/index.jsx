@@ -7,7 +7,7 @@ import Container from "@mui/material/Container";
 import { AkaDropAPI } from "@/lib/api";
 /* Components */
 import PoolsCreationCardContent from "@/components/poolsCreationCardContent";
-const NavBar = dynamic(() => import("@/components/navBar"), {
+const NavBar = dynamic(() => import("@/components/NavBar"), {
   ssr: false,
 });
 

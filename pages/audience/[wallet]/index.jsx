@@ -8,7 +8,7 @@ import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 /* Components */
 // import NavBar from "@/components/NavBar";
-const NavBar = dynamic(() => import("@/components/navBar"), {
+const NavBar = dynamic(() => import("@/components/NavBar"), {
   ssr: false,
 });
 

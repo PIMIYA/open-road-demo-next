@@ -14,7 +14,7 @@ import { WalletRoleAPI } from "@/lib/api";
 import { AkaDropAPI } from "@/lib/api";
 /* Components */
 // import NavBar from "@/components/NavBar";
-const NavBar = dynamic(() => import("@/components/navBar"), {
+const NavBar = dynamic(() => import("@/components/NavBar"), {
   ssr: false,
 });
 import PoolsCreationCardGrid from "@/components/poolsCreationCardGrid";

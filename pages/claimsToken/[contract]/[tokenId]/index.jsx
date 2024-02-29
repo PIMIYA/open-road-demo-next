@@ -7,7 +7,7 @@ import Container from "@mui/material/Container";
 import { MainnetAPI } from "@/lib/api";
 /* Components */
 import ClaimsTokenCardContnt from "@/components/claimsTokenCardContnt";
-const NavBar = dynamic(() => import("@/components/navBar"), {
+const NavBar = dynamic(() => import("@/components/NavBar"), {
   ssr: false,
 });
 /* Routing */

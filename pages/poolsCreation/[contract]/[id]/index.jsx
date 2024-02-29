@@ -7,7 +7,7 @@ import Container from "@mui/material/Container";
 import { AkaDropAPI } from "@/lib/api";
 /* Components */
 import PoolsCreationCardContent from "@/components/poolsCreationCardContent";
-const NavBar = dynamic(() => import("@/components/NavBar"), {
+const Nav = dynamic(() => import("@/components/nav"), {
   ssr: false,
 });
 
@@ -17,7 +17,7 @@ export default function Id({ data }) {
   return (
     <>
       <Container maxWidth="lg">
-        <NavBar />
+        <Nav />
         <PoolsCreationCardContent data={data} />
       </Container>
     </>

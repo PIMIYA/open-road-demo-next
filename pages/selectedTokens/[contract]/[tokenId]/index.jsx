@@ -7,8 +7,7 @@ import Container from "@mui/material/Container";
 import { useRouter } from "next/router";
 import { MainnetAPI } from "@/lib/api";
 /* Components */
-// import NavBar from '@/components/NavBar'
-const NavBar = dynamic(() => import("@/components/NavBar"), {
+const Nav = dynamic(() => import("@/components/nav"), {
   ssr: false,
 });
 import SelectedTokenCardContent from "@/components/selectedTokenCardContent";
@@ -19,7 +18,7 @@ export default function TokenId({ data }) {
   return (
     <>
       <Container maxWidth="lg">
-        <NavBar />
+        <Nav />
         <SelectedTokenCardContent data={data} />
       </Container>
     </>

@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from "react";
 /* Taquito */
 import { TezosToolkit } from "@taquito/taquito";
-import ConnectButton from "@/components/ConnectWallet";
-import DisconnectButton from "@/components/DisconnectWallet";
+import ConnectButton from "@/components/connectToWallet";
+import DisconnectButton from "@/components/disconnectToWallet";
 /* MUI */
 import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
@@ -33,7 +33,7 @@ const Item = styled(Paper)(({ theme }) => ({
   boxShadow: "none",
 }));
 
-export default function NavBar() {
+export default function Nav() {
 
   const [Tezos, setTezos] = useState<TezosToolkit>(
     new TezosToolkit("https://ghostnet.ecadinfra.com")

@@ -7,7 +7,7 @@ import Container from "@mui/material/Container";
 import { MainnetAPI } from "@/lib/api";
 /* Components */
 import ClaimsTokenCardContnt from "@/components/claimsTokenCardContnt";
-const NavBar = dynamic(() => import("@/components/NavBar"), {
+const Nav = dynamic(() => import("@/components/nav"), {
   ssr: false,
 });
 /* Routing */
@@ -22,7 +22,7 @@ export default function Id({ data }) {
   return (
     <>
       <Container maxWidth="lg">
-        <NavBar />
+        <Nav />
         <ClaimsTokenCardContnt data={data} />
       </Container>
     </>

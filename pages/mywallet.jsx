@@ -13,15 +13,14 @@ import { TestnetAPI } from "@/lib/api";
 import { WalletRoleAPI } from "@/lib/api";
 import { AkaDropAPI } from "@/lib/api";
 /* Components */
-// import NavBar from "@/components/NavBar";
-const NavBar = dynamic(() => import("@/components/NavBar"), {
+const Nav = dynamic(() => import("@/components/nav"), {
   ssr: false,
 });
 import PoolsCreationCardGrid from "@/components/poolsCreationCardGrid";
 import ClaimsTokenCardGrid from "@/components/claimsTokenCardGrid";
 
 export default function MyWallet({ role, pools, claims }) {
-  /* Receive data from NavBar */
+  /* Receive data from Nav */
   const router = useRouter();
   const address = router.query;
   /* Fake wallet address for test claim from akaDrop */
@@ -32,7 +31,7 @@ export default function MyWallet({ role, pools, claims }) {
   return (
     <>
       <Container maxWidth="lg">
-        <NavBar />
+        <Nav />
         {/* Wallet Info */}
         <Box pt={6} sx={{ textAlign: "center" }}>
           <Box pb={0} component="span" className={styles.fw700}>

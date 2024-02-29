@@ -49,7 +49,7 @@ const DisconnectButton = ({
     }
     setUserAddress("");
     setWallet(null);
-    const tezosTK = new TezosToolkit("https://ghostnet.ecadinfra.com");
+    const tezosTK = new TezosToolkit("https://mainnet.ecadinfra.com");
     setTezos(tezosTK);
     setBeaconConnection(false);
 

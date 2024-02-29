@@ -34,8 +34,8 @@ const ConnectButton = ({
     try {
       await wallet.requestPermissions({
         network: {
-          type: NetworkType.GHOSTNET,
-          rpcUrl: "https://ghostnet.ecadinfra.com",
+          type: NetworkType.MAINNET,
+          rpcUrl: "https://mainnet.ecadinfra.com",
         },
       });
       // gets user's address
@@ -51,8 +51,8 @@ const ConnectButton = ({
     (async () => {
       // creates a wallet instance
       const wallet = new BeaconWallet({
-        name: "Taquito React template",
-        preferredNetwork: NetworkType.GHOSTNET,
+        name: "open-road-demo-next",
+        preferredNetwork: NetworkType.MAINNET,
         disableDefaultEvents: false, // Disable all events when true/ UI. This also disables the pairing alert.
       });
       Tezos.setWalletProvider(wallet);

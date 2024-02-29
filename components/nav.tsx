@@ -36,15 +36,15 @@ const Item = styled(Paper)(({ theme }) => ({
 export default function Nav() {
 
   const [Tezos, setTezos] = useState<TezosToolkit>(
-    new TezosToolkit("https://ghostnet.ecadinfra.com")
+    new TezosToolkit("https://mainnet.ecadinfra.com")
   );
   const [wallet, setWallet] = useState<any>(null);
   const [userAddress, setUserAddress] = useState<string>("");
   const [beaconConnection, setBeaconConnection] = useState<boolean>(false);
 
   /* Routing - Navigate and send data to mywallet */
-  const router = useRouter();
-  const test_wallet = "tz1h4VfHkUNSpjV7Tc5MbH4PGvbB7ygdTjAR"
+  // const router = useRouter();
+  // const test_wallet = "tz1h4VfHkUNSpjV7Tc5MbH4PGvbB7ygdTjAR"
 
   // useEffect(() => {
   //     if (userAddress) {

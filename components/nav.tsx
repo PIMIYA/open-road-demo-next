@@ -83,7 +83,7 @@ export default function Nav() {
               <Box mt={-1} sx={{ cursor: "pointer", textAlign: "right" }}>
                 {userAddress ? (
                   <Box>
-                    <Link style={{ textDecoration: 'none', color: '#000', fontSize: 30, fontStyle: 'italic', }} href={{ pathname: "/myWallet", query: { data: userAddress } }} as="/myWallet">My wallet</Link>
+                    <Link style={{ textDecoration: 'none', color: '#000', fontSize: 30, fontStyle: 'italic', }} href={{ pathname: "/my_wallet", query: { data: userAddress } }} as="/my_wallet">My wallet</Link>
                   </Box>
                   // <Box onClick={() => router.push({
                   //     pathname: '/audience/[wallet]',

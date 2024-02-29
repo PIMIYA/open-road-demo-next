@@ -15,7 +15,7 @@
     "@taquito/beacon-wallet": "^17.4.0",
     "@taquito/taquito": "^17.4.0",
     "axios": "^1.6.7",
-    "next": "14.0.3",
+    "next": "13.5.3",
     "react": "^18",
     "react-dom": "^18",
     "sharp": "^0.33.2"

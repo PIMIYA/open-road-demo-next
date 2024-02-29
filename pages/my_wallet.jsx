@@ -13,9 +13,10 @@ import { TestnetAPI } from "@/lib/api";
 import { WalletRoleAPI } from "@/lib/api";
 import { AkaDropAPI } from "@/lib/api";
 /* Components */
-const Nav = dynamic(() => import("@/components/nav"), {
-  ssr: false,
-});
+// const Nav = dynamic(() => import("@/components/nav"), {
+//   ssr: false,
+// });
+import Nav from "@/components/nav";
 import PoolsCreationCardGrid from "@/components/poolsCreationCardGrid";
 import ClaimsTokenCardGrid from "@/components/claimsTokenCardGrid";
 

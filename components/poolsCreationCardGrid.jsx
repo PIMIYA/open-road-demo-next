@@ -14,12 +14,7 @@ import Typography from "@mui/material/Typography";
 
 /* stack Item setting */
 const Item = styled(Paper)(({ theme }) => ({
-  //...theme.typography.body2,
-  // paddingLeft: theme.spacing(0),
-  // paddingRight: theme.spacing(0),
-  textAlign: "left",
-  // color:"rgb(0,0,0,0.87)",
-  // background: "red",
+  textAlign: "center",
   boxShadow: "none",
 }));
 

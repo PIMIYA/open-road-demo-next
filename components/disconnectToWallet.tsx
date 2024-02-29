@@ -9,9 +9,7 @@ import { useRouter } from "next/router";
 
 interface ButtonProps {
   wallet: BeaconWallet | null;
-  // setPublicToken: Dispatch<SetStateAction<string | null>>;
   setUserAddress: Dispatch<SetStateAction<string>>;
-  // setUserBalance: Dispatch<SetStateAction<number>>;
   setWallet: Dispatch<SetStateAction<any>>;
   setTezos: Dispatch<SetStateAction<TezosToolkit>>;
   setBeaconConnection: Dispatch<SetStateAction<boolean>>;
@@ -19,9 +17,7 @@ interface ButtonProps {
 
 const DisconnectButton = ({
   wallet,
-  // setPublicToken,
   setUserAddress,
-  // setUserBalance,
   setWallet,
   setTezos,
   setBeaconConnection,
@@ -52,12 +48,10 @@ const DisconnectButton = ({
 
     }
     setUserAddress("");
-    // setUserBalance(0);
     setWallet(null);
     const tezosTK = new TezosToolkit("https://ghostnet.ecadinfra.com");
     setTezos(tezosTK);
     setBeaconConnection(false);
-    // setPublicToken(null);
 
     // // eslint-disable-next-line no-floating-promises
     // router.push({

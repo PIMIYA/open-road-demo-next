@@ -12,9 +12,10 @@ import Grid from "@mui/material/Unstable_Grid2";
 /* Fetch data */
 import { MainnetAPI } from "@/lib/api";
 /* Components */
-const Nav = dynamic(() => import("@/components/nav"), {
-  ssr: false,
-});
+// const Nav = dynamic(() => import("@/components/nav"), {
+//   ssr: false,
+// });
+import Nav from "@/components/nav";
 import SelectedTokenCardGrid from "@/components/selectedTokenCardGrid";
 import MyPagination from "@/components/myPagination";
 import { useState } from "react";
@@ -45,12 +46,14 @@ export default function Home({ data }) {
         </Box>
         {!data && <div>A moment please...</div>}
         <SelectedTokenCardGrid data={paginatedPosts} />
-        <MyPagination
-          items={data.tokens.length} // 24
-          currentPage={currentPage} // 1
-          pageSize={pageSize} // 6
-          onPageChange={onPageChange}
-        />
+        <Box pt={3}>
+          <MyPagination
+            items={data.tokens.length} // 24
+            currentPage={currentPage} // 1
+            pageSize={pageSize} // 6
+            onPageChange={onPageChange}
+          />
+        </Box>
       </Container>
     </>
   );

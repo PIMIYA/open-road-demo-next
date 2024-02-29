@@ -7,9 +7,10 @@ import Container from "@mui/material/Container";
 import { AkaDropAPI } from "@/lib/api";
 /* Components */
 import PoolsCreationCardContent from "@/components/poolsCreationCardContent";
-const Nav = dynamic(() => import("@/components/nav"), {
-  ssr: false,
-});
+// const Nav = dynamic(() => import("@/components/nav"), {
+//   ssr: false,
+// });
+import Nav from "@/components/nav";
 
 export default function Id({ data }) {
   //   console.log(data);

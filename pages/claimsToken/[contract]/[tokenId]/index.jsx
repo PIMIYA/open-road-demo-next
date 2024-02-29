@@ -7,9 +7,10 @@ import Container from "@mui/material/Container";
 import { MainnetAPI } from "@/lib/api";
 /* Components */
 import ClaimsTokenCardContnt from "@/components/claimsTokenCardContnt";
-const Nav = dynamic(() => import("@/components/nav"), {
-  ssr: false,
-});
+// const Nav = dynamic(() => import("@/components/nav"), {
+//   ssr: false,
+// });
+import Nav from "@/components/nav";
 /* Routing */
 import { useRouter } from "next/router";
 

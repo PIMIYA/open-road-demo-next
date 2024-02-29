@@ -38,19 +38,9 @@ export default function Nav() {
   const [Tezos, setTezos] = useState<TezosToolkit>(
     new TezosToolkit("https://ghostnet.ecadinfra.com")
   );
-  const [contract, setContract] = useState<any>(undefined);
-  // const [publicToken, setPublicToken] = useState<string | null>(null);
   const [wallet, setWallet] = useState<any>(null);
   const [userAddress, setUserAddress] = useState<string>("");
-  // const [userBalance, setUserBalance] = useState<number>(0);
-  const [storage, setStorage] = useState<number>(0);
-  const [copiedPublicToken, setCopiedPublicToken] = useState<boolean>(false);
   const [beaconConnection, setBeaconConnection] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<string>("transfer");
-
-  /* Ghostnet Increment/Decrement contract */
-  // const contractAddress: string = "KT1QMGSLynvwwSfGbaiJ8gzWHibTCweCGcu8";
-  // const contractAddress: string = "KT1HPWEgkKawxjnq8L6569THCTG3DGD8XziL";
 
   /* Routing - Navigate and send data to mywallet */
   const router = useRouter();
@@ -91,16 +81,6 @@ export default function Nav() {
                   //   })}>
                   //     my wallet
                   // </Box>
-                  // <Box
-                  //   onClick={() =>
-                  //     router.push({
-                  //       pathname: "/myWallet",
-                  //       query: { data: userAddress },
-                  //     })
-                  //   }
-                  // >
-                  //   my wallet
-                  // </Box>
                 ) : null}
               </Box>
             </Item>
@@ -114,9 +94,7 @@ export default function Nav() {
                       <Box sx={{ textAlign: "right" }}>
                         <DisconnectButton
                           wallet={wallet}
-                          // setPublicToken={setPublicToken}
                           setUserAddress={setUserAddress}
-                          // setUserBalance={setUserBalance}
                           setWallet={setWallet}
                           setTezos={setTezos}
                           setBeaconConnection={setBeaconConnection}
@@ -128,13 +106,8 @@ export default function Nav() {
                       <Box sx={{ textAlign: "right" }}>
                         <ConnectButton
                           Tezos={Tezos}
-                          // setContract={setContract}
-                          // setPublicToken={setPublicToken}
                           setWallet={setWallet}
                           setUserAddress={setUserAddress}
-                          // setUserBalance={setUserBalance}
-                          // setStorage={setStorage}
-                          // contractAddress={contractAddress}
                           setBeaconConnection={setBeaconConnection}
                           wallet={wallet}
                         />

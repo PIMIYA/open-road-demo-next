@@ -12,10 +12,6 @@ import Grid from "@mui/material/Unstable_Grid2";
 /* Fetch data */
 import { MainnetAPI } from "@/lib/api";
 /* Components */
-// const Nav = dynamic(() => import("@/components/nav"), {
-//   ssr: false,
-// });
-import Nav from "@/components/nav";
 import SelectedTokenCardGrid from "@/components/selectedTokenCardGrid";
 import MyPagination from "@/components/myPagination";
 import { useState } from "react";
@@ -35,7 +31,6 @@ export default function Home({ data }) {
   return (
     <>
       <Container maxWidth="lg">
-        <Nav />
         <Box
           p={6}
           sx={{

@@ -13,12 +13,9 @@ import { TestnetAPI } from "@/lib/api";
 import { WalletRoleAPI } from "@/lib/api";
 import { AkaDropAPI } from "@/lib/api";
 /* Components */
-// const Nav = dynamic(() => import("@/components/nav"), {
-//   ssr: false,
-// });
-import Nav from "@/components/nav";
 import PoolsCreationCardGrid from "@/components/poolsCreationCardGrid";
 import ClaimsTokenCardGrid from "@/components/claimsTokenCardGrid";
+import { useContext } from "react";
 
 export default function MyWallet({ role, pools, claims }) {
   /* Receive data from Nav */
@@ -29,10 +26,18 @@ export default function MyWallet({ role, pools, claims }) {
   // console.log(address);
   // test commend
 
+  // const context = useContext(Context);
+  // const address = context.wallet.getActiveAccount();
+
+  // useEffect(() => {
+  //     if(context.wallet.getActiveAccount()){
+
+  //     }
+  // }, [])
+
   return (
     <>
       <Container maxWidth="lg">
-        <Nav />
         {/* Wallet Info */}
         <Box pt={6} sx={{ textAlign: "center" }}>
           <Box pb={0} component="span" className={styles.fw700}>

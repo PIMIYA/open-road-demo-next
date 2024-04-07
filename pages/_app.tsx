@@ -13,6 +13,9 @@ import Grid from "@mui/material/Unstable_Grid2";
 import Button from "@mui/material/Button";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
+import Image from 'next/image';
+import logo from "/public/logo.svg";
+
 const theme = createTheme({
   palette: {
     primary: { main: "#ffffff" },
@@ -57,8 +60,13 @@ const NavBar = () => {
       }}
     >
       <ThemeProvider theme={theme}>
-        <Button variant="text" color="secondary" onClick={gotohome}>
-          Kairos
+        <Button disableRipple={true} onClick={gotohome}>
+          <Image
+            priority
+            src={logo}
+            alt="Kairos"
+            onClick={gotohome}
+          />
         </Button>
       </ThemeProvider>
       <div>

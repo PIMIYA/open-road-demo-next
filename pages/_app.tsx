@@ -13,14 +13,22 @@ import Grid from "@mui/material/Unstable_Grid2";
 import Button from "@mui/material/Button";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
+import { CssBaseline } from "@mui/material";
 import Image from 'next/image';
 import logo from "/public/logo.svg";
 
-const theme = createTheme({
+const themeLight = createTheme({
   palette: {
-    primary: { main: "#ffffff" },
-    secondary: { main: "#000000" },
-  },
+    background: {
+      default: "#ffe4db"
+    },
+    primary: {
+      main: "#000",
+    },
+    secondary: {
+      main: "#000",
+    },
+  }
 });
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -33,8 +41,11 @@ export default function App({ Component, pageProps }: AppProps) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <ConnectionProvider>
-        <NavBar />
-        <Component {...pageProps} />
+        <ThemeProvider theme={themeLight}>
+          <CssBaseline />
+          <NavBar />
+          <Component {...pageProps} />
+        </ThemeProvider>
       </ConnectionProvider>
     </>
   );
@@ -59,16 +70,14 @@ const NavBar = () => {
         background: "none",
       }}
     >
-      <ThemeProvider theme={theme}>
-        <Button disableRipple={true} onClick={gotohome}>
-          <Image
-            priority
-            src={logo}
-            alt="Kairos"
-            onClick={gotohome}
-          />
-        </Button>
-      </ThemeProvider>
+      <Button disableRipple={true} onClick={gotohome}>
+        <Image
+          priority
+          src={logo}
+          alt="Kairos"
+          onClick={gotohome}
+        />
+      </Button>
       <div>
         {address ? (
           <>
@@ -90,11 +99,12 @@ const NavBar = () => {
                 }}
                 // as="/creations"
               >
-                <ThemeProvider theme={theme}>
-                  <Button variant="text" color="secondary">
-                    creations
-                  </Button>
-                </ThemeProvider>
+                <Button variant="text" color="secondary">
+                  creations
+                </Button>
+                <Button variant="text" color="secondary">
+                  form
+                </Button>
               </Link>
             </Box>
             <Box component="span">
@@ -105,32 +115,26 @@ const NavBar = () => {
                 }}
                 // as="/my_wallet"
               >
-                <ThemeProvider theme={theme}>
-                  <Button variant="text" color="secondary">
-                    wallet
-                  </Button>
-                </ThemeProvider>
+                <Button variant="text" color="secondary">
+                  wallet
+                </Button>
               </Link>
             </Box>
             <Box component="span">
-              <ThemeProvider theme={theme}>
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={disconnect}
-                >
-                  disconnect
-                </Button>
-              </ThemeProvider>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={disconnect}
+              >
+                disconnect
+              </Button>
             </Box>
           </>
         ) : (
           <>
-            <ThemeProvider theme={theme}>
-              <Button variant="outlined" color="secondary" onClick={connect}>
-                connect
-              </Button>
-            </ThemeProvider>
+            <Button variant="outlined" color="secondary" onClick={connect}>
+              connect
+            </Button>
           </>
         )}
       </div>

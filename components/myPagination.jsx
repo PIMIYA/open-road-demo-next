@@ -1,7 +1,4 @@
-import styles from "@/styles/Pagination.module.css";
 import Pagination from "@mui/material/Pagination";
-import Stack from "@mui/material/Stack";
-import PaginationItem from "@mui/material/PaginationItem";
 // import Box from "@mui/material/Box";
 
 const MyPagination = ({ items, pageSize, currentPage, onPageChange }) => {
@@ -12,23 +9,12 @@ const MyPagination = ({ items, pageSize, currentPage, onPageChange }) => {
   //   console.log(pages);
 
   return (
-    <div className={styles.pagination}>
-      {pages.map((page) => (
-        <a
-          key={page}
-          className={styles.pageLink}
-          onClick={() => onPageChange(page)}
-        >
-          <div
-            className={
-              page === currentPage ? styles.pageItemActive : styles.pageItem
-            }
-          >
-            <div>{page}</div>
-          </div>
-        </a>
-      ))}
-    </div>
+    <Pagination
+      count={pagesCount}
+      page={currentPage}
+      onChange={(e, value) => onPageChange(value)}
+      color="secondary"
+    ></Pagination>
   );
 };
 export default MyPagination;

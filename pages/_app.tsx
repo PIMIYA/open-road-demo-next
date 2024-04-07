@@ -18,19 +18,7 @@ import Image from 'next/image';
 import logo from "/public/logo.svg";
 import LoginIcon from '@mui/icons-material/Login';
 
-const themeLight = createTheme({
-  palette: {
-    background: {
-      default: "#ffe4db"
-    },
-    primary: {
-      main: "#000",
-    },
-    secondary: {
-      main: "#3035a4",
-    },
-  }
-});
+import theme from "@/styles/theme";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
@@ -42,7 +30,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <ConnectionProvider>
-        <ThemeProvider theme={themeLight}>
+        <ThemeProvider theme={theme}>
           <CssBaseline />
           <NavBar />
           <Component {...pageProps} />

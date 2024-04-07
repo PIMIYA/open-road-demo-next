@@ -16,6 +16,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import Image from 'next/image';
 import logo from "/public/logo.svg";
+import LoginIcon from '@mui/icons-material/Login';
 
 const themeLight = createTheme({
   palette: {
@@ -26,7 +27,7 @@ const themeLight = createTheme({
       main: "#000",
     },
     secondary: {
-      main: "#000",
+      main: "#3035a4",
     },
   }
 });
@@ -99,10 +100,10 @@ const NavBar = () => {
                 }}
                 // as="/creations"
               >
-                <Button variant="text" color="secondary">
+                <Button variant="text">
                   creations
                 </Button>
-                <Button variant="text" color="secondary">
+                <Button variant="text">
                   form
                 </Button>
               </Link>
@@ -115,15 +116,14 @@ const NavBar = () => {
                 }}
                 // as="/my_wallet"
               >
-                <Button variant="text" color="secondary">
-                  wallet
+                <Button variant="text">
+                  my wallet
                 </Button>
               </Link>
             </Box>
             <Box component="span">
               <Button
                 variant="outlined"
-                color="secondary"
                 onClick={disconnect}
               >
                 disconnect
@@ -132,7 +132,7 @@ const NavBar = () => {
           </>
         ) : (
           <>
-            <Button variant="outlined" color="secondary" onClick={connect}>
+            <Button variant="contained" color="secondary" startIcon={<LoginIcon />} onClick={connect} >
               connect
             </Button>
           </>

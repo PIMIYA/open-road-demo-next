@@ -39,7 +39,7 @@ export default function FeatureBox({ bgIndex, title, description }) {
           background: '#fff',
           position: 'relative',
           borderRadius: '4vw',
-          border: '1px solid #000',
+          border: '1px solid #aaa',
           margin: '0 auto',
         }}
       >
@@ -66,7 +66,7 @@ export default function FeatureBox({ bgIndex, title, description }) {
           variant='h5'
           sx={{
             fontWeight: 'bold',
-            background: '#d5ff7c',
+            background: '#FFCE6E',
             display: 'inline-block',
             mb: 2,
           }}

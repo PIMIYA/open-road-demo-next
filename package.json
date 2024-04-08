@@ -19,6 +19,7 @@
     "@taquito/taquito": "^19.1.0",
     "autosuggest-highlight": "^3.3.4",
     "axios": "^1.6.7",
+    "html-react-parser": "^5.1.10",
     "next": "13.5.6",
     "react": "^18",
     "react-cookie": "^7.1.0",

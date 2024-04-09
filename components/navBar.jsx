@@ -1,17 +1,20 @@
+import { useState } from "react";
 import { useRouter } from "next/router";
 import { useConnection } from "@/packages/providers";
 
 import Link from "next/link";
 import Image from 'next/image';
 
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import { Stack, Box, Button, IconButton, Menu, MenuItem, ListItemIcon } from "@mui/material";
 
-import logo from "/public/logo.svg";
 import LoginIcon from '@mui/icons-material/Login';
 import LogoutIcon from '@mui/icons-material/Logout';
+import MenuIcon from '@mui/icons-material/Menu';
+
+import logo from "/public/logo.svg";
 
 export default function() {
+  const [anchorEl, setAnchorEl] = useState(null);
   const { address, connect, disconnect } = useConnection();
   const router = useRouter();
 
@@ -19,84 +22,125 @@ export default function() {
     router.push("/");
   };
 
+  const connectBtn = (
+    <Button variant="contained" color="secondary" startIcon={<LoginIcon />} onClick={connect} >connect</Button>
+  );
+
+  const open = Boolean(anchorEl);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = (callback = null) => {
+    setAnchorEl(null);
+
+    if (callback && typeof callback === "function") {
+      callback();
+    }
+  };
+
+  const connectedMenu = (
+    <div>
+      <IconButton
+        id="basic-button"
+        aria-controls={open ? 'basic-menu' : undefined}
+        aria-haspopup="true"
+        aria-expanded={open ? 'true' : undefined}
+        aria-label="dashboard"
+        onClick={handleClick}
+
+        sx={{
+          bgcolor: "secondary.main",
+          color: "white",
+          "&:hover": {
+            bgcolor: "secondary.dark",
+          }
+        }}
+      >
+        <MenuIcon/>
+      </IconButton>
+      <Menu
+        id="basic-menu"
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        MenuListProps={{
+          'aria-labelledby': 'basic-button',
+        }}
+      >
+        <MenuItem onClick={handleClose}>
+          <Link
+            href={{
+              pathname: `/wallet/${address}`,
+              // query: { address: address },
+            }}
+          // as="/my_wallet"
+          >
+            My Wallet
+          </Link>
+        </MenuItem>
+        <MenuItem onClick={handleClose}>
+          <Link
+            href={{
+              pathname: "/mint",
+            }}
+            as="/mint"
+          >
+            Mint
+          </Link>
+        </MenuItem>
+        <MenuItem onClick={() => handleClose(disconnect)}>
+          <ListItemIcon >
+            <LogoutIcon fontSize="small" />
+          </ListItemIcon>
+          Disconnect
+        </MenuItem>
+      </Menu>
+    </div>
+  );
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "1rem",
-        background: "none",
-      }}
-    >
-      <Button disableRipple={true} onClick={gotohome}>
-        <Image
-          priority
-          src={logo}
-          alt="Kairos"
+    <>
+      <Box sx={{ height: "100px" }} /> {/* for padding */}
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        padding="1rem"
+        alignItems="center"
+        sx={{
+          position: "fixed",
+          top: 0,
+          width: "100%",
+        }}
+      >
+        <Box
           onClick={gotohome}
-        />
-      </Button>
-      <div>
-        {address ? (
-          <>
-            <Box component="span">
-              <Link
-                href={{
-                  pathname: "/mint",
-                }}
-                as="/mint"
-              >
-                <Button variant="text">
-                  mint
-                </Button>
-              </Link>
-            </Box>
-            <Box component="span">
-              <Link
-                /* In order to fetch data every time load page, send address from URL  */
-                href={{
-                  pathname: `/creations`,
-                  // query: { address: address }
-                }}
-              // as="/creations"
-              >
-                <Button variant="text">
-                  creations
-                </Button>
-              </Link>
-            </Box>
-            <Box component="span">
-              <Link
-                href={{
-                  pathname: `/wallet/${address}`,
-                  // query: { address: address },
-                }}
-              // as="/my_wallet"
-              >
-                <Button variant="text">
-                  my wallet
-                </Button>
-              </Link>
-            </Box>
-            <Box component="span">
-              <Button
-                variant="outlined"
-                onClick={disconnect}
-                startIcon={<LogoutIcon />}
-              >
-                disconnect
-              </Button>
-            </Box>
-          </>
-        ) : (
-          <>
-            <Button variant="contained" color="secondary" startIcon={<LoginIcon />} onClick={connect} >
-              connect
-            </Button>
-          </>
-        )}
-      </div>
-    </Box>
+          sx={{
+            cursor: "pointer",
+            position: "relative",
+            width: {
+              xs: "100px",
+              sm: "120px",
+              md: "150px",
+            },
+            height: {
+              xs: "50px",
+              sm: "60px",
+              md: "70px",
+            },
+            transition: "width .5s, height .5s",
+          }}
+        >
+          <Image
+            priority
+            src={logo}
+            alt="Kairos"
+            layout="fill"
+            objectFit="contain"
+            onClick={gotohome}
+          />
+        </Box>
+        {address ? connectedMenu  : connectBtn}
+      </Stack>
+    </>
   );
 };

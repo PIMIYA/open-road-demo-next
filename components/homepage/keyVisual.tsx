@@ -256,7 +256,15 @@ const sketch: Sketch = (s) => {
 export default () => {
 
   return (
-    <Box pb='45vh'>
+    <Box
+      sx={{
+        pb: {
+          xs: '20vh',
+          sm: '40vh',
+          md: '45vh',
+        },
+      }}
+    >
       <NextReactP5Wrapper sketch={sketch} />
     </Box>
   );

@@ -17,23 +17,22 @@ const sketch: Sketch = (s) => {
       x: number;
       y: number;
     },
-    type: 'NORMAL' | 'KEY_POINT';
-  }
+    type: 'PATH' | 'KEY_POINT';
+  };
 
   const points: Point[] = [];
 
-  function drawBezierFromSVG(d: string) {
-    let commands = d.split(/(?=[MLCQ])/); // M means Move, L means Line, C means Cubic Bezier, Q means Quadratic Bezier
-
+  function getSvgPoints(d: string, isDev = false) {
+    const result: Point[] = [];
     const g = s.layer1;
 
-    g.noFill();
-    g.noStroke();
-    g.beginShape();
-
+    let commands = d.split(/(?=[MLCQ])/); // M means Move, L means Line, C means Cubic Bezier, Q means Quadratic Bezier
     let startX, startY, control1X, control1Y, control2X, control2Y, endX, endY;
 
-    let lineCount = 0;
+    if (isDev) {
+      g.noFill();
+      g.beginShape();
+    }
 
     for (let cmd of commands) {
       let type = cmd[0];
@@ -50,29 +49,22 @@ const sketch: Sketch = (s) => {
       if (type == 'M') {
         startX = nums[0];
         startY = nums[1];
-        g.vertex(startX, startY);
 
+        isDev && g.vertex(startX, startY);
 
-        g.push();
-          let isStored = false;
-          if (points.length > 0) {
-            const positions = points.map(p => `${p.position.x},${p.position.y}`);
-            const current = `${startX},${startY}`;
-            isStored = positions.includes(current);
-          }
+        let isStored = false;
+        if (result.length > 0) {
+          const positions = result.map(p => `${p.position.x},${p.position.y}`);
+          const current = `${startX},${startY}`;
+          isStored = positions.includes(current);
+        }
 
-          if (!isStored) {
-            lineCount++;
-            points.push({
-              position: { x: startX, y: startY },
-              type: 'KEY_POINT'
-            });
-
-            g.fill('#000');
-            g.circle(startX, startY, 4);
-            g.text(lineCount, startX + s.random(10, 30), startY + s.random(10, 30));
-          }
-        g.pop();
+        if (!isStored) {
+          result.push({
+            position: { x: startX, y: startY },
+            type: 'KEY_POINT'
+          });
+        }
       } else if (type == 'C') {
         control1X = nums[0];
         control1Y = nums[1];
@@ -80,37 +72,39 @@ const sketch: Sketch = (s) => {
         control2Y = nums[3];
         endX = nums[4];
         endY = nums[5];
-        g.bezierVertex(control1X, control1Y, control2X, control2Y, endX, endY);
+        isDev && g.bezierVertex(control1X, control1Y, control2X, control2Y, endX, endY);
 
-        g.push();
-          g.fill('#000');
-          let tStep = 0.001;
+        let tStep = 0.001;
 
-          for (let t = 0; t <= 1; t += tStep) {
-            let x = g.bezierPoint(startX, control1X, control2X, endX, t);
-            let y = g.bezierPoint(startY, control1Y, control2Y, endY, t);
+        for (let t = 0; t <= 1; t += tStep) {
+          let x = g.bezierPoint(startX, control1X, control2X, endX, t);
+          let y = g.bezierPoint(startY, control1Y, control2Y, endY, t);
 
-            points.push({
-              position: { x, y },
-              type: 'NORMAL'
-            });
+          if (t == 0) {
+            const positions = result.map(p => `${p.position.x},${p.position.y}`);
+            const current = `${x},${y}`;
 
-            if (t == 0 || t == 1) {
-              if (chance(10)) {
-                g.push();
-                g.fill('#ccc');
-                  g.circle(x + s.random(-100, 100), y + s.random(-100, 100), s.random(10, 20));
-                g.pop();
-              }
+            if (!positions.includes(current)) {
+              result.push({
+                position: { x, y },
+                type: 'KEY_POINT'
+              });
             }
           }
-        g.pop();
+
+          result.push({
+            position: { x, y },
+            type: 'PATH'
+          });
+        }
 
         startX = endX;
         startY = endY;
       }
     }
-    g.endShape();
+    isDev && g.endShape();
+
+    return result;
   }
 
   function parseSVG() {
@@ -120,13 +114,32 @@ const sketch: Sketch = (s) => {
 
     paths.forEach((path) => {
       let d = path.getAttribute('d');
-      d && drawBezierFromSVG(d);
+
+      if (d) {
+        points.push(...getSvgPoints(d));
+      }
+    });
+  }
+
+  function drawNumbers() {
+    const g = s.layer1;
+
+    g.noFill();
+    g.noStroke();
+    g.beginShape();
+    g.fill('#000');
+
+    const keyPoints = points.filter(p => p.type == 'KEY_POINT');
+    keyPoints.forEach((point, i) => {
+      g.circle(point.position.x, point.position.y, 4);
+      g.text(i + 1, point.position.x + s.random(10, 30), point.position.y + s.random(10, 30));
     });
   }
 
   s.setup = () => {
     s.createCanvas();
     s.windowResized();
+    s.angleMode(s.DEGREES);
     s.canvas.style.position = "absolute";
     s.canvas.style.zIndex = -1;
 
@@ -137,6 +150,7 @@ const sketch: Sketch = (s) => {
     s.layer2.angleMode(s.DEGREES);
 
     parseSVG();
+    drawNumbers();
   }
 
   let randomPositionFactor = .8;
@@ -153,12 +167,13 @@ const sketch: Sketch = (s) => {
 
       if (point.type == 'KEY_POINT') {
         let { x, y } = point.position;
-        let size = s.random(8, 15);
+        let size = s.random(8, 12);
 
         const shape = pick({
           'triangle': 1,
           'circle': 1,
           'square': 1,
+          'other-polygon': 1,
         });
 
         const color = pick({
@@ -184,6 +199,20 @@ const sketch: Sketch = (s) => {
 
           case 'square':
             g2.rect(-size / 2, -size / 2, size, size);
+            break;
+
+          case 'other-polygon':
+            size *= .6;
+            const sides = ~~s.random(5, 9);
+
+            g2.beginShape();
+            for (let i = 0; i < sides; i++) {
+              let angle = 360 / sides * i;
+              let x = size * s.cos(angle);
+              let y = size * s.sin(angle);
+              g2.vertex(x, y);
+            }
+            g2.endShape(s.CLOSE);
             break;
         }
 

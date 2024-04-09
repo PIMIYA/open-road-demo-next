@@ -102,6 +102,12 @@ const sketch: Sketch = (s) => {
         startY = endY;
       }
     }
+
+    result.push({
+      position: { x: endX, y: endY },
+      type: 'KEY_POINT'
+    });
+
     isDev && g.endShape();
 
     return result;
@@ -132,7 +138,8 @@ const sketch: Sketch = (s) => {
     const keyPoints = points.filter(p => p.type == 'KEY_POINT');
     keyPoints.forEach((point, i) => {
       g.circle(point.position.x, point.position.y, 4);
-      g.text(i + 1, point.position.x + s.random(10, 30), point.position.y + s.random(10, 30));
+      g.textSize(8);
+      g.text(i + 1, point.position.x + s.random(5, 10), point.position.y + s.random(5, 10));
     });
   }
 

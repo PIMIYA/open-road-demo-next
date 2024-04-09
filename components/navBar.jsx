@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { useConnection } from "@/packages/providers";
+import { useTheme } from "@mui/material/styles";
 
 import Link from "next/link";
 import Image from 'next/image';
@@ -17,6 +18,7 @@ export default function() {
   const [anchorEl, setAnchorEl] = useState(null);
   const { address, connect, disconnect } = useConnection();
   const router = useRouter();
+  const theme = useTheme();
 
   const gotohome = () => {
     router.push("/");
@@ -66,6 +68,12 @@ export default function() {
         MenuListProps={{
           'aria-labelledby': 'basic-button',
         }}
+        sx={{
+          a: {
+            color: "main",
+            textDecoration: "none",
+          }
+        }}
       >
         <MenuItem onClick={handleClose}>
           <Link
@@ -110,6 +118,7 @@ export default function() {
           position: "fixed",
           top: 0,
           width: "100%",
+          zIndex: theme.zIndex.navBar,
         }}
       >
         <Box
@@ -135,8 +144,10 @@ export default function() {
             src={logo}
             alt="Kairos"
             layout="fill"
-            objectFit="contain"
             onClick={gotohome}
+            style={{
+              objectFit: "contain",
+            }}
           />
         </Box>
         {address ? connectedMenu  : connectBtn}

@@ -1,4 +1,5 @@
 import React from "react";
+import { useTheme } from "@mui/material/styles";
 import { type Sketch } from "@p5-wrapper/react";
 import { NextReactP5Wrapper } from "@p5-wrapper/next";
 import { Box } from "@mui/material";
@@ -147,8 +148,6 @@ const sketch: Sketch = (s) => {
     s.createCanvas();
     s.windowResized();
     s.angleMode(s.DEGREES);
-    s.canvas.style.position = "absolute";
-    s.canvas.style.zIndex = -1;
 
     s.layer1 = s.createGraphics(1152, 2600);
     s.layer2 = s.createGraphics(1152, 2600);
@@ -270,6 +269,8 @@ const sketch: Sketch = (s) => {
 
 export default () => {
 
+  const theme = useTheme();
+
   return (
     <Box
       sx={{
@@ -280,7 +281,12 @@ export default () => {
         },
       }}
     >
-      <NextReactP5Wrapper sketch={sketch} />
+      <Box sx={{
+        position: 'absolute',
+        zIndex: theme.zIndex.keyVisual,
+      }}>
+        <NextReactP5Wrapper sketch={sketch} />
+      </Box>
     </Box>
   );
 }

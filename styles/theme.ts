@@ -1,6 +1,4 @@
-import { createTheme } from '@mui/material/styles';
-
-import { TypographyProps } from '@mui/material/Typography';
+import { ZIndex, createTheme } from '@mui/material/styles';
 
 declare module '@mui/material/Typography' {
   interface TypographyPropsVariantOverrides {
@@ -42,6 +40,10 @@ const theme = createTheme({
       main: "#3035a4",
     },
   },
+  zIndex: {
+    keyVisual: -1,
+    navBar: 1000,
+  } as Partial<ZIndex>,
 });
 
 export default theme;

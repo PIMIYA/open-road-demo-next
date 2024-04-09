@@ -2,7 +2,7 @@ import parse from 'html-react-parser';
 import Box from "@mui/material/Box";
 import Image from "next/image";
 import Typography from "@mui/material/Typography";
-import FadeOnScroll from "@/components/FadeOnScroll";
+import FadeOnScroll from "@/components/fadeOnScroll";
 
 import bg1 from "@/public/bubble1_bg.png";
 import bg2 from "@/public/bubble2_bg.png";
@@ -15,10 +15,21 @@ export default function FeatureBox({ bgIndex, title, description }) {
   description = parse(description.replaceAll('在場證明', '<strong>在場證明</strong>'));
   const bg = bgs[bgIndex];
 
+  const maxWidthMap = {
+    0: 400,
+    1: 400,
+    2: 500,
+    3: 600,
+  };
+
   return (
     <Box
       sx={{
-        maxWidth: 600,
+        maxWidth: {
+          sm: 500,
+          md: 600,
+          lg: maxWidthMap[bgIndex],
+        },
         margin: '0 auto',
         mb: 8,
         ':nth-of-type(2n)': {

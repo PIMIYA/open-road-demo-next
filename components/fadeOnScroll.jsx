@@ -38,7 +38,7 @@ function FadeOnScroll(props) {
   return (
     <Box ref={ref} sx={{
       opacity: isVisible ? 1 : 0,  // Control opacity
-      transform: isVisible ? 'translateY(-50px)' : 'translateY(0px)',  // Control translateY
+      transform: isVisible ? 'translateY(0)' : 'translateY(50px)',  // Control translateY
       transition: 'opacity 1000ms, transform 1000ms'  // Add transitions for both properties
     }}>
       {props.children}

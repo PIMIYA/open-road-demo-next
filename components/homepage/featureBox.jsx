@@ -2,7 +2,7 @@ import parse from 'html-react-parser';
 import Box from "@mui/material/Box";
 import Image from "next/image";
 import Typography from "@mui/material/Typography";
-import { styled } from "@mui/material/styles";
+import FadeOnScroll from "@/components/FadeOnScroll";
 
 import bg1 from "@/public/bubble1_bg.png";
 import bg2 from "@/public/bubble2_bg.png";
@@ -32,17 +32,18 @@ export default function FeatureBox({ bgIndex, title, description }) {
         }
       }}
     >
-      <Box
-        sx={{
-          maxHeight: 300,
-          height: { xs: '45vw', md: '25vw' },
-          background: '#fff',
-          position: 'relative',
-          borderRadius: '4vw',
-          border: '1px solid #aaa',
-          margin: '0 auto',
-        }}
-      >
+      <FadeOnScroll onceonly>
+        <Box
+          sx={{
+            maxHeight: 300,
+            height: { xs: '45vw', md: '25vw' },
+            background: '#fff',
+            position: 'relative',
+            borderRadius: '4vw',
+            border: '1px solid #aaa',
+            margin: '0 auto',
+          }}
+        >
         <Image
           src={bg}
           alt={title}
@@ -54,31 +55,34 @@ export default function FeatureBox({ bgIndex, title, description }) {
             transform: 'translateX(-50%)',
           }}
         />
-      </Box>
-      <Box
-        sx={{
-          px: { xs: 2, md: 6},
-          py: { xs: 2, md: 4 },
-        }}
-      >
-        <Typography
-          component='h1'
-          variant='h5'
+        </Box>
+      </FadeOnScroll>
+      <FadeOnScroll onceonly>
+        <Box
           sx={{
-            fontWeight: 'bold',
-            background: '#FFCE6E',
-            display: 'inline-block',
-            mb: 2,
+            px: { xs: 2, md: 6},
+            py: { xs: 2, md: 4 },
           }}
         >
-          {title}
-        </Typography>
-        <Typography
-          fontSize={18}
-        >
-          {description}
-        </Typography>
-      </Box>
+          <Typography
+            component='h1'
+            variant='h5'
+            sx={{
+              fontWeight: 'bold',
+              background: '#FFCE6E',
+              display: 'inline-block',
+              mb: 2,
+            }}
+          >
+            {title}
+          </Typography>
+          <Typography
+            fontSize={18}
+          >
+            {description}
+          </Typography>
+        </Box>
+      </FadeOnScroll>
     </Box>
   );
 }

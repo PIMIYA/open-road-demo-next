@@ -1,6 +1,15 @@
 import { createTheme } from '@mui/material/styles';
 
 const theme = createTheme({
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: () => ({
+        body: {
+          overflowX: 'hidden',
+        }
+      }),
+    },
+  },
   palette: {
     background: {
       default: "#ecf2eb",

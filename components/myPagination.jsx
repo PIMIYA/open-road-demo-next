@@ -14,6 +14,10 @@ const MyPagination = ({ items, pageSize, currentPage, onPageChange }) => {
       page={currentPage}
       onChange={(e, value) => onPageChange(value)}
       color="secondary"
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+      }}
     ></Pagination>
   );
 };

@@ -1,4 +1,5 @@
 /* MUI */
+import Skeleton from "@mui/material/Skeleton";
 import Box from "@mui/material/Box";
 import { styled } from "@mui/material/styles";
 import Paper from "@mui/material/Paper";
@@ -17,12 +18,25 @@ import Link from "next/link";
 const Item = styled(Paper)(({ theme }) => ({
   textAlign: "center",
   boxShadow: "none",
+  background: "transparent",
 }));
 
 export default function SelectedTokenCardGrid({ data }) {
   return (
     <>
       <Grid container spacing={4} columns={{ xs: 4, sm: 8, md: 12 }}>
+        {!data &&
+          Array.from(new Array(6)).map(
+            (_, index) => (
+              <Grid xs={4}>
+                <Item>
+                  <Skeleton variant="rectangular" height={200} sx={{mb: 1}} />
+                  <Skeleton variant="text" />
+                  <Skeleton variant="text" />
+                  <Skeleton variant="text" width={100} />
+                </Item>
+              </Grid>
+        ))}
         {data &&
           data.map(
             ({

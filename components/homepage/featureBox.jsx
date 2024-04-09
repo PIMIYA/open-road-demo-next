@@ -76,7 +76,7 @@ export default function FeatureBox({ bgIndex, title, description }) {
           }}
         >
           <Typography
-            component='h1'
+            component='h2'
             variant='h5'
             sx={{
               fontWeight: 'bold',

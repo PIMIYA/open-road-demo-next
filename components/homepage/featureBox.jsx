@@ -40,7 +40,7 @@ export default function FeatureBox({ bgIndex, title, description }) {
         },
         ':nth-of-type(n + 3)': {
           mt: { lg: -30 },
-        }
+        },
       }}
     >
       <FadeOnScroll onceonly>
@@ -64,6 +64,7 @@ export default function FeatureBox({ bgIndex, title, description }) {
             position: 'absolute',
             left: '50%',
             transform: 'translateX(-50%)',
+            pointerEvents: 'none',
           }}
         />
         </Box>

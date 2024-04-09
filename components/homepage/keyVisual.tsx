@@ -167,10 +167,15 @@ const sketch: Sketch = (s) => {
     const g = s.layer1;
     const g2 = s.layer2;
 
+    let isFinished = false;
+
     for (let i = 0; i < 60 * CONFIG.DRAW_SPEED; i++) {
       let point = points.shift();
 
-      if (!point) break;
+      if (!point) {
+        isFinished = true;
+        break;
+      }
 
       if (point.type == 'KEY_POINT') {
         let { x, y } = point.position;
@@ -248,6 +253,10 @@ const sketch: Sketch = (s) => {
     s.image(g2, 1, 1, s.width, s.height);
     s.image(g2, 1, 0, s.width, s.height);
     s.image(g2, 0, 1, s.width, s.height);
+
+    if (isFinished) {
+      s.noLoop();
+    }
   };
 
   s.windowResized = () => {

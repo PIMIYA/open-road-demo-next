@@ -7,7 +7,7 @@ import { xx, chance, pick } from "./utils";
 import svgData from './svgData';
 
 const CONFIG = {
-  DRAW_SPEED: 1,
+  DRAW_SPEED: .5,
 }
 
 const sketch: Sketch = (s) => {
@@ -74,7 +74,7 @@ const sketch: Sketch = (s) => {
         endY = nums[5];
         isDev && g.bezierVertex(control1X, control1Y, control2X, control2Y, endX, endY);
 
-        let tStep = 0.001;
+        let tStep = 0.002;
 
         for (let t = 0; t <= 1; t += tStep) {
           let x = g.bezierPoint(startX, control1X, control2X, endX, t);
@@ -228,20 +228,26 @@ const sketch: Sketch = (s) => {
         return;
       }
 
+      g.noFill();
+      g.stroke(0, 0, 0, 10);
+
       for (let j = 0; j < 3; j++) {
         let {x, y} = point.position;
         if (randomPositionFactor) {
           x += s.random(-1, 1) * randomPositionFactor;
           y += s.random(-1, 1) * randomPositionFactor;
         }
-        g.fill(0, 0, 0, 20);
         g.circle(x, y, s.random(...strokeSizeRange));
       }
     }
 
     s.clear();
     s.image(g, 0, 0, s.width, s.height);
+
     s.image(g2, 0, 0, s.width, s.height);
+    s.image(g2, 1, 1, s.width, s.height);
+    s.image(g2, 1, 0, s.width, s.height);
+    s.image(g2, 0, 1, s.width, s.height);
   };
 
   s.windowResized = () => {

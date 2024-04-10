@@ -1,28 +1,19 @@
-import React from "react";
 import { useTheme } from "@mui/material/styles";
 import { type Sketch } from "@p5-wrapper/react";
 import { NextReactP5Wrapper } from "@p5-wrapper/next";
 import { Box } from "@mui/material";
 
+import { type Point, POINT_TYPES } from "./const";
 import { xx, chance, pick } from "./utils";
 import svgData from './svgData';
 
-const CONFIG = {
-  DRAW_SPEED: .5,
-}
+import CONFIG from './config';
 
 const sketch: Sketch = (s) => {
-
-  type Point = {
-    position: {
-      x: number;
-      y: number;
-    },
-    type: 'PATH' | 'KEY_POINT';
-  };
-
   const points: Point[] = [];
   const originalSize = [1152, 2130];
+
+  let isFinished = false;
 
   function getSvgPoints(d: string, isDev = false) {
     const result: Point[] = [];
@@ -62,7 +53,7 @@ const sketch: Sketch = (s) => {
         if (!isStored) {
           result.push({
             position: { x: startX, y: startY },
-            type: 'KEY_POINT'
+            type: POINT_TYPES.KEY_POINT
           });
         }
       } else if (type == 'C') {
@@ -87,14 +78,14 @@ const sketch: Sketch = (s) => {
             if (!positions.includes(current)) {
               result.push({
                 position: { x, y },
-                type: 'KEY_POINT'
+                type: POINT_TYPES.KEY_POINT
               });
             }
           }
 
           result.push({
             position: { x, y },
-            type: 'PATH'
+            type: POINT_TYPES.PATH
           });
         }
 
@@ -104,8 +95,8 @@ const sketch: Sketch = (s) => {
     }
 
     result.push({
-      position: { x: endX, y: endY },
-      type: 'KEY_POINT'
+      position: { x: endX as number, y: endY as number },
+      type: POINT_TYPES.KEY_POINT
     });
 
     isDev && g.endShape();
@@ -135,12 +126,92 @@ const sketch: Sketch = (s) => {
     g.beginShape();
     g.fill('#000');
 
-    const keyPoints = points.filter(p => p.type == 'KEY_POINT');
+    const keyPoints = points.filter(p => p.type == POINT_TYPES.KEY_POINT);
     keyPoints.forEach((point, i) => {
       g.circle(point.position.x, point.position.y, 4);
       g.textSize(8);
       g.text(i + 1, point.position.x + s.random(5, 10), point.position.y + s.random(5, 10));
     });
+  }
+
+  function drawKeyPoint(point: Point, g: any) {
+    let { x, y } = point.position;
+    let size = +pick({
+      [s.random(4, 8)]: 1,
+      [s.random(8, 12)]: 2,
+      [s.random(12, 20)]: .3,
+      [s.random(20, 30)]: .1,
+    });
+
+    const shape = pick(CONFIG.SHAPE_CHANCE);
+    const color = pick(CONFIG.COLOR_CHANCE);
+
+    g.push();
+    g.fill(color);
+    g.translate(x, y);
+    g.rotate(s.random(360));
+
+    switch (shape) {
+      case 'triangle':
+        size *= .8;
+        g.triangle(0, -size, -size * Math.sqrt(3) / 2, size / 2, size * Math.sqrt(3) / 2, size / 2);
+        break;
+
+      case 'circle':
+        g.circle(0, 0, size);
+        break;
+
+      case 'square':
+        g.rect(-size / 2, -size / 2, size, size);
+        break;
+
+      case 'other-polygon':
+        size *= .6;
+        const sides = ~~s.random(5, 9);
+
+        g.beginShape();
+        for (let i = 0; i < sides; i++) {
+          let angle = 360 / sides * i;
+          let x = size * s.cos(angle);
+          let y = size * s.sin(angle);
+          g.vertex(x, y);
+        }
+        g.endShape(s.CLOSE);
+        break;
+    }
+
+    g.pop();
+  }
+
+  function drawPoints() {
+    const g = s.layer1;
+    const g2 = s.layer2;
+
+    for (let i = 0; i < 60 * CONFIG.DRAW_SPEED; i++) {
+      let point = points.shift();
+
+      if (!point) {
+        isFinished = true;
+        break;
+      }
+
+      if (point.type == POINT_TYPES.KEY_POINT) {
+        drawKeyPoint(point, g2);
+        return;
+      }
+
+      g.noFill();
+      g.stroke(0, 0, 0, 10);
+
+      for (let j = 0; j < 3; j++) {
+        let { x, y } = point.position;
+        if (CONFIG.PATH.RANDOM_POSITION_FACTOR) {
+          x += s.random(-1, 1) * CONFIG.PATH.RANDOM_POSITION_FACTOR;
+          y += s.random(-1, 1) * CONFIG.PATH.RANDOM_POSITION_FACTOR;
+        }
+        g.circle(x, y, s.random(...CONFIG.PATH.STROKE_SIZE_RANGE));
+      }
+    }
   }
 
   s.setup = () => {
@@ -158,97 +229,11 @@ const sketch: Sketch = (s) => {
     drawNumbers();
   }
 
-  let randomPositionFactor = .8;
-  let strokeSizeRange = [.1, 1];
-
   s.draw = () => {
     const g = s.layer1;
     const g2 = s.layer2;
 
-    let isFinished = false;
-
-    for (let i = 0; i < 60 * CONFIG.DRAW_SPEED; i++) {
-      let point = points.shift();
-
-      if (!point) {
-        isFinished = true;
-        break;
-      }
-
-      if (point.type == 'KEY_POINT') {
-        let { x, y } = point.position;
-        let size = +pick({
-          [s.random(4, 8)]: 1,
-          [s.random(8, 12)]: 2,
-          [s.random(12, 20)]: .3,
-          [s.random(20, 30)]: .1,
-        });
-
-        const shape = pick({
-          'triangle': 1,
-          'circle': 1,
-          'square': 1,
-          'other-polygon': 1,
-        });
-
-        const color = pick({
-          '#0016B9': 1,
-          '#da46a7': 1,
-          '#20956b': 1,
-        })
-
-        g2.push();
-          g2.fill(color);
-          g2.translate(x, y);
-          g2.rotate(s.random(360));
-
-        switch (shape) {
-          case 'triangle':
-            size *= .8;
-            g2.triangle(0, -size, -size * Math.sqrt(3) / 2, size / 2, size * Math.sqrt(3) / 2, size / 2);
-            break;
-
-          case 'circle':
-            g2.circle(0, 0, size);
-            break;
-
-          case 'square':
-            g2.rect(-size / 2, -size / 2, size, size);
-            break;
-
-          case 'other-polygon':
-            size *= .6;
-            const sides = ~~s.random(5, 9);
-
-            g2.beginShape();
-            for (let i = 0; i < sides; i++) {
-              let angle = 360 / sides * i;
-              let x = size * s.cos(angle);
-              let y = size * s.sin(angle);
-              g2.vertex(x, y);
-            }
-            g2.endShape(s.CLOSE);
-            break;
-        }
-
-        g2.pop();
-
-        return;
-      }
-
-      g.noFill();
-      g.stroke(0, 0, 0, 10);
-
-      for (let j = 0; j < 3; j++) {
-        let {x, y} = point.position;
-        if (randomPositionFactor) {
-          x += s.random(-1, 1) * randomPositionFactor;
-          y += s.random(-1, 1) * randomPositionFactor;
-        }
-        g.circle(x, y, s.random(...strokeSizeRange));
-      }
-    }
-
+    drawPoints();
     s.clear();
     s.image(g, 0, 0, s.width, s.height);
 
@@ -287,7 +272,7 @@ export default () => {
     >
       <Box sx={{
         position: 'absolute',
-        zIndex: theme.zIndex.keyVisual,
+        zIndex: (theme.zIndex as any).keyVisual,
       }}>
         <NextReactP5Wrapper sketch={sketch} />
       </Box>

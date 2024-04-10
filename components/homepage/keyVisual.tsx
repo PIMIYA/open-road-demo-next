@@ -13,6 +13,11 @@ const sketch: Sketch = (s) => {
   const points: Point[] = [];
   const originalSize = [1152, 2130];
 
+  const strokeType = pick({
+    'thin': 1,
+    'thick': 1,
+  });
+
   let isFinished = false;
 
   function getSvgPoints(d: string, isDev = false) {
@@ -203,9 +208,25 @@ const sketch: Sketch = (s) => {
       g.noFill();
       g.stroke(0, 0, 0, 10);
 
-      for (let j = 0; j < 3; j++) {
+      let strokeWidth = 0;
+      let pointCount = 3;
+
+      switch (strokeType) {
+        case 'thin':
+          strokeWidth = s.noise(point.position.x * .01, point.position.y * .01) * 5;
+          pointCount = 5;
+          break;
+
+        case 'thick':
+          strokeWidth = (.2 + s.noise(point.position.x * .01, point.position.y * .01) * .8) * 10;
+          pointCount = 10;
+          break;
+      }
+
+      for (let j = 0; j < pointCount; j++) {
         let { x, y } = point.position;
         if (CONFIG.PATH.RANDOM_POSITION_FACTOR) {
+          x += s.random(-1, 1) * strokeWidth;
           x += s.random(-1, 1) * CONFIG.PATH.RANDOM_POSITION_FACTOR;
           y += s.random(-1, 1) * CONFIG.PATH.RANDOM_POSITION_FACTOR;
         }

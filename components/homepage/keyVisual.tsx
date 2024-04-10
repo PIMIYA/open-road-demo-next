@@ -22,6 +22,7 @@ const sketch: Sketch = (s) => {
   };
 
   const points: Point[] = [];
+  const originalSize = [1152, 2130];
 
   function getSvgPoints(d: string, isDev = false) {
     const result: Point[] = [];
@@ -40,11 +41,9 @@ const sketch: Sketch = (s) => {
       let nums = cmd.slice(1).split(/[\s,]+/).map(Number);
 
       nums = nums.map((num, i) => {
-        if (i % 2 == 0) {
-          return num + 10;
-        } else {
-          return num
-        }
+        num *= .95;
+        num += 30;
+        return num;
       });
 
       if (type == 'M') {
@@ -149,8 +148,8 @@ const sketch: Sketch = (s) => {
     s.windowResized();
     s.angleMode(s.DEGREES);
 
-    s.layer1 = s.createGraphics(1152, 2600);
-    s.layer2 = s.createGraphics(1152, 2600);
+    s.layer1 = s.createGraphics(...originalSize);
+    s.layer2 = s.createGraphics(...originalSize);
 
     s.layer2.noStroke();
     s.layer2.angleMode(s.DEGREES);
@@ -178,7 +177,12 @@ const sketch: Sketch = (s) => {
 
       if (point.type == 'KEY_POINT') {
         let { x, y } = point.position;
-        let size = s.random(8, 12);
+        let size = +pick({
+          [s.random(4, 8)]: 1,
+          [s.random(8, 12)]: 2,
+          [s.random(12, 20)]: .3,
+          [s.random(20, 30)]: .1,
+        });
 
         const shape = pick({
           'triangle': 1,
@@ -259,8 +263,8 @@ const sketch: Sketch = (s) => {
   };
 
   s.windowResized = () => {
-    const ratio = 1152 / 2600;
-    const width = Math.min(1152, window.innerWidth);
+    const ratio = originalSize[0] / originalSize[1];
+    const width = Math.min(originalSize[0], window.innerWidth);
     const height = width / ratio;
 
     s.resizeCanvas(width, height);

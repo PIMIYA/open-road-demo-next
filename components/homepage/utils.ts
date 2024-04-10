@@ -14,5 +14,7 @@ export const pick = (options: { [key: string]: number }) => {
     }
     current = current + chance;
   }
+
+  return 0;
 }
 

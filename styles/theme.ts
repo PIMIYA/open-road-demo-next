@@ -1,4 +1,4 @@
-import { ZIndex, createTheme } from '@mui/material/styles';
+import { PaletteOptions, ZIndex, createTheme } from '@mui/material/styles';
 
 declare module '@mui/material/Typography' {
   interface TypographyPropsVariantOverrides {
@@ -32,9 +32,20 @@ const theme = createTheme({
             fontSize: '1.2rem',
             lineHeight: '1.3',
             fontWeight: 'bold',
+            marginBottom: 0,
           },
         },
       ],
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: '.2rem',
+          '&:hover': {
+            background: '#ffce6e',
+          }
+        },
+      },
     },
   },
   palette: {
@@ -47,7 +58,10 @@ const theme = createTheme({
     secondary: {
       main: "#3035a4",
     },
-  },
+    highlight: {
+      main: "#ffce6e",
+    },
+  } as PaletteOptions,
   zIndex: {
     keyVisual: -1,
     navBar: 1000,

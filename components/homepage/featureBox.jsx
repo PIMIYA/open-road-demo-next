@@ -8,16 +8,18 @@ import bg1 from "@/public/bubble1_bg.png";
 import bg2 from "@/public/bubble2_bg.png";
 import bg3 from "@/public/bubble3_bg.png";
 import bg4 from "@/public/bubble4_bg.png";
+import { useTheme } from '@emotion/react';
 
 const bgs = [bg1, bg2, bg3, bg4];
 
 export default function FeatureBox({ bgIndex, title, description }) {
+  const theme = useTheme();
   description = parse(description.replaceAll('在場證明', '<strong>在場證明</strong>'));
   const bg = bgs[bgIndex];
 
   const maxWidthMap = {
     0: 400,
-    1: 400,
+    1: 440,
     2: 500,
     3: 600,
   };
@@ -81,7 +83,7 @@ export default function FeatureBox({ bgIndex, title, description }) {
             variant='h5'
             sx={{
               fontWeight: 'bold',
-              background: '#FFCE6E',
+              background: theme.palette.highlight.main,
               display: 'inline-block',
               mb: 2,
             }}

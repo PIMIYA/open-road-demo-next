@@ -112,11 +112,11 @@ export default function() {
       <Stack
         direction="row"
         justifyContent="space-between"
-        padding="1rem"
+        padding="2rem 1.5rem"
         alignItems="center"
         sx={{
           position: "fixed",
-          top: 0,
+          top: '0px',
           width: "100%",
           zIndex: theme.zIndex.navBar,
         }}
@@ -129,12 +129,12 @@ export default function() {
             width: {
               xs: "100px",
               sm: "120px",
-              md: "150px",
+              md: "130px",
             },
             height: {
               xs: "50px",
               sm: "60px",
-              md: "70px",
+              md: "65px",
             },
             transition: "width .5s, height .5s",
           }}

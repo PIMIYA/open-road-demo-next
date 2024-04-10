@@ -15,6 +15,15 @@ const theme = createTheme({
         }
       }),
     },
+    MuiPopover: {
+      styleOverrides: {
+        paper: {
+          marginTop: '.5rem',
+          boxShadow: 'none',
+          border: '1px solid #ccc',
+        },
+      },
+    },
     MuiTypography: {
       variants: [
         {
@@ -23,7 +32,6 @@ const theme = createTheme({
             fontSize: '1.2rem',
             lineHeight: '1.3',
             fontWeight: 'bold',
-            // marginBottom: '.5rem',
           },
         },
       ],

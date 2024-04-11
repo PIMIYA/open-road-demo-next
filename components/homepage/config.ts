@@ -1,15 +1,23 @@
+import { STROKE_TYPES, SHAPE_TYPES } from './const';
+
 export default {
   DRAW_SPEED: .5,
-  SHAPE_CHANCE: {
-    'triangle': 1,
-    'circle': 1,
-    'square': 1,
-    'other-polygon': 1,
-  },
   COLOR_CHANCE: {
     '#0016B9': 1,
     '#da46a7': 1,
     '#20956b': 1,
+  },
+  SHAPE_CHANCE: {
+    [SHAPE_TYPES.TRIANGLE]: 1,
+    [SHAPE_TYPES.CIRCLE]: 1,
+    [SHAPE_TYPES.SQUARE]: 1,
+    [SHAPE_TYPES.OTHER_POLYGON]: 1,
+  },
+  STROKE_CHANCE: {
+    [STROKE_TYPES.THIN]: 1,
+    [STROKE_TYPES.MEDIUM]: 1,
+    [STROKE_TYPES.THICK]: .5,
+    [STROKE_TYPES.BLACK]: .1,
   },
   PATH: {
     RANDOM_POSITION_FACTOR: .8,

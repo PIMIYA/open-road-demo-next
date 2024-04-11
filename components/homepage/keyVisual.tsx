@@ -3,7 +3,7 @@ import { type Sketch } from "@p5-wrapper/react";
 import { NextReactP5Wrapper } from "@p5-wrapper/next";
 import { Box } from "@mui/material";
 
-import { type Point, POINT_TYPES } from "./const";
+import { type Point, POINT_TYPES, STROKE_TYPES, SHAPE_TYPES } from "./const";
 import { xx, chance, pick } from "./utils";
 import svgData from './svgData';
 
@@ -13,10 +13,9 @@ const sketch: Sketch = (s) => {
   const points: Point[] = [];
   const originalSize = [1152, 2130];
 
-  const strokeType = pick({
-    'thin': 1,
-    'thick': 1,
-  });
+  const strokeType = pick(CONFIG.STROKE_CHANCE);
+  const strokeRandomFactor = chance(80) ? 0 : s.random(20, 40);
+  const isStraightPath = chance(2);
 
   let isFinished = false;
 
@@ -32,6 +31,8 @@ const sketch: Sketch = (s) => {
       g.beginShape();
     }
 
+    const storedPoints: { [key: string]: number[] } = {};
+
     for (let cmd of commands) {
       let type = cmd[0];
       let nums = cmd.slice(1).split(/[\s,]+/).map(Number);
@@ -43,31 +44,57 @@ const sketch: Sketch = (s) => {
       });
 
       if (type == 'M') {
-        startX = nums[0];
-        startY = nums[1];
+        const key = `${nums[0]},${nums[1]}`;
+
+        if (storedPoints[key]) {
+          startX = storedPoints[key][0];
+          startY = storedPoints[key][1];
+        } else {
+          startX = nums[0] + s.random(-1, 1) * strokeRandomFactor;
+          startY = nums[1] + s.random(-1, 1) * strokeRandomFactor;
+
+          storedPoints[key] = [startX, startY];
+        }
 
         isDev && g.vertex(startX, startY);
 
-        let isStored = false;
+        let isDuplicated = false;
         if (result.length > 0) {
           const positions = result.map(p => `${p.position.x},${p.position.y}`);
           const current = `${startX},${startY}`;
-          isStored = positions.includes(current);
+          isDuplicated = positions.includes(current);
         }
 
-        if (!isStored) {
+        if (!isDuplicated) {
           result.push({
             position: { x: startX, y: startY },
             type: POINT_TYPES.KEY_POINT
           });
         }
       } else if (type == 'C') {
-        control1X = nums[0];
-        control1Y = nums[1];
-        control2X = nums[2];
-        control2Y = nums[3];
-        endX = nums[4];
-        endY = nums[5];
+        control1X = nums[0] + s.random(-1, 1) * strokeRandomFactor;
+        control1Y = nums[1] + s.random(-1, 1) * strokeRandomFactor;
+        control2X = nums[2] + s.random(-1, 1) * strokeRandomFactor;
+        control2Y = nums[3] + s.random(-1, 1) * strokeRandomFactor;
+        endX = nums[4] + s.random(-1, 1) * strokeRandomFactor;
+        endY = nums[5] + s.random(-1, 1) * strokeRandomFactor;
+
+        const key = `${nums[4]},${nums[5]}`;
+
+        if (storedPoints[key]) {
+          endX = storedPoints[key][0];
+          endY = storedPoints[key][1];
+        } else {
+          storedPoints[key] = [endX, endY];
+        }
+
+        if (isStraightPath) {
+          control1X = startX;
+          control1Y = startY;
+          control2X = endX;
+          control2Y = endY;
+        }
+
         isDev && g.bezierVertex(control1X, control1Y, control2X, control2Y, endX, endY);
 
         let tStep = 0.002;
@@ -157,20 +184,20 @@ const sketch: Sketch = (s) => {
     g.rotate(s.random(360));
 
     switch (shape) {
-      case 'triangle':
+      case SHAPE_TYPES.TRIANGLE:
         size *= .8;
         g.triangle(0, -size, -size * Math.sqrt(3) / 2, size / 2, size * Math.sqrt(3) / 2, size / 2);
         break;
 
-      case 'circle':
+      case SHAPE_TYPES.CIRCLE:
         g.circle(0, 0, size);
         break;
 
-      case 'square':
+      case SHAPE_TYPES.SQUARE:
         g.rect(-size / 2, -size / 2, size, size);
         break;
 
-      case 'other-polygon':
+      case SHAPE_TYPES.OTHER_POLYGON:
         size *= .6;
         const sides = ~~s.random(5, 9);
 
@@ -212,14 +239,25 @@ const sketch: Sketch = (s) => {
       let pointCount = 3;
 
       switch (strokeType) {
-        case 'thin':
+        case STROKE_TYPES.THIN:
+          strokeWidth = 1;
+          pointCount = 5;
+          break;
+
+        case STROKE_TYPES.MEDIUM:
           strokeWidth = s.noise(point.position.x * .01, point.position.y * .01) * 5;
           pointCount = 5;
           break;
 
-        case 'thick':
+        case STROKE_TYPES.THICK:
           strokeWidth = (.2 + s.noise(point.position.x * .01, point.position.y * .01) * .8) * 10;
           pointCount = 10;
+          break;
+
+        case STROKE_TYPES.BLACK:
+          strokeWidth = 1 + s.noise(s.frameCount * .1) * 5;
+          pointCount = 30;
+          g.stroke(0, 0, 0, 100);
           break;
       }
 

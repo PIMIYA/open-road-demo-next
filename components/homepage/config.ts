@@ -18,9 +18,10 @@ export default {
     [STROKE_TYPES.MEDIUM]: 1,
     [STROKE_TYPES.THICK]: .5,
     [STROKE_TYPES.BLACK]: .1,
+    [STROKE_TYPES.BRUSH]: 2,
   },
   PATH: {
-    RANDOM_POSITION_FACTOR: .8,
+    RANDOM_POSITION_FACTOR: Math.random(),
     STROKE_SIZE_RANGE: [.1, 1],
   },
 };

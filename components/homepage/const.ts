@@ -8,6 +8,7 @@ export const enum STROKE_TYPES {
   MEDIUM = 'medium',
   THICK = 'thick',
   BLACK = 'black',
+  BRUSH = 'brush',
 };
 
 export const enum SHAPE_TYPES {

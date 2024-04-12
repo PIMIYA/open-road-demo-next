@@ -23,6 +23,7 @@ const sketch: Sketch = (s) => {
     strokeRandomFactor = s.random(2);
   }
 
+  const isBrush = strokeType == STROKE_TYPES.BRUSH;
 
   let isFinished = false;
 
@@ -191,7 +192,7 @@ const sketch: Sketch = (s) => {
       [s.random(20, 30)]: .1,
     });
 
-    if (isSeparate) {
+    if (isSeparate || isBrush) {
       size = s.random(5, 10);
     }
 
@@ -283,18 +284,66 @@ const sketch: Sketch = (s) => {
           }
           g.stroke(0, 0, 0, 100);
           break;
+
+        case STROKE_TYPES.BRUSH:
+          pointCount = chance(70) ? 100 : 5; // wet
+          strokeWidth = s.random(1, 5);
+          break;
       }
 
       for (let j = 0; j < pointCount; j++) {
         let { x, y } = point.position;
+
         if (CONFIG.PATH.RANDOM_POSITION_FACTOR) {
           x += s.random(-1, 1) * strokeWidth;
           x += s.random(-1, 1) * CONFIG.PATH.RANDOM_POSITION_FACTOR;
           y += s.random(-1, 1) * CONFIG.PATH.RANDOM_POSITION_FACTOR;
         }
-        g.circle(x, y, s.random(...CONFIG.PATH.STROKE_SIZE_RANGE));
+
+        if (isBrush) {
+          const bs = s.brushGraphics.size;
+          g.push();
+          g.translate(x, y);
+          g.rotate(s.noise(s.frameCount * .01) * 360);
+          g.image(s.brushGraphics, -bs / 2, -bs / 2, bs, bs);
+          g.pop();
+        } else {
+          g.circle(x, y, s.random(...CONFIG.PATH.STROKE_SIZE_RANGE));
+        }
       }
+
     }
+  }
+
+  function prepareBrush() {
+    s.brushGraphics = s.createGraphics(30, 30);
+    s.brushGraphics.size = 30;
+
+    const g = s.brushGraphics;
+    g.noStroke();
+    g.angleMode(s.DEGREES);
+
+    g.push();
+      g.translate(g.width / 2, g.height / 2);
+      g.colorMode(s.HSB, 360, 1, 1, 1);
+
+      let hue, sat, bri;
+      let hueBase = s.random(360);
+      for (let i = 0; i < 200 ; i++) {
+        let angle = s.random(360);
+        let radius = ~~(s.random(5 / 3)) * 3;
+
+        let x = radius * s.cos(angle);
+        let y = radius * s.sin(angle);
+        y *= .3;
+
+        hue = hueBase + s.random(5);
+        sat = chance(5) ? s.random(.4, .5) :  s.random(.6, .7);
+        bri = chance(90) ? s.random(.7, .8) : s.random(.3, .5);
+        g.fill(hue, sat * 0.1 , bri * 1.2, 1);
+        g.circle(x, y, s.random(.5, 1));
+      }
+    g.pop();
   }
 
   s.setup = () => {
@@ -312,6 +361,10 @@ const sketch: Sketch = (s) => {
 
     parseSVG();
     drawNumbers();
+
+    if (isBrush) {
+      prepareBrush();
+    }
   }
 
   s.draw = () => {
@@ -326,6 +379,10 @@ const sketch: Sketch = (s) => {
     s.image(g2, 1, 1, s.width, s.height);
     s.image(g2, 1, 0, s.width, s.height);
     s.image(g2, 0, 1, s.width, s.height);
+
+    if (isBrush) {
+      s.image(s.brushGraphics, 0, 0);
+    }
 
     if (isFinished) {
       s.noLoop();

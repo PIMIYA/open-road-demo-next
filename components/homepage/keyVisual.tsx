@@ -14,8 +14,15 @@ const sketch: Sketch = (s) => {
   const originalSize = [1152, 2130];
 
   const strokeType = pick(CONFIG.STROKE_CHANCE);
-  const strokeRandomFactor = chance(80) ? 0 : s.random(20, 40);
-  const isStraightPath = chance(2);
+  const isStraightPath = chance(1);
+  const isSeparate = chance(10);
+
+  let strokeRandomFactor = chance(90) ? 0 : s.random(20, 40);
+
+  if (isSeparate) {
+    strokeRandomFactor = s.random(2);
+  }
+
 
   let isFinished = false;
 
@@ -115,6 +122,15 @@ const sketch: Sketch = (s) => {
             }
           }
 
+          const distToStart = s.dist(x, y, startX, startY);
+          const distToEnd = s.dist(x, y, endX, endY);
+
+          if (isSeparate) {
+            if (distToStart < 8 || distToEnd < 8) {
+              continue;
+            }
+          }
+
           result.push({
             position: { x, y },
             type: POINT_TYPES.PATH
@@ -174,6 +190,10 @@ const sketch: Sketch = (s) => {
       [s.random(12, 20)]: .3,
       [s.random(20, 30)]: .1,
     });
+
+    if (isSeparate) {
+      size = s.random(5, 10);
+    }
 
     const shape = pick(CONFIG.SHAPE_CHANCE);
     const color = pick(CONFIG.COLOR_CHANCE);
@@ -257,6 +277,10 @@ const sketch: Sketch = (s) => {
         case STROKE_TYPES.BLACK:
           strokeWidth = 1 + s.noise(s.frameCount * .1) * 5;
           pointCount = 30;
+
+          if (isSeparate) {
+            strokeWidth /= 5;
+          }
           g.stroke(0, 0, 0, 100);
           break;
       }
@@ -281,7 +305,9 @@ const sketch: Sketch = (s) => {
     s.layer1 = s.createGraphics(...originalSize);
     s.layer2 = s.createGraphics(...originalSize);
 
+    s.layer1.noStroke();
     s.layer2.noStroke();
+    s.layer1.angleMode(s.DEGREES);
     s.layer2.angleMode(s.DEGREES);
 
     parseSVG();

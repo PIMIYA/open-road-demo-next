@@ -3,6 +3,8 @@ import { type Sketch } from "@p5-wrapper/react";
 import { NextReactP5Wrapper } from "@p5-wrapper/next";
 import { Box } from "@mui/material";
 
+import { useGlobalContext } from "@/contexts/GlobalContext";
+
 import { type Point, POINT_TYPES, STROKE_TYPES, SHAPE_TYPES } from "./const";
 import { xx, chance, pick } from "./utils";
 import svgData from './svgData';
@@ -11,6 +13,7 @@ import CONFIG from './config';
 
 const sketch: Sketch = (s) => {
   const points: Point[] = [];
+  const keyPoints: Point[] = [];
   const originalSize = [1152, 2130];
 
   const strokeType = pick(CONFIG.STROKE_CHANCE);
@@ -74,10 +77,12 @@ const sketch: Sketch = (s) => {
         }
 
         if (!isDuplicated) {
-          result.push({
+          const p = {
             position: { x: startX, y: startY },
             type: POINT_TYPES.KEY_POINT
-          });
+          };
+          result.push(p);
+          keyPoints.push(p);
         }
       } else if (type == 'C') {
         control1X = nums[0] + s.random(-1, 1) * strokeRandomFactor;
@@ -116,10 +121,13 @@ const sketch: Sketch = (s) => {
             const current = `${x},${y}`;
 
             if (!positions.includes(current)) {
-              result.push({
+              const p = {
                 position: { x, y },
                 type: POINT_TYPES.KEY_POINT
-              });
+              };
+
+              result.push(p);
+              keyPoints.push(p);
             }
           }
 
@@ -167,20 +175,33 @@ const sketch: Sketch = (s) => {
     });
   }
 
+  let keyPointIndex = 0;
+
   function drawNumbers() {
+    const point = keyPoints?.shift();
     const g = s.layer1;
+
+    if (!point) {
+      return;
+    }
 
     g.noFill();
     g.noStroke();
     g.beginShape();
     g.fill('#000');
 
-    const keyPoints = points.filter(p => p.type == POINT_TYPES.KEY_POINT);
-    keyPoints.forEach((point, i) => {
-      g.circle(point.position.x, point.position.y, 4);
-      g.textSize(8);
-      g.text(i + 1, point.position.x + s.random(5, 10), point.position.y + s.random(5, 10));
-    });
+    keyPointIndex++;
+
+    const size = 1.2;
+
+    g.circle(point.position.x, point.position.y, 5);
+    g.textSize(8 * size);
+    g.text(keyPointIndex, point.position.x + s.random(5, 10) * size, point.position.y + s.random(5, 10) * size);
+
+    if (!keyPoints.length) {
+      s.isLanded = true;
+      s.updateIsLanded();
+    }
   }
 
   function drawKeyPoint(point: Point, g: any) {
@@ -311,7 +332,6 @@ const sketch: Sketch = (s) => {
           g.circle(x, y, s.random(...CONFIG.PATH.STROKE_SIZE_RANGE));
         }
       }
-
     }
   }
 
@@ -360,18 +380,28 @@ const sketch: Sketch = (s) => {
     s.layer2.angleMode(s.DEGREES);
 
     parseSVG();
-    drawNumbers();
 
     if (isBrush) {
       prepareBrush();
     }
   }
 
+  s.updateWithProps = (props: any) => {
+    if (!s.updateIsLanded) {
+      s.updateIsLanded = props.updateIsLanded;
+    }
+  };
+
   s.draw = () => {
     const g = s.layer1;
     const g2 = s.layer2;
 
-    drawPoints();
+    drawNumbers();
+
+    if (s.isLanded) {
+      drawPoints();
+    }
+
     s.clear();
     s.image(g, 0, 0, s.width, s.height);
 
@@ -399,7 +429,7 @@ const sketch: Sketch = (s) => {
 };
 
 export default () => {
-
+  const { updateIsLanded } = useGlobalContext();
   const theme = useTheme();
 
   return (
@@ -416,7 +446,7 @@ export default () => {
         position: 'absolute',
         zIndex: (theme.zIndex as any).keyVisual,
       }}>
-        <NextReactP5Wrapper sketch={sketch} />
+        <NextReactP5Wrapper sketch={sketch} updateIsLanded={updateIsLanded} />
       </Box>
     </Box>
   );

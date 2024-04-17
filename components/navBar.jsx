@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import { useConnection } from "@/packages/providers";
 import { useTheme } from "@mui/material/styles";
+import { useGlobalContext } from "@/contexts/GlobalContext";
 
 import Link from "next/link";
 import Image from 'next/image';
@@ -15,8 +16,10 @@ import MenuIcon from '@mui/icons-material/Menu';
 import logo from "/public/logo.svg";
 
 export default function() {
+  const { isLanded } = useGlobalContext();
   const [anchorEl, setAnchorEl] = useState(null);
   const { address, connect, disconnect } = useConnection();
+
   const router = useRouter();
   const theme = useTheme();
 
@@ -116,9 +119,10 @@ export default function() {
         alignItems="center"
         sx={{
           position: "fixed",
-          top: '0px',
+          top: isLanded ? 0 : "-100px",
           width: "100%",
           zIndex: theme.zIndex.navBar,
+          transition: "top .5s",
         }}
       >
         <Box

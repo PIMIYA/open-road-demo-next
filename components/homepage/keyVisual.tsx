@@ -20,7 +20,7 @@ const sketch: Sketch = (s) => {
   const isStraightPath = chance(1);
   const isSeparate = chance(10);
 
-  let strokeRandomFactor = chance(90) ? 0 : s.random(20, 40);
+  let strokeRandomFactor = chance(90) ? 0 : s.random(10, 20);
 
   if (isSeparate) {
     strokeRandomFactor = s.random(2);
@@ -188,7 +188,7 @@ const sketch: Sketch = (s) => {
     g.noFill();
     g.noStroke();
     g.beginShape();
-    g.fill('#000');
+    g.fill(0, 0, 0, 200);
 
     keyPointIndex++;
 
@@ -209,8 +209,6 @@ const sketch: Sketch = (s) => {
     let size = +pick({
       [s.random(4, 8)]: 1,
       [s.random(8, 12)]: 2,
-      [s.random(12, 20)]: .3,
-      [s.random(20, 30)]: .1,
     });
 
     if (isSeparate || isBrush) {

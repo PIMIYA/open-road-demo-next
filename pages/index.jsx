@@ -1,39 +1,16 @@
-// front page with selected event lists
-
-/* NEXT */
-import Link from "next/link";
-import dynamic from "next/dynamic";
-/* Routing */
-import { useRouter } from "next/router";
-/* MUI */
-import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
-
-/* Fetch data */
 import { MainnetAPI } from "@/lib/api";
 
 /* Components */
-import SelectedTokenCardGrid from "@/components/selectedTokenCardGrid";
-import MyPagination from "@/components/myPagination";
+import Container from "@mui/material/Container";
+import Typography from "@mui/material/Typography";
+
 import FeatureBox from "@/components/homepage/featureBox";
 import KeyVisual from "@/components/homepage/keyVisual";
 import FadeOnScroll from "@/components/fadeOnScroll";
 
-import Typography from "@mui/material/Typography";
-
-import { useState } from "react";
-import { paginate } from "@/lib/paginate";
+import SelectedTokenCardGrid from "@/components/selectedTokenCardGrid";
 
 export default function Home({ data }) {
-  // console.log(data.tokens)
-
-  /* Pagination */
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 6;
-  const onPageChange = (page) => {
-    setCurrentPage(page);
-  };
-  const paginatedPosts = paginate(data.tokens, currentPage, pageSize);
 
   return (
     <>
@@ -56,15 +33,7 @@ export default function Home({ data }) {
           >
             最近的活動
           </Typography>
-          <SelectedTokenCardGrid data={paginatedPosts} />
-          <Box my={10}>
-            <MyPagination
-              items={data.tokens.length} // 24
-              currentPage={currentPage} // 1
-              pageSize={pageSize} // 6
-              onPageChange={onPageChange}
-            />
-          </Box>
+          <SelectedTokenCardGrid data={data.tokens} />
         </FadeOnScroll>
       </Container>
     </>

@@ -28,7 +28,14 @@ export default function() {
   };
 
   const connectBtn = (
-    <Button variant="contained" color="secondary" startIcon={<LoginIcon />} onClick={connect} >connect</Button>
+    <Button
+      variant="contained"
+      color="secondary"
+      startIcon={<LoginIcon />}
+      sx={{
+        borderRadius: 20,
+      }}
+      onClick={connect} >connect</Button>
   );
 
   const open = Boolean(anchorEl);

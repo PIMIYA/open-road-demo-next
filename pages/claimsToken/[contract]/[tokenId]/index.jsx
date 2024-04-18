@@ -6,7 +6,7 @@ import Container from "@mui/material/Container";
 /* Fetch data */
 import { MainnetAPI } from "@/lib/api";
 /* Components */
-import ClaimsTokenCardContnt from "@/components/claimsTokenCardContnt";
+import SingleToken from "@/components/singleToken";
 /* Routing */
 import { useRouter } from "next/router";
 
@@ -16,13 +16,7 @@ export default function Id({ data }) {
   // const query = router.query;
   // console.log(query);
 
-  return (
-    <>
-      <Container maxWidth="lg">
-        <ClaimsTokenCardContnt data={data} />
-      </Container>
-    </>
-  );
+  return <SingleToken data={data} />;
 }
 
 export async function getServerSideProps(params) {

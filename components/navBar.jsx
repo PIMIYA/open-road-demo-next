@@ -118,7 +118,7 @@ export default function() {
 
   return (
     <>
-      <Box sx={{ height: "100px" }} /> {/* for padding */}
+      <Box sx={{ height: "130px" }} /> {/* for padding */}
       <Stack
         direction="row"
         justifyContent="space-between"

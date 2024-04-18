@@ -1,16 +1,21 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useEffect, useState, useContext } from 'react';
+import { useRouter } from 'next/router';
 
 export const GlobalContext = createContext();
 
 export const GlobalProvider = ({ children }) => {
+  const router = useRouter();
+
   const [isLanded, setIsLanded] = useState(false);
 
-  const updateIsLanded = () => {
-    setIsLanded(true);
-  };
+  useEffect(() => {
+    if (router.pathname !== '/') {
+      setIsLanded(true);
+    }
+  }, [router.pathname]);
 
   return (
-    <GlobalContext.Provider value={{ isLanded, updateIsLanded }}>
+    <GlobalContext.Provider value={{ isLanded, setIsLanded }}>
       {children}
     </GlobalContext.Provider>
   );

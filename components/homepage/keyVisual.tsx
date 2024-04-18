@@ -200,7 +200,7 @@ const sketch: Sketch = (s) => {
 
     if (!keyPoints.length) {
       s.isLanded = true;
-      s.updateIsLanded();
+      s.setIsLanded(true);
     }
   }
 
@@ -385,8 +385,8 @@ const sketch: Sketch = (s) => {
   }
 
   s.updateWithProps = (props: any) => {
-    if (!s.updateIsLanded) {
-      s.updateIsLanded = props.updateIsLanded;
+    if (!s.setIsLanded) {
+      s.setIsLanded = props.setIsLanded;
     }
   };
 
@@ -427,7 +427,7 @@ const sketch: Sketch = (s) => {
 };
 
 export default () => {
-  const { updateIsLanded } = useGlobalContext();
+  const { setIsLanded } = useGlobalContext();
   const theme = useTheme();
 
   return (
@@ -444,7 +444,7 @@ export default () => {
         position: 'absolute',
         zIndex: (theme.zIndex as any).keyVisual,
       }}>
-        <NextReactP5Wrapper sketch={sketch} updateIsLanded={updateIsLanded} />
+        <NextReactP5Wrapper sketch={sketch} setIsLanded={setIsLanded} />
       </Box>
     </Box>
   );

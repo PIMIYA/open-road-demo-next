@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 /* NEXT */
 import Link from "next/link";
 /* MUI */
@@ -41,9 +41,11 @@ export default function ClaimsTokenCardGrid({ claims }) {
   // const claimURLs = myclaim.map((m) => {
   //   return m.poolURL;
   // });
-  const claimTokenURLs = myclaim.map((c) => {
-    return c.tokenURL;
-  });
+
+  // useMemo to avoid re-render
+  const claimTokenURLs = useMemo(() => {
+    return myclaim.map(c => c.tokenURL)
+  }, [claims]);
 
   const [data, setData] = useState(null);
   const [isLoading, setLoading] = useState(true);

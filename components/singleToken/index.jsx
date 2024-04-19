@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Box, Chip, Container, Stack, Typography } from "@mui/material";
 import Image from "next/image";
 import Tags from "@/components/Tags";
@@ -110,10 +111,17 @@ export default function SingleToken({data}) {
             columnGap: 10,
           }}>
           {ownerAddresses.map((address) => (
-            <Stack direction="row" justifyContent='space-between' mx='auto'>
-              <Box>{data.ownerAliases[address] || truncateAddress(address)}</Box>
-              <Box>{data.owners[address]}</Box>
-            </Stack>
+            <Link
+              href={{
+                pathname: "/wallet/[address]",
+                query: { address },
+              }}
+            >
+              <Stack direction="row" justifyContent='space-between' mx='auto'>
+                <Box>{data.ownerAliases[address] || truncateAddress(address)}</Box>
+                <Box>{data.owners[address]}</Box>
+              </Stack>
+            </Link>
           ))}
           </Box>
         </Box>

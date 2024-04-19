@@ -13,6 +13,7 @@
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.15.14",
+    "@mui/lab": "^5.0.0-alpha.170",
     "@mui/material": "^5.15.14",
     "@p5-wrapper/next": "^1.0.2",
     "@p5-wrapper/react": "^4.3.4",

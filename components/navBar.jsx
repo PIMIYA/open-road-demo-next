@@ -151,13 +151,14 @@ export default function() {
           }}
         >
           <Image
-            priority
             src={logo}
             alt="Kairos"
-            layout="fill"
             onClick={gotohome}
+            width='100'
+            height='100'
             style={{
-              objectFit: "contain",
+              width: '100%',
+              height: 'auto',
             }}
           />
         </Box>

@@ -1,6 +1,7 @@
 import { Box, Chip, Container, Stack, Typography } from "@mui/material";
 import Image from "next/image";
 import Tags from "@/components/Tags";
+import { truncateAddress } from "@/lib/stringUtils";
 
 export default function SingleToken({data}) {
   if (data) {
@@ -101,12 +102,16 @@ export default function SingleToken({data}) {
         <Box py={6} textAlign='center'>
           <Typography variant='h5' component='div' mb={4}>Collecters</Typography>
           <Box sx={{
-            columnCount: 2,
+            columnCount: {
+              sm: 2,
+              md: 3,
+              lg: 4,
+            },
             columnGap: 10,
           }}>
           {ownerAddresses.map((address) => (
             <Stack direction="row" justifyContent='space-between' mx='auto'>
-              <Box>{data.ownerAliases[address] || address}</Box>
+              <Box>{data.ownerAliases[address] || truncateAddress(address)}</Box>
               <Box>{data.owners[address]}</Box>
             </Stack>
           ))}

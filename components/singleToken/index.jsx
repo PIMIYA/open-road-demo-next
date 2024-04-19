@@ -1,5 +1,6 @@
 import { Box, Chip, Container, Stack, Typography } from "@mui/material";
 import Image from "next/image";
+import Tags from "@/components/Tags";
 
 export default function SingleToken({data}) {
   if (data) {
@@ -81,12 +82,7 @@ export default function SingleToken({data}) {
 
                   {data.tags &&
                     <Box mb={8}>
-                      {data.tags.map((tag, index) => (
-                        <Chip key={index} label={tag} size="small" sx={{
-                          mr: 1,
-                          mb: 1,
-                        }} />
-                      ))}
+                      <Tags tags={data.tags} />
                     </Box>
                   }
 

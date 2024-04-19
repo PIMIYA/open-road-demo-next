@@ -1,8 +1,8 @@
 /* MUI */
 import { styled } from "@mui/material/styles";
-import { Box, Chip, Stack, Skeleton, Typography } from "@mui/material";
-import { CardMedia } from "@mui/material";
+import { Box, Chip, CardMedia, Stack, Skeleton, Typography } from "@mui/material";
 import Grid from '@mui/material/Unstable_Grid2';
+import Tags from "@/components/Tags";
 
 /* NEXT */
 import Link from "next/link";
@@ -94,12 +94,7 @@ export default function SelectedTokenCardGrid({ data }) {
                       </Typography>
                     </Box>
                     <Stack direction="row" flexWrap="wrap">
-                      {tags.slice(0, 5).map((tag, index) => (
-                        <Chip key={index} label={tag} size="small" sx={{
-                          mr: 1,
-                          mb: 1,
-                        }} />
-                      ))}
+                      <Tags tags={tags.slice(0, 5)} />
                     </Stack>
                   </Link>
                 </Item>

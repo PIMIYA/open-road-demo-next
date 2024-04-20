@@ -32,11 +32,32 @@ export default function() {
       variant="contained"
       color="secondary"
       startIcon={<LoginIcon />}
-      sx={{
-        borderRadius: 20,
-      }}
       onClick={connect} >connect</Button>
   );
+
+  const NavLink = function(props) {
+    return (
+      <Link
+        href={props.href}
+        passHref
+        >
+        <Button
+          variant="contained"
+          sx={{
+            bgcolor: "white",
+            color: "secondary.main",
+            border: "1px solid",
+            "&:hover": {
+              bgcolor: "secondary.main",
+              color: "white",
+            }
+          }}
+        >
+          {props.label}
+        </Button>
+      </Link>
+    );
+  }
 
   const open = Boolean(anchorEl);
   const handleClick = (event) => {
@@ -162,7 +183,17 @@ export default function() {
             }}
           />
         </Box>
-        {address ? connectedMenu  : connectBtn}
+        <Box>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={4}
+          >
+            <NavLink label="所有活動" href="/events" />
+            <NavLink label="所有創作者" href="/creators" />
+            {address ? connectedMenu  : connectBtn}
+          </Stack>
+        </Box>
       </Stack>
     </>
   );

@@ -5,23 +5,64 @@
 /* Providers */
 import { ConnectionProvider, useConnection } from "@/packages/providers";
 /* MUI */
-import Box from "@mui/material/Box";
+import { Box, Container, Paper, Stack } from '@mui/material';
 /* Fetch data */
 import { useRouter } from "next/router";
 import { WalletRoleAPI } from "@/lib/api";
 import { AkaDropAPI } from "@/lib/api";
+/* Dummy for mockup */
+import { getRandomText } from '@/lib/dummy';
+/* Sub Components */
+import WalletProfile from '@/components/wallet/WalletProfile';
+import WalletTimeLine from '@/components/wallet/WalletTimeLine';
 
 export default function Wallet({ role, pools, claims, addressFromURL }) {
   /* Connected wallet */
   const { address, connect, disconnect } = useConnection();
+
+  // TODO: get introduction from real data
+  const introduction = getRandomText();
+
+  function StyledPaper(props) {
+    return (
+      <Paper sx={{
+        padding: 2,
+        boxShadow: 0,
+        marginBottom: 4,
+      }}>
+        {props.children}
+      </Paper>
+    );
+  }
+
   return (
-    <>
-      <Box>address from URL: {addressFromURL}</Box>
-      <Box>address from wallet: {address}</Box>
-      {/* <Box>{role.length}</Box> */}
-      {/* <Box>{pools}</Box>
-      <Box>{claims}</Box> */}
-    </>
+    <Container maxWidth="lg">
+      <Stack direction={
+        { md: 'column', lg: 'row' }
+      } spacing={4}>
+        <Box
+          width={{
+            md: '100%',
+            lg: 300
+          }}
+        > {/* left */}
+          <StyledPaper>
+            <WalletProfile address={addressFromURL} introduction={introduction}></WalletProfile>
+          </StyledPaper>
+          {/* TODO: filter */}
+        </Box>
+        <Box width={'100%'}> {/* right */}
+          <Box>
+            <Stack direction="row">
+              <Box width={'100%'}> {/* timeline */}
+                <WalletTimeLine rawClaims={claims} />
+              </Box>
+              {/* TODO: analytics */}
+            </Stack>
+          </Box>
+        </Box>
+      </Stack>
+    </Container>
   );
 }
 

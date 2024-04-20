@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { getRandomDate, getRandomPlace, getRandomCreator } from "@/lib/dummy";
 import WalletTimelineCard from "./WalletTimeLineCard";
 
 import Timeline from '@mui/lab/Timeline';
@@ -8,6 +7,9 @@ import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import TimelineConnector from '@mui/lab/TimelineConnector';
 import TimelineContent from '@mui/lab/TimelineContent';
 import TimelineDot from '@mui/lab/TimelineDot';
+
+import { getContractFromUid, getIdFromUid, getUrlFromUid } from "@/lib/stringUtils";
+import { getRandomDate, getRandomPlace, getRandomCreator } from "@/lib/dummy";
 
 // TODO: infinite scroll
 // TODO: skeleton loading
@@ -19,16 +21,10 @@ export default function WalletTimeline({ rawClaims }) {
   const claims = rawClaims.claims.map((claim) => {
     let result = {
       poolUid: claim.poolUid,
-      poolid: claim.poolUid.split("-").pop(),
-      contact: claim.poolUid.split("-").shift(),
-      poolURL: claim.poolUid
-        .split("-")
-        .shift()
-        .concat("/", claim.poolUid.split("-").pop()),
-      tokenURL: claim.tokenUid
-        .split("-")
-        .shift()
-        .concat("/", claim.tokenUid.split("-").pop()),
+      poolid: getIdFromUid(claim.poolUid),
+      contact: getContractFromUid(claim.poolUid),
+      poolURL: getUrlFromUid(claim.poolUid),
+      tokenURL: getUrlFromUid(claim.tokenUid),
     };
     return result;
   });

@@ -38,6 +38,7 @@ export function Footer() {
       sx={{
         bgcolor: '#7b7b7b',
         color: 'white',
+        mt: '5em',
         padding: '2em 0',
         display: isLanded ? 'block' : 'none',
       }}

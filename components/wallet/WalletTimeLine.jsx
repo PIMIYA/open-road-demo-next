@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import WalletTimelineCard from "./WalletTimeLineCard";
+import WalletTimelineCard from "./WalletTimelineCard";
 
 import Timeline from '@mui/lab/Timeline';
 import TimelineItem from '@mui/lab/TimelineItem';

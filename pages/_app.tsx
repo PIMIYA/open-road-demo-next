@@ -11,6 +11,7 @@ import { GlobalProvider } from "@/contexts/GlobalContext";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 
 import theme from "@/styles/theme";
+import { Footer } from "@/components/footer";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
@@ -27,6 +28,7 @@ export default function App({ Component, pageProps }: AppProps) {
             <CssBaseline />
             <NavBar />
             <Component {...pageProps} />
+            <Footer />
           </ThemeProvider>
         </GlobalProvider>
       </ConnectionProvider>

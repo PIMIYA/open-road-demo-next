@@ -1,4 +1,5 @@
 import { PaletteOptions, ZIndex, createTheme } from '@mui/material/styles';
+import { TypographyOptions } from '@mui/material/styles/createTypography';
 
 declare module '@mui/material/Typography' {
   interface TypographyPropsVariantOverrides {
@@ -47,7 +48,23 @@ const theme = createTheme({
         },
       },
     },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: '20px',
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: 'none',
+          }
+        },
+      },
+    },
   },
+  typography: {
+    smallest: {
+      fontSize: 10,
+    },
+  } as TypographyOptions,
   palette: {
     background: {
       default: "#ecf2eb",

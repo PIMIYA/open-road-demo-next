@@ -7,13 +7,16 @@ import { useGlobalContext } from "@/contexts/GlobalContext";
 import Link from "next/link";
 import Image from 'next/image';
 
-import { Stack, Box, Button, IconButton, Menu, MenuItem, ListItemIcon } from "@mui/material";
+import { Stack, Box, Button, IconButton, Menu, MenuItem, ListItemIcon, Divider } from "@mui/material";
 
 import LoginIcon from '@mui/icons-material/Login';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 
 import logo from "/public/logo.svg";
+
+// TODO: only creator role have 'Mint' and 'My Creator Page' in the menu
+// TODO: remove 'My Wallet (temp)' after wallet page ready
 
 export default function() {
   const { isLanded } = useGlobalContext();
@@ -114,7 +117,28 @@ export default function() {
             }}
           // as="/my_wallet"
           >
+            My Wallet (temp)
+          </Link>
+        </MenuItem>
+        <MenuItem onClick={handleClose}>
+          <Link
+            href={{
+              pathname: "/wallet/[address]",
+              query: { address },
+            }}
+          >
             My Wallet
+          </Link>
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={handleClose}>
+          <Link
+            href={{
+              pathname: "/creator/[address]",
+              query: { address },
+            }}
+          >
+            My Creator Page
           </Link>
         </MenuItem>
         <MenuItem onClick={handleClose}>
@@ -127,6 +151,7 @@ export default function() {
             Mint
           </Link>
         </MenuItem>
+        <Divider />
         <MenuItem onClick={() => handleClose(disconnect)}>
           <ListItemIcon >
             <LogoutIcon fontSize="small" />

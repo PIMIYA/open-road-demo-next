@@ -1,17 +1,10 @@
 import Link from "next/link";
-import { Box, Chip, Container, Stack, Typography } from "@mui/material";
+import { Box, Container, Stack, Typography } from "@mui/material";
 import Image from "next/image";
 import Tags from "@/components/Tags";
 import { truncateAddress } from "@/lib/stringUtils";
 
 export default function SingleToken({data}) {
-  if (data) {
-    data.creator = '白先勇✕蘇州崑劇院';
-    data.objectType = '節目手冊';
-    data.eventDate = '2024/05/10 - 2024/05/11';
-    data.eventPlace = '台北國家戲劇院';
-  }
-
   const tokenImageUrl = `https://assets.akaswap.com/ipfs/${data.displayUri.replace("ipfs://", "")}`;
   const total = data.amount;
   const collected = Object.values(data.owners).reduce((a, b) => a + b, 0);
@@ -89,8 +82,8 @@ export default function SingleToken({data}) {
                   }
 
                   <Box>
-                    {data.description.split("\n").map((paragraph) => (
-                      <Typography paragraph>{paragraph}</Typography>
+                    {data.description.split("\n").map((paragraph, index) => (
+                      <Typography key={index} paragraph>{paragraph}</Typography>
                     ))}
                   </Box>
                 </Box>
@@ -100,8 +93,8 @@ export default function SingleToken({data}) {
         </Container>
       </Box>
       <Container maxWidth="lg">
-        <Box py={6} textAlign='center'>
-          <Typography variant='h5' component='div' mb={4}>Collecters</Typography>
+        <Box py={6} textAlign='center' minHeight={300}>
+          <Typography variant='h5' component='div' mb={4}>Collectors</Typography>
           <Box sx={{
             columnCount: {
               sm: 2,
@@ -110,8 +103,9 @@ export default function SingleToken({data}) {
             },
             columnGap: 10,
           }}>
-          {ownerAddresses.map((address) => (
+          {ownerAddresses.map((address, index) => (
             <Link
+              key={index}
               href={{
                 pathname: "/wallet/[address]",
                 query: { address },

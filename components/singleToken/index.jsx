@@ -1,16 +1,14 @@
-import Link from "next/link";
 import { Box, Container, Stack, Typography } from "@mui/material";
 import Image from "next/image";
 import Tags from "@/components/Tags";
-import { truncateAddress } from "@/lib/stringUtils";
+
+import TokenCollectors from "./TokenCollectors";
+import TokenClaimedProgress from "./TokenClaimedProgress";
 
 export default function SingleToken({data}) {
   const tokenImageUrl = `https://assets.akaswap.com/ipfs/${data.displayUri.replace("ipfs://", "")}`;
   const total = data.amount;
   const collected = Object.values(data.owners).reduce((a, b) => a + b, 0);
-  const collectedPercentage = Math.round((collected / total) * 100);
-
-  const ownerAliases = data.ownerAliases;
   const ownerAddresses = Object.keys(data.owners);
 
   return (
@@ -54,11 +52,8 @@ export default function SingleToken({data}) {
                 }}
               >
                 <Box>
-                  <Box mb={2}>
-                    <Box width={400} bgcolor="#eee">
-                      <Box height={6} width={`$collectedPercentage%`} bgcolor='secondary.main'></Box>
-                    </Box>
-                    {collected} / {total} collected
+                  <Box mb={2} width={400}>
+                    <TokenClaimedProgress collected={collected} total={total} />
                   </Box>
 
                   <Typography variant="h4" component="h1">
@@ -92,34 +87,7 @@ export default function SingleToken({data}) {
           </Box>
         </Container>
       </Box>
-      <Container maxWidth="lg">
-        <Box py={6} textAlign='center' minHeight={300}>
-          <Typography variant='h5' component='div' mb={4}>Collectors</Typography>
-          <Box sx={{
-            columnCount: {
-              sm: 2,
-              md: 3,
-              lg: 4,
-            },
-            columnGap: 10,
-          }}>
-          {ownerAddresses.map((address, index) => (
-            <Link
-              key={index}
-              href={{
-                pathname: "/wallet/[address]",
-                query: { address },
-              }}
-            >
-              <Stack direction="row" justifyContent='space-between' mx='auto'>
-                <Box>{data.ownerAliases[address] || truncateAddress(address)}</Box>
-                <Box>{data.owners[address]}</Box>
-              </Stack>
-            </Link>
-          ))}
-          </Box>
-        </Box>
-      </Container>
+      <TokenCollectors owners={data.owners} ownerAddresses={ownerAddresses} ownerAliases={data.ownerAliases} />
     </>
   )
 }

@@ -39,6 +39,8 @@ export default function() {
   );
 
   const NavLink = function(props) {
+    const borderWidth = router.pathname === props.href ? "2px" : "1px";
+
     return (
       <Link
         href={props.href}
@@ -49,7 +51,7 @@ export default function() {
           sx={{
             bgcolor: "white",
             color: "secondary.main",
-            border: "1px solid",
+            boxShadow: `inset 0 0 0 ${borderWidth} ${theme.palette.secondary.main}`,
             "&:hover": {
               bgcolor: "secondary.main",
               color: "white",

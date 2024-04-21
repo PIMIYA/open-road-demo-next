@@ -4,8 +4,10 @@ import Tags from "@/components/Tags";
 
 import TokenCollectors from "./TokenCollectors";
 import TokenClaimedProgress from "./TokenClaimedProgress";
+import { useTheme } from "@emotion/react";
 
 export default function SingleToken({data}) {
+  const theme = useTheme();
   const tokenImageUrl = `https://assets.akaswap.com/ipfs/${data.displayUri.replace("ipfs://", "")}`;
   const total = data.amount;
   const collected = Object.values(data.owners).reduce((a, b) => a + b, 0);
@@ -27,7 +29,8 @@ export default function SingleToken({data}) {
                   sx={{
                     width: { xs: "100%", md: "100%" },
                     height: { xs: "100vw", md: "70vh" },
-                    position: "relative",
+                    position: "sticky",
+                    top: theme.spacing(6),
                   }}
                 >
                   <Image
@@ -41,9 +44,6 @@ export default function SingleToken({data}) {
                     alt="Picture of the author"
                   />
                 </Box>
-                <div>
-                  this is for comment
-                </div>
               </Box>
               <Box
                 sx={{
@@ -52,7 +52,7 @@ export default function SingleToken({data}) {
                 }}
               >
                 <Box>
-                  <Box mb={2} width={400}>
+                  <Box mb={2} width={400} maxWidth="100%">
                     <TokenClaimedProgress collected={collected} total={total} />
                   </Box>
 

@@ -9,7 +9,7 @@ import FeatureBox from "@/components/homepage/featureBox";
 import KeyVisual from "@/components/homepage/keyVisual";
 import FadeOnScroll from "@/components/fadeOnScroll";
 
-import SelectedTokenCardGrid from "@/components/selectedTokenCardGrid";
+import GeneralTokenCardGrid from "@/components/GeneralTokenCardGrid";
 
 export default function Home({ data }) {
   const { isLanded } = useGlobalContext();
@@ -36,7 +36,7 @@ export default function Home({ data }) {
               >
                 最近的活動
               </Typography>
-              <SelectedTokenCardGrid data={data.tokens} />
+              <GeneralTokenCardGrid data={data.tokens} />
             </FadeOnScroll>
           </>
         }

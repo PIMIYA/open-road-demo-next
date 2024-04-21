@@ -106,6 +106,8 @@ export default function() {
           a: {
             color: "main",
             textDecoration: "none",
+            display: "block",
+            width: "100%",
           }
         }}
       >

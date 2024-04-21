@@ -15,7 +15,7 @@ import { getRandomDate, getRandomPlace, getRandomCreator } from "@/lib/dummy";
 // TODO: skeleton loading
 export default function WalletTimeline({ rawClaims }) {
 
-  const [cardData, setCardData] = useState(null);
+  const [cardData, setCardData] = useState([null, null, null]);
   const [isLoading, setLoading] = useState(true);
 
   const claims = rawClaims.claims.map((claim) => {
@@ -47,26 +47,27 @@ export default function WalletTimeline({ rawClaims }) {
           data = res.data[0].tokens;
         }
 
-        // TODO: remove dummy data after api ready
-        data = data.map((d) => {
-          d.cliamDate = getRandomDate();
-          d.eventPlace = getRandomPlace();
-          d.creator = getRandomCreator();
-          return d;
-        });
+        if (data) {
+          // TODO: remove dummy data after api ready
+          data = data.map((d) => {
+            d.cliamDate = getRandomDate();
+            d.eventPlace = getRandomPlace();
+            d.creator = getRandomCreator();
+            return d;
+          });
 
-        // sort cartData by cliamDate
-        data.sort((a, b) => {
-          return new Date(b.cliamDate) - new Date(a.cliamDate);
-        });
+          // sort cartData by cliamDate
+          data.sort((a, b) => {
+            return new Date(b.cliamDate) - new Date(a.cliamDate);
+          });
+        }
 
         setCardData(data);
         setLoading(false);
       });
   }, [claimTokenURLs]);
 
-  if (isLoading) return <p>Loading...</p>;
-  if (!cardData) return <p>No profile data</p>;
+  if (!isLoading && !cardData) return <p>No profile data</p>;
 
   return (
     <Timeline

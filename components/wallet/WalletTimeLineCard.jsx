@@ -1,15 +1,43 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Box, Stack, Typography } from '@mui/material';
+import { Box, Stack, Skeleton, Typography } from '@mui/material';
 import Tags from '@/components/Tags';
 
 export default function WalletTimelineCard({ data, index }) {
+  if (!data) {
+    return (
+      <Box mb={10}>
+        <Stack direction={{
+          xs: 'column',
+          md: 'row',
+        }} spacing={2}>
+          <Box width={{
+            xs: 100,
+            md: 200,
+          }}>
+            <Skeleton width='50%' />
+            <Skeleton />
+          </Box>
+          <Box width='100%'>
+            <Skeleton variant="rectangular" width='100%' height={300} />
+            <Box mt={1}>
+              <Skeleton width='30%' />
+              <Skeleton width='20%' />
+            </Box>
+          </Box>
+        </Stack>
+      </Box>
+    );
+  }
   const tokenImageUrl = `https://assets.akaswap.com/ipfs/${data.displayUri.replace("ipfs://", "")}`;
   const { contract, tokenId } = data;
 
   return (
     <Box mb={10}>
-      <Stack direction={'row'}>
+      <Stack direction={{
+        xs: 'column',
+        md: 'row',
+      }} spacing={2}>
         <Box width={200}>
           <Typography variant="body1">
             {data.cliamDate}

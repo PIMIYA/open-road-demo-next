@@ -1,19 +1,22 @@
 // all event lists
 
+import { useState } from "react";
+import { paginate } from "@/lib/paginate";
+
 /* NEXT */
 import Link from "next/link";
 /* Routing */
 import { useRouter } from "next/router";
 /* MUI */
 import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
 /* Fetch data */
 import { MainnetAPI } from "@/lib/api";
 /* Components */
-import SelectedTokenCardGrid from "@/components/selectedTokenCardGrid";
+import TwoColumnLayout, { Main, Side } from "@/components/layouts/TwoColumnLayout";
+import GeneralTokenCardGrid from "@/components/GeneralTokenCardGrid";
 import MyPagination from "@/components/myPagination";
-import { useState } from "react";
-import { paginate } from "@/lib/paginate";
+import SidePaper from "@/components/SidePaper";
+import Filter from "@/components/Filter";
 
 export default function Events({ data }) {
   // console.log(data.tokens)
@@ -27,13 +30,19 @@ export default function Events({ data }) {
   const paginatedPosts = paginate(data.tokens, currentPage, pageSize);
 
   return (
-    <>
-      <Container maxWidth="lg">
-        <Box p={6} sx={{ textAlign: "center" }}>
-          fa2 tokens minted on akaSwap
+    <TwoColumnLayout>
+      <Side>
+        <Box sx={{
+          position: 'sticky',
+          top: 100,
+        }}>
+          <SidePaper>
+            <Filter />
+          </SidePaper>
         </Box>
-        {!data && <div>A moment please...</div>}
-        <SelectedTokenCardGrid data={paginatedPosts} />
+      </Side>
+      <Main>
+        <GeneralTokenCardGrid data={paginatedPosts} />
         <Box pt={3}>
           <MyPagination
             items={data.tokens.length} // 24
@@ -42,8 +51,8 @@ export default function Events({ data }) {
             onPageChange={onPageChange}
           />
         </Box>
-      </Container>
-    </>
+      </Main>
+    </TwoColumnLayout>
   );
 }
 

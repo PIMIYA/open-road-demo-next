@@ -1,5 +1,4 @@
-import React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { paginate } from "@/lib/paginate";
 
 import Box from "@mui/material/Box";
@@ -8,9 +7,14 @@ import MyPagination from "@/components/myPagination";
 export default function LazyLoadPaginatedCards({ apiEndPoint, children, pageSize }) {
   const [data, setData] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const listTopRef = useRef(null);
 
   const onPageChange = (page) => {
     setCurrentPage(page);
+
+    if(listTopRef.current) {
+      listTopRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {
@@ -40,13 +44,23 @@ export default function LazyLoadPaginatedCards({ apiEndPoint, children, pageSize
 
   let enhancedChild;
   if (React.isValidElement(children)) {
-    enhancedChild = React.cloneElement(children, { data: paginatedPosts });
+    enhancedChild = React.cloneElement(children, {
+      data: paginatedPosts,
+      pageSize,
+    });
   } else {
     throw new Error("LazyLoadPaginatedCards 的子元件必須是 React Element");
   }
 
   return (
     <>
+      <Box
+        ref={listTopRef}
+        sx={{
+          position: 'absolute',
+          top: '-20px',
+        }}
+      />
       {enhancedChild}
       <Box my={10}>
         <MyPagination

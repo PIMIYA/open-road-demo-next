@@ -10,6 +10,7 @@ import { getRandomObjectType, getRandomPeriod } from "@/lib/dummy";
 export default function GeneralTokenCardGrid(props) {
 
   const data = props.data;
+  const pageSize = props.pageSize || 6;
   const defaultColumnSettings = {
     grid: {
       xs: 4,
@@ -54,7 +55,7 @@ export default function GeneralTokenCardGrid(props) {
     <>
       <Grid container spacing={4} columns={columnSettings.grid}>
         {!data &&
-          Array.from(new Array(6)).map(
+          Array.from(new Array(pageSize)).map(
             (_, index) => (
               <Grid xs={columnSettings.item.xs} key={index}>
                 <Skeleton variant="rectangular" height={200} sx={{ mb: 1 }} />

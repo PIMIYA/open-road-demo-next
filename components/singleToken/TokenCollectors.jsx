@@ -1,12 +1,19 @@
 import Link from "next/link";
-import { Box, Container, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Container, Stack, Typography } from "@mui/material";
 import { truncateAddress } from "@/lib/stringUtils";
 
 export default function TokenCollectors({ owners, ownerAddresses = [], ownerAliases = []}) {
   return (
     <Container maxWidth="lg">
-      <Box py={6} textAlign='center' minHeight={300}>
-        <Typography variant='h5' component='div' mb={4}>Collectors</Typography>
+      <Box py={6} minHeight={300}>
+        <Typography
+          variant='h5'
+          component='div'
+          mb={4}
+          textAlign='center'
+        >
+          Collectors
+        </Typography>
         <Box sx={{
           columnCount: {
             sm: 2,
@@ -26,7 +33,9 @@ export default function TokenCollectors({ owners, ownerAddresses = [], ownerAlia
               <Stack
                 direction="row"
                 justifyContent="space-between"
+                alignItems="center"
                 mx="auto"
+                spacing={2}
                 sx={{
                   bgcolor: "white",
                   paddingX: 2,
@@ -35,7 +44,12 @@ export default function TokenCollectors({ owners, ownerAddresses = [], ownerAlia
                   borderRadius: 1,
                 }}
               >
-                <Box>
+                <Avatar>
+                  {(ownerAliases[address] || truncateAddress(address)).slice(0, 2)}
+                </Avatar>
+                <Box
+                  width="100%"
+                >
                   {ownerAliases[address] || truncateAddress(address)}
                 </Box>
                 <Box

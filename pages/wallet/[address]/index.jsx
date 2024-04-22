@@ -32,21 +32,27 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
         <SidePaper>
           <WalletProfile address={addressFromURL} introduction={introduction}></WalletProfile>
         </SidePaper>
-        {claims.count > 0 && (
+        {claims.count > 1 && (
           <SidePaper>
             <Filter />
           </SidePaper>
         )}
       </Side>
       <Main>
-        <Box>
-          <Stack direction="row">
-            <Box width={'100%'}> {/* timeline */}
-              <WalletTimeline rawClaims={claims} />
-            </Box>
-            {/* TODO: analytics */}
-          </Stack>
-        </Box>
+        {claims.count === 0 ? (
+          <>
+            No Token
+          </>
+        ) : (
+          <Box>
+              <Stack direction = "row">
+              <Box width = { '100%' }> {/* timeline */ }
+                <WalletTimeline rawClaims={claims} />
+              </Box>
+              {/* TODO: analytics */}
+            </Stack>
+          </Box >
+        )}
       </Main>
     </TwoColumnLayout>
   );

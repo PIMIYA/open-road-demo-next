@@ -42,11 +42,6 @@ export default function WalletTimeline({ rawClaims }) {
       .then((res) => {
         let data = res.data;
 
-        // for testing other wallets
-        if (res.data && res.data[0].tokens) {
-          data = res.data[0].tokens;
-        }
-
         if (data) {
           // TODO: remove dummy data after api ready
           data = data.map((d) => {

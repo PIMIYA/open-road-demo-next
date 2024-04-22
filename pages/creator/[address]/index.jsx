@@ -17,7 +17,7 @@ export default function ({ address, pools }) {
   return (
     <TwoColumnLayout>
       <Side>
-        {pools.count > 0 && (
+        {pools.count > 1 && (
           <SidePaper>
             <Filter />
           </SidePaper>

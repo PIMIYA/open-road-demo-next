@@ -4,6 +4,7 @@ import { Box, Container, Stack, Typography } from '@mui/material';
 import CreatorCardGrid from '@/components/creator/CreatorCardGrid';
 import { getRandomText } from '@/lib/dummy';
 
+import TwoColumnLayout, { Side, Main} from '@/components/layouts/TwoColumnLayout';
 import SidePaper from '@/components/SidePaper';
 import Filter from '@/components/Filter';
 
@@ -14,25 +15,17 @@ export default function ({ address, pools }) {
   const description = getRandomText();
 
   return (
-    <Container maxWidth="lg">
-      <Stack direction={
-        { md: 'column', lg: 'row' }
-      } spacing={4}>
-        <Box
-          width={{
-            md: '100%',
-            lg: 300
-          }}
-        >
-          {pools.count > 0 && (
-            <SidePaper>
-              <Filter />
-            </SidePaper>
-          )}
-        </Box>
-        <Box width={'100%'}> {/* right */}
-          {/* TODO: generative image */}
-          {/* <Box
+    <TwoColumnLayout>
+      <Side>
+        {pools.count > 0 && (
+          <SidePaper>
+            <Filter />
+          </SidePaper>
+        )}
+      </Side>
+      <Main>
+        {/* TODO: generative image */}
+        {/* <Box
             width={'100%'}
             height={400}
             bgcolor={'white'}
@@ -41,19 +34,18 @@ export default function ({ address, pools }) {
           >
             generative image
           </Box> */}
-          <Box mb={10}>
-            <Typography variant="h5">
-              {creatorName}
-            </Typography>
-            <Typography variant="body1">
-              {description}
-            </Typography>
-          </Box>
-
-          <CreatorCardGrid rawPools={pools} />
+        <Box mb={10}>
+          <Typography variant="h5">
+            {creatorName}
+          </Typography>
+          <Typography variant="body1">
+            {description}
+          </Typography>
         </Box>
-      </Stack>
-    </Container>
+
+        <CreatorCardGrid rawPools={pools} />
+      </Main>
+    </TwoColumnLayout>
   );
 }
 

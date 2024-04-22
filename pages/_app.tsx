@@ -8,7 +8,7 @@ import { ConnectionProvider } from "@/packages/providers";
 import { GlobalProvider } from "@/contexts/GlobalContext";
 
 /* MUI */
-import { CssBaseline, ThemeProvider } from "@mui/material";
+import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 
 import theme from "@/styles/theme";
 import { Footer } from "@/components/footer";
@@ -27,7 +27,9 @@ export default function App({ Component, pageProps }: AppProps) {
           <ThemeProvider theme={theme}>
             <CssBaseline />
             <NavBar />
-            <Component {...pageProps} />
+            <Box sx={{ minHeight: "calc(100vh - 200px)" }}>
+              <Component {...pageProps} />
+            </Box>
             <Footer />
           </ThemeProvider>
         </GlobalProvider>

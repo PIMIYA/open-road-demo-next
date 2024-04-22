@@ -15,6 +15,8 @@ import { getRandomText } from '@/lib/dummy';
 /* Sub Components */
 import WalletProfile from '@/components/wallet/WalletProfile';
 import WalletTimeLine from '@/components/wallet/WalletTimeLine';
+import SidePaper from '@/components/SidePaper';
+import Filter from '@/components/Filter';
 
 export default function Wallet({ role, pools, claims, addressFromURL }) {
   /* Connected wallet */
@@ -22,18 +24,6 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
 
   // TODO: get introduction from real data
   const introduction = getRandomText();
-
-  function StyledPaper(props) {
-    return (
-      <Paper sx={{
-        padding: 2,
-        boxShadow: 0,
-        marginBottom: 4,
-      }}>
-        {props.children}
-      </Paper>
-    );
-  }
 
   return (
     <Container maxWidth="lg">
@@ -46,10 +36,14 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
             lg: 300
           }}
         > {/* left */}
-          <StyledPaper>
+          <SidePaper>
             <WalletProfile address={addressFromURL} introduction={introduction}></WalletProfile>
-          </StyledPaper>
-          {/* TODO: filter */}
+          </SidePaper>
+          {claims.count > 0 && (
+            <SidePaper>
+              <Filter />
+            </SidePaper>
+          )}
         </Box>
         <Box width={'100%'}> {/* right */}
           <Box>

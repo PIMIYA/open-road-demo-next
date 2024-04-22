@@ -4,6 +4,9 @@ import { Box, Container, Stack, Typography } from '@mui/material';
 import CreatorCardGrid from '@/components/creator/CreatorCardGrid';
 import { getRandomText } from '@/lib/dummy';
 
+import SidePaper from '@/components/SidePaper';
+import Filter from '@/components/Filter';
+
 export default function ({ address, pools }) {
 
   // TODO: get introduction from real data
@@ -21,10 +24,11 @@ export default function ({ address, pools }) {
             lg: 300
           }}
         >
-          {/* TODO: filter */}
-          {/* <Box>
-            filter
-          </Box> */}
+          {pools.count > 0 && (
+            <SidePaper>
+              <Filter />
+            </SidePaper>
+          )}
         </Box>
         <Box width={'100%'}> {/* right */}
           {/* TODO: generative image */}

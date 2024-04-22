@@ -48,9 +48,9 @@ export default function TokenCollectors({ owners, ownerAddresses = [], ownerAlia
                   {(ownerAliases[address] || truncateAddress(address)).slice(0, 2)}
                 </Avatar>
                 <Box
-                  width="100%"
+                  width="60%"
                 >
-                  {ownerAliases[address] || truncateAddress(address)}
+                  <Typography noWrap>{ownerAliases[address] || truncateAddress(address)}</Typography>
                 </Box>
                 <Box
                   sx={{

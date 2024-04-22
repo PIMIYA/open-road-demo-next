@@ -42,25 +42,32 @@ export default function() {
     const borderWidth = router.pathname === props.href ? "2px" : "1px";
 
     return (
-      <Link
-        href={props.href}
-        passHref
-        >
-        <Button
-          variant="contained"
-          sx={{
-            bgcolor: "white",
-            color: "secondary.main",
-            boxShadow: `inset 0 0 0 ${borderWidth} ${theme.palette.secondary.main}`,
-            "&:hover": {
-              bgcolor: "secondary.main",
-              color: "white",
-            }
-          }}
-        >
-          {props.label}
-        </Button>
-      </Link>
+      <Box sx={{
+        display: {
+          xs: "none",
+          sm: "block",
+        },
+      }}>
+        <Link
+          href={props.href}
+          passHref
+          >
+          <Button
+            variant="contained"
+            sx={{
+              bgcolor: "white",
+              color: "secondary.main",
+              boxShadow: `inset 0 0 0 ${borderWidth} ${theme.palette.secondary.main}`,
+              "&:hover": {
+                bgcolor: "secondary.main",
+                color: "white",
+              }
+            }}
+          >
+            {props.label}
+          </Button>
+        </Link>
+      </Box>
     );
   }
 
@@ -113,6 +120,24 @@ export default function() {
           }
         }}
       >
+        <Box sx={{
+          display: {
+            xs: "block",
+            sm: "none",
+          }
+        }}>
+          <MenuItem onClick={handleClose}>
+            <Link href='/events'>
+              所有活動
+            </Link>
+          </MenuItem>
+          <MenuItem onClick={handleClose}>
+            <Link href='/creators'>
+              所有創作者
+            </Link>
+          </MenuItem>
+          <Divider />
+        </Box>
         <MenuItem onClick={handleClose}>
           <Link
             href={{

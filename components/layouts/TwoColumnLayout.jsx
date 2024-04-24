@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Box, Stack } from "@mui/material";
 
-export function Side({ children }) {
+export function Side({ sticky, children }) {
+  if (sticky) {
+    return (
+      <Box sx={{
+        position: 'sticky',
+        top: 100,
+      }}>
+        {children}
+      </Box>
+    );
+  }
   return <>{children}</>;
 };
 
@@ -19,9 +29,9 @@ export default function TwoColumnLayout({ children }) {
   useEffect(() => {
     React.Children.forEach(children, child => {
       if (child.type.displayName === 'Side') {
-        setSideContent(child.props.children);
+        setSideContent(child);
       } else if (child.type.displayName === 'Main') {
-        setMainContent(child.props.children);
+        setMainContent(child);
       }
     });
   }, [children]);

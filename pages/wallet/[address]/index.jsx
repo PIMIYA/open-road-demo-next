@@ -28,7 +28,7 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
 
   return (
     <TwoColumnLayout>
-      <Side>
+      <Side sticky={true}>
         <SidePaper>
           <WalletProfile address={addressFromURL} introduction={introduction}></WalletProfile>
         </SidePaper>

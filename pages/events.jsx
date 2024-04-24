@@ -31,15 +31,10 @@ export default function Events({ data }) {
 
   return (
     <TwoColumnLayout>
-      <Side>
-        <Box sx={{
-          position: 'sticky',
-          top: 100,
-        }}>
-          <SidePaper>
-            <Filter />
-          </SidePaper>
-        </Box>
+      <Side sticky>
+        <SidePaper>
+          <Filter />
+        </SidePaper>
       </Side>
       <Main>
         <GeneralTokenCardGrid data={paginatedPosts} />

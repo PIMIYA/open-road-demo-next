@@ -14,6 +14,11 @@ import theme from "@/styles/theme";
 import { Footer } from "@/components/footer";
 
 export default function App({ Component, pageProps }: AppProps) {
+  let isMinimal = false;
+  if (['ShowCase'].includes(Component.displayName || '')) {
+    isMinimal = true;
+  }
+
   return (
     <>
       <Head>
@@ -26,11 +31,11 @@ export default function App({ Component, pageProps }: AppProps) {
         <GlobalProvider>
           <ThemeProvider theme={theme}>
             <CssBaseline />
-            <NavBar />
+            {!isMinimal && <NavBar /> }
             <Box sx={{ minHeight: "calc(100vh - 200px)" }}>
               <Component {...pageProps} />
             </Box>
-            <Footer />
+            {!isMinimal && <Footer />}
           </ThemeProvider>
         </GlobalProvider>
       </ConnectionProvider>

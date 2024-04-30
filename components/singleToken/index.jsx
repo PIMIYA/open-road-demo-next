@@ -1,21 +1,35 @@
-import { Box, Container, Stack, Typography } from "@mui/material";
-import Image from "next/image";
-import Tags from "@/components/Tags";
+import { useTheme } from "@emotion/react";
+import { useRouter } from "next/router";
 
+import Link from "next/link";
+import Image from "next/image";
+import { Box, Button, Container, Stack, Typography } from "@mui/material";
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+
+import Tags from "@/components/Tags";
 import TokenCollectors from "./TokenCollectors";
 import TokenClaimedProgress from "./TokenClaimedProgress";
-import { useTheme } from "@emotion/react";
+
+import { getAkaswapAssetUrl } from "@/lib/stringUtils";
+import { encrypt } from "@/lib/dummy";
 
 export default function SingleToken({data}) {
+  const router = useRouter();
   const theme = useTheme();
-  const tokenImageUrl = `https://assets.akaswap.com/ipfs/${data.displayUri.replace("ipfs://", "")}`;
+  const tokenImageUrl = getAkaswapAssetUrl(data.displayUri);
   const total = data.amount;
   const collected = Object.values(data.owners).reduce((a, b) => a + b, 0);
   const ownerAddresses = Object.keys(data.owners);
 
+  const url = `${router.query.contract}/${router.query.tokenId}`;
+  const hash = encrypt(url);
+  const showcaseUrl = `/showcase/${hash}`;
+
+  const isShowcasePageLinkAvailable = true; // TODO: depends on wallet
+
   return (
     <>
-      <Box sx={{ background: '#fff' }}>
+      <Box sx={{ background: '#fff' }} mx={3} borderRadius={2}>
         <Container maxWidth="lg">
           <Box py={6}>
             <Stack direction={{ xs: "column", md: "row" }} spacing={8}>
@@ -75,6 +89,19 @@ export default function SingleToken({data}) {
                       <Tags tags={data.tags} />
                     </Box>
                   }
+
+                  {isShowcasePageLinkAvailable && (
+                    <Box mb={3}>
+                      <Button
+                        variant="outlined"
+                        startIcon={<OpenInNewIcon />}
+                      >
+                        <Link href={showcaseUrl} target="_blank">
+                          Showcase Page
+                        </Link>
+                      </Button>
+                    </Box>
+                  )}
 
                   <Box>
                     {data.description.split("\n").map((paragraph, index) => (

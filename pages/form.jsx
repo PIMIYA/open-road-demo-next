@@ -93,7 +93,7 @@ export default function Form() {
   let mintingToken = false;
   const serverUrl = "http://localhost:3030";
   const contractAddress = "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
-  const contractId = 91040;
+  const contractId = 91040; //正式版kairos = 91087
   const { address, callcontract } = useConnection();
 
   const userAddress = address;

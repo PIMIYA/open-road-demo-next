@@ -3,7 +3,7 @@
 // and we should simply handle it here
 import { Context, createContext, useContext, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
-import { connectBeacon } from "./beacon";
+import { connectBeacon, tezosToolkit } from "./beacon";
 import { WalletApi, WalletConnection } from "./types";
 
 interface ConnectionContextType extends Partial<WalletApi> {

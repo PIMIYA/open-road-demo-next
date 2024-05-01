@@ -19,7 +19,6 @@ import { getGeocode, getLatLng } from "use-places-autocomplete";
 // Kairos
 import { useConnection } from "@/packages/providers";
 
-
 // Custom styles for the file upload button and hide the input
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -57,9 +56,9 @@ function loadScript(src, position, id) {
   position.appendChild(script);
 }
 
-const autocompleteService = { current: null };
-
 export default function Form() {
+  // Ref for the Google Maps Places Autocomplete service
+  const autocompleteService = useRef(null);
   // State variables for places autocomplete
   const [value, setValue] = useState(null);
   const [inputValue, setInputValue] = useState("");
@@ -68,6 +67,8 @@ export default function Form() {
   // State variables for lat and lng
   const [lat, setLat] = useState(null);
   const [lng, setLng] = useState(null);
+  const [placePrediction, setPlacePrediction] = useState(null);
+
 
   if (typeof window !== "undefined" && !loaded.current) {
     if (!document.querySelector("#google-maps")) {
@@ -81,13 +82,26 @@ export default function Form() {
     loaded.current = true;
   }
 
-  // const fetch = useMemo(
-  //   () =>
-  //     debounce((request, callback) => {
-  //       autocompleteService.current.getPlacePredictions(request, callback);
-  //     }, 400),
-  //   []
-  // );
+  const fetchPlacePredictions = useMemo(
+    () =>
+      debounce((request, callback) => {
+        console.log("Request:", request);
+        console.log("Autocomplete Service:", autocompleteService.current);
+        if (
+          autocompleteService.current &&
+          typeof autocompleteService.current.getPlacePredictions === "function"
+        ) {
+          autocompleteService.current.getPlacePredictions(request, (predictions, status) => {
+            if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+              // Store the first prediction in state
+              setPlacePrediction(predictions[0]);
+            }
+            callback(predictions, status);
+          });
+        }
+      }, 400),
+    []
+  );
 
   let pinningMetadata = false;
   let mintingToken = false;
@@ -109,9 +123,13 @@ export default function Form() {
   const [royaltyPercentage, setRoyaltyPercentage] = useState(0);
   const [walletAddress, setWalletAddress] = useState("");
 
-
   const upload = async (event) => {
     event.preventDefault();
+    // Check if the Google Maps Places library is loaded
+    if (!autocompleteService.current) {
+      console.error("Google Maps Places library is not loaded yet");
+      return;
+    }
     try {
       pinningMetadata = true;
       // Create a new FormData instance
@@ -168,7 +186,7 @@ export default function Form() {
       // {
       //   "decimals": 4,
       //   "shares": {
-      //   "tz1VcC6FbCHbiPRLGM1ahVPZwzRvmoUvuSRL": 1000, 
+      //   "tz1VcC6FbCHbiPRLGM1ahVPZwzRvmoUvuSRL": 1000,
       //   "tz1VcC6FbCHbiPRLGM1ahVPZwzRvmoUvuSRL": 1000
       // }
       // {"tz1VcC6FbCHbiPRLGM1ahVPZwzRvmoUvuSRL": 1000} 1000 = 10%
@@ -214,8 +232,6 @@ export default function Form() {
 
           //quick test mint-factory
           //Editions
-          const mintingTokenQty = mintingTokenQty;
-
           const metadataHashes = [metadataHash];
 
           const creators = [userAddress];
@@ -227,12 +243,15 @@ export default function Form() {
             tokens: metadataHashes,
           };
 
+          console.log(mintingTokenQty); 
+
           try {
             const opHash = await callcontract(contractCallDetails);
             console.log("Operation successful with hash:", opHash);
           } catch (error) {
             console.error("Error calling contract function:", error);
           }
+
         } else {
           throw "No IPFS hash";
         }
@@ -247,42 +266,43 @@ export default function Form() {
     }
   };
 
-  // useEffect(() => {
-  //   let active = true;
 
-  //   if (!autocompleteService.current && window.google) {
-  //     autocompleteService.current =
-  //       new window.google.maps.places.AutocompleteService();
-  //   }
-  //   if (!autocompleteService.current) {
-  //     return undefined;
-  //   }
+  useEffect(() => {
+    let active = true;
 
-  //   if (inputValue === "") {
-  //     setOptions(value ? [value] : []);
-  //     return undefined;
-  //   }
+    if (window.google && window.google.maps && window.google.maps.places) {
+      autocompleteService.current =
+        new window.google.maps.places.AutocompleteService();
+    }
+    if (!autocompleteService.current) {
+      return undefined;
+    }
 
-  //   fetch({ input: inputValue }, (results) => {
-  //     if (active) {
-  //       let newOptions = [];
+    if (inputValue === "") {
+      setOptions(value ? [value] : []);
+      return undefined;
+    }
 
-  //       if (value) {
-  //         newOptions = [value];
-  //       }
+    fetchPlacePredictions({ input: inputValue }, (results) => {
+      if (active) {
+        let newOptions = [];
 
-  //       if (results) {
-  //         newOptions = [...newOptions, ...results];
-  //       }
+        if (value) {
+          newOptions = [value];
+        }
 
-  //       setOptions(newOptions);
-  //     }
-  //   });
+        if (results) {
+          newOptions = [...newOptions, ...results];
+        }
 
-  //   return () => {
-  //     active = false;
-  //   };
-  // }, [value, inputValue, fetch]);
+        setOptions(newOptions);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [value, inputValue, fetchPlacePredictions]);
 
   return (
     <>
@@ -348,7 +368,7 @@ export default function Form() {
             />
           </Box>
           <Box>
-            {/* <Autocomplete
+            <Autocomplete
               id="google-place-geocode"
               sx={{ width: 300 }}
               getOptionLabel={(option) =>
@@ -434,18 +454,18 @@ export default function Form() {
                   </li>
                 );
               }}
-            /> */}
+            />
           </Box>
           {/* // If the user selects a location, display the lat and lng */}
           <Box>
-            {/* {lat ? (
+            {lat ? (
               <Box sx={{ width: 300 }}>
                 <Box component="span">lat:{lat}</Box>
                 <Box component="span" pl={1}>
                   lng:{lng}
                 </Box>
               </Box>
-            ) : null} */}
+            ) : null}
           </Box>
           <Box pt={3}>
             <select
@@ -492,7 +512,7 @@ export default function Form() {
               max="100"
               value={royaltyPercentage}
               onChange={(event) =>
-                setRoyaltyPercentage(Number(event.target.value**100))
+                setRoyaltyPercentage(Number(event.target.value ** 100))
               }
             />
             <input

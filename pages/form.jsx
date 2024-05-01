@@ -16,6 +16,10 @@ import Container from "@mui/material/Container";
 // Get the lat and lng from the address
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 
+// Kairos
+import { useConnection } from "@/packages/providers";
+
+
 // Custom styles for the file upload button and hide the input
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -39,6 +43,7 @@ const theme = createTheme({
 
 // MUI + Google Maps Places Autocomplete
 const GOOGLE_MAPS_API_KEY = `${process.env.GoogleMapsAPIKey}`;
+console.log(GOOGLE_MAPS_API_KEY);
 
 function loadScript(src, position, id) {
   if (!position) {
@@ -76,50 +81,208 @@ export default function Form() {
     loaded.current = true;
   }
 
-  const fetch = useMemo(
-    () =>
-      debounce((request, callback) => {
-        autocompleteService.current.getPlacePredictions(request, callback);
-      }, 400),
-    []
-  );
+  // const fetch = useMemo(
+  //   () =>
+  //     debounce((request, callback) => {
+  //       autocompleteService.current.getPlacePredictions(request, callback);
+  //     }, 400),
+  //   []
+  // );
 
-  useEffect(() => {
-    let active = true;
+  let pinningMetadata = false;
+  let mintingToken = false;
+  const serverUrl = "http://localhost:3030";
+  const contractAddress = "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
+  const contractId = 91040; //正式版kairos = 91087
+  const { address, callcontract } = useConnection();
 
-    if (!autocompleteService.current && window.google) {
-      autocompleteService.current =
-        new window.google.maps.places.AutocompleteService();
-    }
-    if (!autocompleteService.current) {
-      return undefined;
-    }
+  const userAddress = address;
 
-    if (inputValue === "") {
-      setOptions(value ? [value] : []);
-      return undefined;
-    }
+  const titleRef = useRef();
+  const descriptionRef = useRef();
+  const fileRef = useRef();
 
-    fetch({ input: inputValue }, (results) => {
-      if (active) {
-        let newOptions = [];
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [license, setLicense] = useState("All rights reserved");
+  const [mintingTokenQty, setMintingTokenQty] = useState(1);
+  const [royaltyPercentage, setRoyaltyPercentage] = useState(0);
+  const [walletAddress, setWalletAddress] = useState("");
 
-        if (value) {
-          newOptions = [value];
-        }
 
-        if (results) {
-          newOptions = [...newOptions, ...results];
-        }
+  const upload = async (event) => {
+    event.preventDefault();
+    try {
+      pinningMetadata = true;
+      // Create a new FormData instance
+      const data = new FormData();
 
-        setOptions(newOptions);
+      // Append each form field to the FormData instance
+      data.append("title", titleRef.current.value);
+      data.append("description", descriptionRef.current.value);
+      data.append("category", selectedCategory.label);
+
+      //solve ugly data tags
+      const transformedData = tags.reduce((acc, { main, sub }) => {
+        const mainFormatted =
+          main.charAt(0).toUpperCase() + main.slice(1).toLowerCase();
+        const subFormatted =
+          sub.charAt(0).toUpperCase() + sub.slice(1).toLowerCase();
+        acc[mainFormatted] = acc[mainFormatted]
+          ? [...acc[mainFormatted], subFormatted]
+          : [subFormatted];
+        return acc;
+      }, {});
+      const beautyResult = Object.keys(transformedData).map((key) => ({
+        [key]: transformedData[key],
+      }));
+      data.append("tags", JSON.stringify(beautyResult));
+
+      // Append the lat and lng to the FormData instance
+      const geolocation = [lat, lng];
+      data.append("geolocation", geolocation);
+
+      // Append the creator address to the FormData instance
+      data.append("creator", userAddress);
+
+      // Append the minter address to the FormData instance
+      data.append("minter", contractAddress);
+
+      // Append the minting tool to the FormData instance
+      const mintingTool = "https://kairos-mint.art/mint";
+      data.append("mintingTool", mintingTool);
+
+      // Append the copyright to the FormData instance,
+      // No license/All rights reserved
+      // CC0 public (Public Domain)
+      // CC BY (Attribution)
+      // CC BY-SA (Attribution-ShareAlike)
+      const right = "All rights reserved";
+      data.append("right", right);
+
+      // Append the royalties to the FormData instance
+      const royalties = {
+        decimals: 4,
+        shares: { [userAddress]: 1000 },
+      };
+      // {
+      //   "decimals": 4,
+      //   "shares": {
+      //   "tz1VcC6FbCHbiPRLGM1ahVPZwzRvmoUvuSRL": 1000, 
+      //   "tz1VcC6FbCHbiPRLGM1ahVPZwzRvmoUvuSRL": 1000
+      // }
+      // {"tz1VcC6FbCHbiPRLGM1ahVPZwzRvmoUvuSRL": 1000} 1000 = 10%
+      // decimals: 4
+      data.append("royalties", royalties);
+
+      // Append the rights to the FormData instance
+      const rights = "All rights reserved";
+      data.append("rights", rights);
+
+      // Append the file to the FormData instance
+      if (fileRef.current.files[0]) {
+        data.append("image", fileRef.current.files[0]);
       }
-    });
 
-    return () => {
-      active = false;
-    };
-  }, [value, inputValue, fetch]);
+      console.log(data);
+
+      // Make a POST request to the server
+      const response = await fetch(`${serverUrl}/mint`, {
+        method: "POST",
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+        },
+        body: data,
+      });
+
+      // // Parse the JSON response
+      if (response) {
+        const data = await response.json();
+        console.log(data);
+        if (
+          data.status === true &&
+          data.msg.metadataHash &&
+          data.msg.imageHash
+        ) {
+          pinningMetadata = false;
+          mintingToken = true;
+
+          // Minting token
+          console.log("Minting token...");
+
+          const metadataHash = `ipfs://${data.msg.metadataHash}`;
+
+          //quick test mint-factory
+          //Editions
+          const mintingTokenQty = mintingTokenQty;
+
+          const metadataHashes = [metadataHash];
+
+          const creators = [userAddress];
+
+          const contractCallDetails = {
+            contractId: contractId,
+            tokenQty: mintingTokenQty,
+            creators: creators,
+            tokens: metadataHashes,
+          };
+
+          try {
+            const opHash = await callcontract(contractCallDetails);
+            console.log("Operation successful with hash:", opHash);
+          } catch (error) {
+            console.error("Error calling contract function:", error);
+          }
+        } else {
+          throw "No IPFS hash";
+        }
+      } else {
+        throw "No response";
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      pinningMetadata = false;
+      mintingToken = false;
+    }
+  };
+
+  // useEffect(() => {
+  //   let active = true;
+
+  //   if (!autocompleteService.current && window.google) {
+  //     autocompleteService.current =
+  //       new window.google.maps.places.AutocompleteService();
+  //   }
+  //   if (!autocompleteService.current) {
+  //     return undefined;
+  //   }
+
+  //   if (inputValue === "") {
+  //     setOptions(value ? [value] : []);
+  //     return undefined;
+  //   }
+
+  //   fetch({ input: inputValue }, (results) => {
+  //     if (active) {
+  //       let newOptions = [];
+
+  //       if (value) {
+  //         newOptions = [value];
+  //       }
+
+  //       if (results) {
+  //         newOptions = [...newOptions, ...results];
+  //       }
+
+  //       setOptions(newOptions);
+  //     }
+  //   });
+
+  //   return () => {
+  //     active = false;
+  //   };
+  // }, [value, inputValue, fetch]);
 
   return (
     <>
@@ -134,6 +297,7 @@ export default function Form() {
         >
           <Box>
             <TextField
+              inputRef={titleRef}
               id="title"
               label="Title"
               variant="standard"
@@ -143,6 +307,7 @@ export default function Form() {
           <Box>
             <TextField
               id="description"
+              inputRef={descriptionRef}
               label="Description"
               multiline
               maxRows={4}
@@ -157,6 +322,9 @@ export default function Form() {
               options={categories}
               getOptionLabel={(option) => option.label}
               sx={{ width: 300 }}
+              onChange={(event, newValue) => {
+                setSelectedCategory(newValue);
+              }}
               renderInput={(params) => (
                 <TextField {...params} label="Category" variant="standard" />
               )}
@@ -171,14 +339,16 @@ export default function Form() {
               groupBy={(option) => option.main}
               getOptionLabel={(option) => option.sub}
               sx={{ width: 300 }}
+              onChange={(event, newValue) => {
+                setSelectedTags(newValue);
+              }}
               renderInput={(params) => (
                 <TextField {...params} label="Tag" variant="standard" />
               )}
             />
           </Box>
-
           <Box>
-            <Autocomplete
+            {/* <Autocomplete
               id="google-place-geocode"
               sx={{ width: 300 }}
               getOptionLabel={(option) =>
@@ -264,18 +434,75 @@ export default function Form() {
                   </li>
                 );
               }}
-            />
+            /> */}
           </Box>
           {/* // If the user selects a location, display the lat and lng */}
           <Box>
-            {lat ? (
+            {/* {lat ? (
               <Box sx={{ width: 300 }}>
                 <Box component="span">lat:{lat}</Box>
                 <Box component="span" pl={1}>
                   lng:{lng}
                 </Box>
               </Box>
-            ) : null}
+            ) : null} */}
+          </Box>
+          <Box pt={3}>
+            <select
+              id="license"
+              name="license"
+              value={license}
+              onChange={(event) => setLicense(event.target.value)}
+            >
+              <option value="All rights reserved">All rights reserved</option>
+              <option value="CC0 public (Public Domain)">
+                CC0 public (Public Domain)
+              </option>
+              <option value="CC BY (Attribution)">CC BY (Attribution)</option>
+              <option value="CC BY-SA (Attribution-ShareAlike)">
+                CC BY-SA (Attribution-ShareAlike)
+              </option>
+            </select>
+          </Box>
+          <Box pt={3}>
+            <TextField
+              id="mintingTokenQty"
+              label="Editions"
+              type="number"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              variant="outlined"
+              inputProps={{
+                min: 1,
+              }}
+              value={mintingTokenQty}
+              onChange={(event) =>
+                setMintingTokenQty(Number(event.target.value))
+              }
+            />
+          </Box>
+          <Box pt={3}>
+            <input
+              type="range"
+              label="royaltyPercentage"
+              id="royaltyPercentage"
+              name="royaltyPercentage"
+              min="0"
+              max="100"
+              value={royaltyPercentage}
+              onChange={(event) =>
+                setRoyaltyPercentage(Number(event.target.value**100))
+              }
+            />
+            <input
+              type="text"
+              label="walletAddress"
+              id="walletAddress"
+              name="walletAddress"
+              value={walletAddress}
+              onChange={(event) => setWalletAddress(event.target.value)}
+            />
           </Box>
           <Box pt={3}>
             <ThemeProvider theme={theme}>
@@ -288,9 +515,14 @@ export default function Form() {
                 color="primary"
               >
                 Upload file
-                <VisuallyHiddenInput type="file" />
+                <VisuallyHiddenInput type="file" ref={fileRef} />
               </Button>
             </ThemeProvider>
+          </Box>
+          <Box pt={3}>
+            <Button variant="contained" color="primary" onClick={upload}>
+              Mint
+            </Button>
           </Box>
         </Box>
       </Container>

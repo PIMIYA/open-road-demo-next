@@ -1,3 +1,5 @@
+// page for minting new tokens
+
 // MUI + Google Maps Places Autocomplete
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
@@ -54,7 +56,7 @@ function loadScript(src, position, id) {
 
 const autocompleteService = { current: null };
 
-export default function Form() {
+export default function Mint() {
   // State variables for places autocomplete
   const [value, setValue] = useState(null);
   const [inputValue, setInputValue] = useState("");

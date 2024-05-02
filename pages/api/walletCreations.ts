@@ -23,26 +23,14 @@ export default async function handler(
     }
 
     getData()
+    
     .then(data => {
       // console.log(data)
       res.status(200).send({ data })
     })
     .catch (err => {
         res.status(500).send({ error: 'failed to fetch data' })
-      })
-    
-    /*** testing fetch single string, and then send result to where use api route ***/
-    // const result = await fetch(
-    //       `https://mars.akaswap.com/drop/api/pools/${array2object[0].url}?offset=0&limit=10&state=active`
-    //         // `https://mars.akaswap.com/drop/api/pools/KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf/1?offset=0&limit=10&state=active`      
-    //     )
-
-    // const data = await result.json();
-    // res.status(200).send({ data })
-
-    // } catch (err) {
-    //   res.status(500).send({ error: 'failed to fetch data' })
-    // }
+    })
 }
 
 export const config = {

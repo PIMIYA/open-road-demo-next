@@ -1,16 +1,12 @@
-// front page with selected event lists
+// all event lists
 
 /* NEXT */
 import Link from "next/link";
-import dynamic from "next/dynamic";
 /* Routing */
 import { useRouter } from "next/router";
 /* MUI */
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
-import { styled } from "@mui/material/styles";
-import Paper from "@mui/material/Paper";
-import Grid from "@mui/material/Unstable_Grid2";
 /* Fetch data */
 import { MainnetAPI } from "@/lib/api";
 /* Components */
@@ -19,7 +15,7 @@ import MyPagination from "@/components/myPagination";
 import { useState } from "react";
 import { paginate } from "@/lib/paginate";
 
-export default function Home({ data }) {
+export default function Events({ data }) {
   // console.log(data.tokens)
 
   /* Pagination */

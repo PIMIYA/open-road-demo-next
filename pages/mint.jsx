@@ -16,6 +16,9 @@ import Container from "@mui/material/Container";
 // Get the lat and lng from the address
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 
+// Kairos
+import { useConnection } from "@/packages/providers";
+
 // Custom styles for the file upload button and hide the input
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -39,6 +42,7 @@ const theme = createTheme({
 
 // MUI + Google Maps Places Autocomplete
 const GOOGLE_MAPS_API_KEY = `${process.env.GoogleMapsAPIKey}`;
+console.log(GOOGLE_MAPS_API_KEY);
 
 function loadScript(src, position, id) {
   if (!position) {
@@ -52,9 +56,9 @@ function loadScript(src, position, id) {
   position.appendChild(script);
 }
 
-const autocompleteService = { current: null };
-
-export default function Form() {
+export default function Mint() {
+  // Ref for the Google Maps Places Autocomplete service
+  const autocompleteService = useRef(null);
   // State variables for places autocomplete
   const [value, setValue] = useState(null);
   const [inputValue, setInputValue] = useState("");
@@ -63,6 +67,7 @@ export default function Form() {
   // State variables for lat and lng
   const [lat, setLat] = useState(null);
   const [lng, setLng] = useState(null);
+  const [placePrediction, setPlacePrediction] = useState(null);
 
   if (typeof window !== "undefined" && !loaded.current) {
     if (!document.querySelector("#google-maps")) {
@@ -76,18 +81,196 @@ export default function Form() {
     loaded.current = true;
   }
 
-  const fetch = useMemo(
+  const fetchPlacePredictions = useMemo(
     () =>
       debounce((request, callback) => {
-        autocompleteService.current.getPlacePredictions(request, callback);
+        console.log("Request:", request);
+        console.log("Autocomplete Service:", autocompleteService.current);
+        if (
+          autocompleteService.current &&
+          typeof autocompleteService.current.getPlacePredictions === "function"
+        ) {
+          autocompleteService.current.getPlacePredictions(
+            request,
+            (predictions, status) => {
+              if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+                // Store the first prediction in state
+                setPlacePrediction(predictions[0]);
+              }
+              callback(predictions, status);
+            }
+          );
+        }
       }, 400),
     []
   );
 
+  let pinningMetadata = false;
+  let mintingToken = false;
+  const serverUrl = "http://localhost:3030";
+  const contractAddress = "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
+  const contractId = 91040; //正式版kairos = 91087
+  const { address, callcontract } = useConnection();
+
+  const userAddress = address;
+
+  const titleRef = useRef();
+  const descriptionRef = useRef();
+  const fileRef = useRef();
+
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [license, setLicense] = useState("All rights reserved");
+  const [mintingTokenQty, setMintingTokenQty] = useState(1);
+  const [royaltyPercentage, setRoyaltyPercentage] = useState(0);
+  const [walletAddress, setWalletAddress] = useState("");
+
+  const upload = async (event) => {
+    event.preventDefault();
+    // Check if the Google Maps Places library is loaded
+    if (!autocompleteService.current) {
+      console.error("Google Maps Places library is not loaded yet");
+      return;
+    }
+    try {
+      pinningMetadata = true;
+      // Create a new FormData instance
+      const data = new FormData();
+
+      // Append each form field to the FormData instance
+      data.append("title", titleRef.current.value);
+      data.append("description", descriptionRef.current.value);
+      data.append("category", selectedCategory.label);
+
+      //solve ugly data tags
+      const transformedData = tags.reduce((acc, { main, sub }) => {
+        const mainFormatted =
+          main.charAt(0).toUpperCase() + main.slice(1).toLowerCase();
+        const subFormatted =
+          sub.charAt(0).toUpperCase() + sub.slice(1).toLowerCase();
+        acc[mainFormatted] = acc[mainFormatted]
+          ? [...acc[mainFormatted], subFormatted]
+          : [subFormatted];
+        return acc;
+      }, {});
+      const beautyResult = Object.keys(transformedData).map((key) => ({
+        [key]: transformedData[key],
+      }));
+      data.append("tags", JSON.stringify(beautyResult));
+
+      // Append the lat and lng to the FormData instance
+      const geolocation = [lat, lng];
+      data.append("geolocation", geolocation);
+
+      // Append the creator address to the FormData instance
+      data.append("creator", userAddress);
+
+      // Append the minter address to the FormData instance
+      data.append("minter", contractAddress);
+
+      // Append the minting tool to the FormData instance
+      const mintingTool = "https://kairos-mint.art/mint";
+      data.append("mintingTool", mintingTool);
+
+      // Append the copyright to the FormData instance,
+      // No license/All rights reserved
+      // CC0 public (Public Domain)
+      // CC BY (Attribution)
+      // CC BY-SA (Attribution-ShareAlike)
+      const right = "All rights reserved";
+      data.append("right", right);
+
+      // Append the royalties to the FormData instance
+      const royalties = {
+        decimals: 4,
+        shares: { [userAddress]: 1000 },
+      };
+      // {
+      //   "decimals": 4,
+      //   "shares": {
+      //   "tz1VcC6FbCHbiPRLGM1ahVPZwzRvmoUvuSRL": 1000,
+      //   "tz1VcC6FbCHbiPRLGM1ahVPZwzRvmoUvuSRL": 1000
+      // }
+      // {"tz1VcC6FbCHbiPRLGM1ahVPZwzRvmoUvuSRL": 1000} 1000 = 10%
+      // decimals: 4
+      data.append("royalties", royalties);
+
+      // Append the rights to the FormData instance
+      const rights = "All rights reserved";
+      data.append("rights", rights);
+
+      // Append the file to the FormData instance
+      if (fileRef.current.files[0]) {
+        data.append("image", fileRef.current.files[0]);
+      }
+
+      console.log(data);
+
+      // Make a POST request to the server
+      const response = await fetch(`${serverUrl}/mint`, {
+        method: "POST",
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+        },
+        body: data,
+      });
+
+      // // Parse the JSON response
+      if (response) {
+        const data = await response.json();
+        console.log(data);
+        if (
+          data.status === true &&
+          data.msg.metadataHash &&
+          data.msg.imageHash
+        ) {
+          pinningMetadata = false;
+          mintingToken = true;
+
+          // Minting token
+          console.log("Minting token...");
+
+          const metadataHash = `ipfs://${data.msg.metadataHash}`;
+
+          //quick test mint-factory
+          //Editions
+          const metadataHashes = [metadataHash];
+
+          const creators = [userAddress];
+
+          const contractCallDetails = {
+            contractId: contractId,
+            tokenQty: mintingTokenQty,
+            creators: creators,
+            tokens: metadataHashes,
+          };
+
+          console.log(mintingTokenQty);
+
+          try {
+            const opHash = await callcontract(contractCallDetails);
+            console.log("Operation successful with hash:", opHash);
+          } catch (error) {
+            console.error("Error calling contract function:", error);
+          }
+        } else {
+          throw "No IPFS hash";
+        }
+      } else {
+        throw "No response";
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      pinningMetadata = false;
+      mintingToken = false;
+    }
+  };
+
   useEffect(() => {
     let active = true;
 
-    if (!autocompleteService.current && window.google) {
+    if (window.google && window.google.maps && window.google.maps.places) {
       autocompleteService.current =
         new window.google.maps.places.AutocompleteService();
     }
@@ -100,7 +283,7 @@ export default function Form() {
       return undefined;
     }
 
-    fetch({ input: inputValue }, (results) => {
+    fetchPlacePredictions({ input: inputValue }, (results) => {
       if (active) {
         let newOptions = [];
 
@@ -119,7 +302,7 @@ export default function Form() {
     return () => {
       active = false;
     };
-  }, [value, inputValue, fetch]);
+  }, [value, inputValue, fetchPlacePredictions]);
 
   return (
     <>
@@ -134,6 +317,7 @@ export default function Form() {
         >
           <Box>
             <TextField
+              inputRef={titleRef}
               id="title"
               label="Title"
               variant="standard"
@@ -143,6 +327,7 @@ export default function Form() {
           <Box>
             <TextField
               id="description"
+              inputRef={descriptionRef}
               label="Description"
               multiline
               maxRows={4}
@@ -157,6 +342,9 @@ export default function Form() {
               options={categories}
               getOptionLabel={(option) => option.label}
               sx={{ width: 300 }}
+              onChange={(event, newValue) => {
+                setSelectedCategory(newValue);
+              }}
               renderInput={(params) => (
                 <TextField {...params} label="Category" variant="standard" />
               )}
@@ -171,12 +359,14 @@ export default function Form() {
               groupBy={(option) => option.main}
               getOptionLabel={(option) => option.sub}
               sx={{ width: 300 }}
+              onChange={(event, newValue) => {
+                setSelectedTags(newValue);
+              }}
               renderInput={(params) => (
                 <TextField {...params} label="Tag" variant="standard" />
               )}
             />
           </Box>
-
           <Box>
             <Autocomplete
               id="google-place-geocode"
@@ -278,6 +468,63 @@ export default function Form() {
             ) : null}
           </Box>
           <Box pt={3}>
+            <select
+              id="license"
+              name="license"
+              value={license}
+              onChange={(event) => setLicense(event.target.value)}
+            >
+              <option value="All rights reserved">All rights reserved</option>
+              <option value="CC0 public (Public Domain)">
+                CC0 public (Public Domain)
+              </option>
+              <option value="CC BY (Attribution)">CC BY (Attribution)</option>
+              <option value="CC BY-SA (Attribution-ShareAlike)">
+                CC BY-SA (Attribution-ShareAlike)
+              </option>
+            </select>
+          </Box>
+          <Box pt={3}>
+            <TextField
+              id="mintingTokenQty"
+              label="Editions"
+              type="number"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              variant="outlined"
+              inputProps={{
+                min: 1,
+              }}
+              value={mintingTokenQty}
+              onChange={(event) =>
+                setMintingTokenQty(Number(event.target.value))
+              }
+            />
+          </Box>
+          <Box pt={3}>
+            <input
+              type="range"
+              label="royaltyPercentage"
+              id="royaltyPercentage"
+              name="royaltyPercentage"
+              min="0"
+              max="100"
+              value={royaltyPercentage}
+              onChange={(event) =>
+                setRoyaltyPercentage(Number(event.target.value ** 100))
+              }
+            />
+            <input
+              type="text"
+              label="walletAddress"
+              id="walletAddress"
+              name="walletAddress"
+              value={walletAddress}
+              onChange={(event) => setWalletAddress(event.target.value)}
+            />
+          </Box>
+          <Box pt={3}>
             <ThemeProvider theme={theme}>
               <Button
                 id="thumbnail"
@@ -288,9 +535,14 @@ export default function Form() {
                 color="primary"
               >
                 Upload file
-                <VisuallyHiddenInput type="file" />
+                <VisuallyHiddenInput type="file" ref={fileRef} />
               </Button>
             </ThemeProvider>
+          </Box>
+          <Box pt={3}>
+            <Button variant="contained" color="primary" onClick={upload}>
+              Mint
+            </Button>
           </Box>
         </Box>
       </Container>

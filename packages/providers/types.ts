@@ -8,9 +8,10 @@ export interface WalletConnection {
     connection: WalletConnection;
   }
   export interface ContractCallDetails {
-    contractAddress: string;
-    amountMutez: number;
-    id: string;
+    contractId: number;
+    tokenQty: number;
+    tokens: string;
+    creators: string[];
   }
   
   export interface WalletApi {

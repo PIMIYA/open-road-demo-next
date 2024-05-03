@@ -142,18 +142,6 @@ export default function() {
           <Link
             href={{
               pathname: `/wallet/${address}`,
-              // query: { address: address },
-            }}
-          // as="/my_wallet"
-          >
-            My Wallet (temp)
-          </Link>
-        </MenuItem>
-        <MenuItem onClick={handleClose}>
-          <Link
-            href={{
-              pathname: "/wallet/[address]",
-              query: { address },
             }}
           >
             My Wallet

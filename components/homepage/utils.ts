@@ -1,4 +1,4 @@
-export const xx = (t: any) => console.log(t);
+export const xx = (...args: any) => console.log(...args);
 export const chance = (n: number) => Math.random() * 100 < n;
 
 export const pick = (options: { [key: string]: number }) => {

@@ -16,6 +16,7 @@ import { getRandomText } from '@/lib/dummy';
 import TwoColumnLayout, { Side, Main } from '@/components/layouts/TwoColumnLayout';
 import WalletProfile from '@/components/wallet/WalletProfile';
 import WalletTimeline from '@/components/wallet/WalletTimeline';
+import WalletCanvas from '@/components/wallet/WalletCanvas';
 import SidePaper from '@/components/SidePaper';
 import Filter from '@/components/Filter';
 
@@ -45,7 +46,8 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
           </>
         ) : (
           <Box>
-              <Stack direction = "row">
+            <WalletCanvas />
+            <Stack direction = "row">
               <Box width = { '100%' }> {/* timeline */ }
                 <WalletTimeline rawClaims={claims} />
               </Box>

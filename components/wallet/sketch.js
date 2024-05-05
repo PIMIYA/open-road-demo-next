@@ -1,8 +1,11 @@
 import Shape from './Shape';
 import Path from './Path';
+import Info from './Info';
 
 export default function sketch(s) {
   let isStart = false;
+
+  s.drawnShapeCount = 0;
 
   s.setup = () => {
     s.createCanvas();
@@ -32,9 +35,12 @@ export default function sketch(s) {
 
     s.baseLayer = s.initGraphics(s.createGraphics(s.width, s.height));
     s.lineLayer = s.initGraphics(s.createGraphics(s.width, s.height));
+    s.infoLayer = s.initGraphics(s.createGraphics(200, 250));
+
     s.layers = [
       s.baseLayer,
       s.lineLayer,
+      s.infoLayer,
     ];
 
     s.isInited = true;
@@ -50,8 +56,10 @@ export default function sketch(s) {
     }));
 
     s.path = new Path(s);
+    s.info = new Info(s);
 
     s.bgColor = s.color(s.random(360), 0.01, .9);
+
     s.loop();
   }
 
@@ -74,6 +82,11 @@ export default function sketch(s) {
 
     s.image(s.baseLayer, 0, 0, s.width, s.height);
     s.image(s.lineLayer, 0, 0, s.width, s.height);
+    s.image(s.infoLayer, 0, s.height - s.infoLayer.height, s.infoLayer.width, s.infoLayer.height);
+
+    if (s.drawnShapeCount == s.tokens.length) {
+      s.noLoop();
+    }
   }
 
   s.windowResized = () => {

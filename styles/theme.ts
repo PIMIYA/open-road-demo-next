@@ -42,6 +42,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: '.2rem',
+          cursor: 'pointer',
           '&:hover': {
             background: '#ffce6e',
           }

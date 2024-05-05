@@ -27,15 +27,13 @@ export const shapeMap = {
 };
 
 export const hueMap = {
-  'Visual': 0,
-  'Performance': 210,
-  'Design': 290,
-  'VisualPainting': 0, // red
-  'VisualInstallation': 5,
-  'VisualSculpture': 10,
-  'VisualPhotography': 15,
-  'PerformanceCircus': 210, // blue
-  'PerformanceMusical': 215,
-  'DesignInteractive': 280, // purple
-  'DesignGraphic': 290,
+  'Design': 158,
+  'Visual': 233,
+  'Performance': 321,
+};
+
+export const tagsLabelColor = {
+  'Design': '#20956b',
+  'Visual': '#0016B9',
+  'Performance': '#da46a7',
 };

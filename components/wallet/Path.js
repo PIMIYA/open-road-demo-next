@@ -69,7 +69,6 @@ export default class Path {
 
   draw() {
     const s = this.s;
-    this.frameCount += this.frameSpeed;
 
     if (this.isStopped) return;
     if (this.isOnlyTwoPoints) {
@@ -78,11 +77,13 @@ export default class Path {
       if (this.shapes.length < 3) return;
     }
 
+    this.frameCount += this.frameSpeed;
+
     if (!this.point) {
       this.resetDrawingPoints();
     }
 
-    for (let i = 0; i < this.frameSpeed; i++) {
+    for (let i = 0; i < this.frameSpeed; i+= .1) {
       const frameCount = this.frameCount + i;
       const progress = frameCount / this.speed;
 
@@ -101,11 +102,9 @@ export default class Path {
       }
 
       if (isInRange) {
-        for (let i = 0; i < 10; i++) {
-          const size = s.noise(frameCount * 0.05, i) * 3 + .8;
-          g.fill(0, 0, .1, s.random(.05, 1));
-          g.circle(lerpX + s.random(size), lerpY + s.random(size), 1);
-        }
+        const size = s.noise(frameCount * 0.05, i) * 3 + .8;
+        g.fill(0, 0, .1, s.random(.05, 1));
+        g.circle(lerpX + s.random(size), lerpY + s.random(size), 1);
       }
 
       if (progress > 1) {

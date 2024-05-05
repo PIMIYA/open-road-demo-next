@@ -238,6 +238,7 @@ export default class Shape {
 
   stop() {
     this.isStopped = true;
+    this.s.drawnShapeCount++;
   }
 
   placeImage() {

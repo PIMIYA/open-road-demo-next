@@ -158,7 +158,7 @@ export default class Shape {
 
     const alphaBase = s.map(s.noise(this.frameCount * .01), 0, 1, 1, 5);
 
-    for(let i = 0; i < 100; i+=1) {
+    for(let i = 0; i < 100; i+=.5) {
       let size = 1.2;
       let alpha = g.map(i, 100, 0, .1, .01) * alphaBase;
       let sat = g.map(s.noise(i * .01), 0, 1, .5, 1);
@@ -174,6 +174,8 @@ export default class Shape {
         // alpha *= 2;
         size = s.noise(this.frameCount * .1) * 5;
       }
+
+      size *= .8;
 
       g.fill(this.hue, sat, bri, alpha);
       const x = g.lerp(startX, endX, i / 100);
@@ -205,7 +207,7 @@ export default class Shape {
       this.nextAngle += s.random(-1, 1) * 90;
       x = this.position.x + s.cos(this.nextAngle) * radius;
       y = this.position.y + s.sin(this.nextAngle) * radius;
-    } while (x < s.width * .1 || x > s.width * .9 || y < s.height * .1 || y > s.height * .9);
+    } while (x < s.baseWidth * .1 || x > s.baseWidth * .9 || y < s.baseHeight * .1 || y > s.baseHeight * .9);
 
     this.nextShape = new Shape({
       s,
@@ -230,7 +232,7 @@ export default class Shape {
     g.push();
       g.translate(this.position.x, this.position.y);
       g.stroke(0);
-      g.textSize(10);
+      g.textSize(13);
       g.text(this.index + 1, 10, 10);
       g.text(this.index + 1, 10, 10);
     g.pop();
@@ -246,6 +248,10 @@ export default class Shape {
     const g = this.graphics;
 
     s.baseLayer.image(g, this.position.x - g.width / 2, this.position.y - g.height / 2)
+  }
+
+  removeGraphics() {
+    this.graphics.remove();
   }
 
   draw() {

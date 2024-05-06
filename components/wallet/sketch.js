@@ -33,8 +33,11 @@ export default function sketch(s) {
     s.randomSeed(s.seedCount);
     s.noiseSeed(s.seedCount);
 
-    s.baseLayer = s.initGraphics(s.createGraphics(s.width, s.height));
-    s.lineLayer = s.initGraphics(s.createGraphics(s.width, s.height));
+    s.baseWidth = 890 * 1.5;
+    s.baseHeight = 533 * 1.5;
+
+    s.baseLayer = s.initGraphics(s.createGraphics(s.baseWidth, s.baseHeight));
+    s.lineLayer = s.initGraphics(s.createGraphics(s.baseWidth, s.baseHeight));
     s.infoLayer = s.initGraphics(s.createGraphics(200, 250));
 
     s.layers = [
@@ -50,8 +53,8 @@ export default function sketch(s) {
       s,
       index: 0,
       position: {
-        x: s.width * .5,
-        y: s.height * .5,
+        x: s.baseWidth * .5,
+        y: s.baseHeight * .5,
       },
     }));
 
@@ -79,14 +82,34 @@ export default function sketch(s) {
       shape.draw();
     });
     s.path.draw();
-
-    s.image(s.baseLayer, 0, 0, s.width, s.height);
-    s.image(s.lineLayer, 0, 0, s.width, s.height);
-    s.image(s.infoLayer, 0, s.height - s.infoLayer.height, s.infoLayer.width, s.infoLayer.height);
+    s.placeLayers();
 
     if (s.drawnShapeCount == s.tokens.length) {
-      s.noLoop();
+      s.stop();
     }
+  }
+
+  s.stop = () => {
+    s.noLoop();
+    s.shapes.forEach((shape) => {
+      shape.removeGraphics();
+    });
+  }
+
+  s.placeLayers = () => {
+    s.image(s.baseLayer, 0, 0, s.width, s.height);
+    s.image(s.lineLayer, 0, 0, s.width, s.height);
+
+    let infoWidth = s.infoLayer.width;
+    let infoHeight = s.infoLayer.height;
+    let infoRatio = s.infoLayer.width / s.infoLayer.height;
+
+    if (s.height * .6 < infoHeight) {
+      infoWidth = s.width * .3;
+      infoHeight = infoWidth / infoRatio;
+    }
+
+    s.image(s.infoLayer, 0, s.height - infoHeight, infoWidth, infoHeight);
   }
 
   s.windowResized = () => {

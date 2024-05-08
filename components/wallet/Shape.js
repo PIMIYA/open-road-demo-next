@@ -12,10 +12,10 @@ export default class Shape {
     this.cliamedPercentage = this.token.cliamedPercentage;
 
     this.type = shapeMap[this.token.categoryId].type;
-
     this.sides = shapeMap[this.token.categoryId].sides;
+    this.isStripped = shapeMap[this.token.categoryId].strip;
 
-    this.hue = this.token.tags.map(tag => hueMap[tag.main]).reduce((acc, cur) => acc + cur, 0) / this.token.tags.length;
+    this.hue = this.getHue();
     this.radius = this.token.totalAmount * .5;
     this.rotate = options.s.random(360);
     this.nextAngle = options.nextAngle || options.s.random(360);
@@ -23,9 +23,23 @@ export default class Shape {
 
     this.frameCount = 0;
     this.padding = 20;
+    this.framesForOneSide = ~~this.s.random(90, 130);
 
     this.initGraphics();
     this.drawCenter();
+  }
+
+  updateHue() {
+    this.hueIndex++;
+    this.hue = this.getHue();
+  }
+
+  getHue() {
+    if (this.hueIndex == null) {
+      this.hueIndex = 0;
+    }
+    const randomTag = this.token.tags[this.hueIndex % this.token.tags.length];
+    return hueMap[randomTag];
   }
 
   drawCenter() {
@@ -82,12 +96,12 @@ export default class Shape {
     const s = this.s;
     const g = this.graphics;
     if (this.startAngle == null) {
-      this.startAngle = this.s.random(360);
+      this.startAngle = s.random(360);
     }
 
-    let angle = this.startAngle + this.frameCount;
-    let x = this.radius * s.cos(angle);
-    let y = this.radius * s.sin(angle);
+    const angle = this.startAngle + this.frameCount;
+    const x = this.radius * s.cos(angle);
+    const y = this.radius * s.sin(angle);
 
     if (this.frameCount >= 360) {
       this.isNodeDrawn = true;
@@ -102,14 +116,18 @@ export default class Shape {
   }
 
   drawPolygon() {
+    const s = this.s;
+
     if (this.endPoints == null) {
       this.endPoints = [];
       this.isDrawFromCenter = true;
-      const startAngle = this.s.random(360);
+
+      let startAngle = s.random(360);
+
       for (let i = 0; i < this.sides; i++) {
-        const angle = 360 / this.sides * i + startAngle;
-        const x = this.radius * this.s.cos(angle);
-        const y = this.radius * this.s.sin(angle);
+        let angle = 360 / this.sides * i + startAngle;
+        let x = this.radius * s.cos(angle);
+        let y = this.radius * s.sin(angle);
         this.endPoints.push({ x, y });
       }
 
@@ -132,15 +150,15 @@ export default class Shape {
     let { x: endX, y: endY } = this.endPoint;
     let { x: targetX, y: targetY } = this.nextPoint;
 
-    endX = g.lerp(endX, targetX, (this.frameCount % 100) / 100);
-    endY = g.lerp(endY, targetY, (this.frameCount % 100) / 100);
+    endX = g.lerp(endX, targetX, (this.frameCount % this.framesForOneSide) / this.framesForOneSide);
+    endY = g.lerp(endY, targetY, (this.frameCount % this.framesForOneSide) / this.framesForOneSide);
 
     g.push();
       g.translate(g.width / 2, g.height / 2);
       this.drawLine(startX, startY, endX, endY);
     g.pop();
 
-    if (Math.floor(this.frameCount / 100) > this.drawnPoints.length) {
+    if (Math.floor(this.frameCount / this.framesForOneSide) > this.drawnPoints.length) {
       this.drawnPoints.push(this.nextPoint);
       this.endPoint = this.nextPoint;
       this.nextPoint = this.endPoints.shift();
@@ -159,6 +177,11 @@ export default class Shape {
     const alphaBase = s.map(s.noise(this.frameCount * .01), 0, 1, 1, 5);
 
     for(let i = 0; i < 100; i+=.5) {
+
+      if (this.isStripped) {
+        if (~~(i / 8) % 2 == 0) continue;
+      }
+
       let size = 1.2;
       let alpha = g.map(i, 100, 0, .1, .01) * alphaBase;
       let sat = g.map(s.noise(i * .01), 0, 1, .5, 1);
@@ -204,7 +227,23 @@ export default class Shape {
     let x, y;
 
     do {
-      this.nextAngle += s.random(-1, 1) * 90;
+      switch (s.moveMode) {
+        case 'Freedraw':
+          this.nextAngle += s.random(-1, 1) * 180;
+          break;
+
+        case 'Smooth':
+          this.nextAngle += s.random(-1, 1) * 60;
+          break;
+
+        case 'Clockwise':
+          this.nextAngle += s.random(.8, 1) * 60;
+          break;
+
+        default:
+          break;
+      }
+
       x = this.position.x + s.cos(this.nextAngle) * radius;
       y = this.position.y + s.sin(this.nextAngle) * radius;
     } while (x < s.baseWidth * .1 || x > s.baseWidth * .9 || y < s.baseHeight * .1 || y > s.baseHeight * .9);
@@ -271,5 +310,9 @@ export default class Shape {
       this.frameCount++;
     }
     this.isShapeBuilt = true;
+
+    if (this.frameCount % (360 / this.sides) * 2 == 0) {
+      this.updateHue();
+    }
   }
 }

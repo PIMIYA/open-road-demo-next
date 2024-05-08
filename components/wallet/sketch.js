@@ -1,11 +1,9 @@
 import Shape from './Shape';
 import Path from './Path';
-import Info from './Info';
+import { moveModes } from './const';
 
 export default function sketch(s) {
   let isStart = false;
-
-  s.drawnShapeCount = 0;
 
   s.setup = () => {
     s.createCanvas();
@@ -27,23 +25,29 @@ export default function sketch(s) {
     return graphics;
   }
 
+  s.getMoveMode = () => {
+    return moveModes[~~s.random(moveModes.length)];
+  }
+
   s.init = () => {
     if (s.isInited) return;
 
     s.randomSeed(s.seedCount);
     s.noiseSeed(s.seedCount);
 
+    s.moveMode = s.getMoveMode();
+    s.isStraight = s.chance(30);
+
+    s.drawnShapeCount = 0;
     s.baseWidth = 890 * 1.5;
     s.baseHeight = 533 * 1.5;
 
     s.baseLayer = s.initGraphics(s.createGraphics(s.baseWidth, s.baseHeight));
     s.lineLayer = s.initGraphics(s.createGraphics(s.baseWidth, s.baseHeight));
-    s.infoLayer = s.initGraphics(s.createGraphics(200, 250));
 
     s.layers = [
       s.baseLayer,
       s.lineLayer,
-      s.infoLayer,
     ];
 
     s.isInited = true;
@@ -59,7 +63,6 @@ export default function sketch(s) {
     }));
 
     s.path = new Path(s);
-    s.info = new Info(s);
 
     s.bgColor = s.color(s.random(360), 0.01, .9);
 
@@ -97,19 +100,17 @@ export default function sketch(s) {
   }
 
   s.placeLayers = () => {
-    s.image(s.baseLayer, 0, 0, s.width, s.height);
-    s.image(s.lineLayer, 0, 0, s.width, s.height);
-
-    let infoWidth = s.infoLayer.width;
-    let infoHeight = s.infoLayer.height;
-    let infoRatio = s.infoLayer.width / s.infoLayer.height;
-
-    if (s.height * .6 < infoHeight) {
-      infoWidth = s.width * .3;
-      infoHeight = infoWidth / infoRatio;
+    if (s.width > s.height) {
+      s.image(s.baseLayer, 0, 0, s.width, s.height);
+      s.image(s.lineLayer, 0, 0, s.width, s.height);
+      return;
     }
-
-    s.image(s.infoLayer, 0, s.height - infoHeight, infoWidth, infoHeight);
+    s.push();
+      s.translate(s.width, 0);
+      s.rotate(90);
+      s.image(s.baseLayer, 0, 0, s.height, s.width);
+      s.image(s.lineLayer, 0, 0, s.height, s.width);
+    s.pop();
   }
 
   s.windowResized = () => {
@@ -153,15 +154,14 @@ export default function sketch(s) {
       if (maxY == null || point.y > maxY) maxY = point.y;
     });
 
-    return 1 / s.dist(minX, minY, maxX, maxY) * 300;
+    return 1 / s.dist(minX, minY, maxX, maxY) * 400;
   }
 
   s.resize = () => {
     if (!s.canvas?.parentElement) return;
 
-    const ratio = .6;
     const width = s.canvas.parentElement.clientWidth;
-    const height = width * ratio;
+    const height = s.canvas.parentElement.clientHeight;
     s.resizeCanvas(width, height);
   }
 }

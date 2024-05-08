@@ -1,4 +1,4 @@
-import { shapeMap, tagsLabelColor } from "./const";
+import { categoryNames, shapeMap, tagNames, tagsLabelColor } from "./const";
 
 export default class Info {
   constructor(s) {
@@ -9,24 +9,29 @@ export default class Info {
     this.initDraw();
   }
 
-  drawRound() {
+  drawRound({ isStripped }) {
     const g = this.graphics;
     g.circle(0, 0, this.shapeRadius * 2);
+
+    if (isStripped) {
+      g.circle(0, 0, this.shapeRadius * 1.2);
+      g.circle(0, 0, this.shapeRadius * .4);
+    }
   }
 
-  drawPolygon(sides) {
+  drawPolygon({type, sides, radius}) {
     const g = this.graphics;
-    const angle = 360 / sides;
-    const radius = this.shapeRadius;
     const points = [];
 
     for (let i = 0; i < sides; i++) {
-      const x = radius * this.s.cos(angle * i);
-      const y = radius * this.s.sin(angle * i);
+      const angle = 360 / sides * i;
+      const x = radius * this.s.cos(angle);
+      const y = radius * this.s.sin(angle);
       points.push({ x, y });
     }
 
     g.beginShape();
+    g.noFill();
     points.forEach((point, index) => {
       const nextPoint = points[index + 1] || points[0];
       g.vertex(point.x, point.y);
@@ -41,21 +46,27 @@ export default class Info {
     g.translate(this.shapeRadius, 0);
 
     Object.entries(shapeMap).forEach(([key, shape], index) => {
+      shape.isStripped = shapeMap[key].strip;
+
       g.push();
       g.translate(0, index * 20);
 
-      g.text(shape.label, 10, 0);
+      g.text(categoryNames[shape.label], 10, 0);
 
       g.noFill();
       g.stroke(0);
 
       switch (shape.type) {
         case 'round':
-          this.drawRound();
+          this.drawRound(shape);
           break;
 
         default:
-          this.drawPolygon(shape.sides);
+          this.drawPolygon({ ...shape, radius: this.shapeRadius });
+          if (shape.isStripped) {
+            this.drawPolygon({ ...shape, radius: this.shapeRadius * .4 });
+          }
+
           break;
       }
 
@@ -76,7 +87,7 @@ export default class Info {
       g.translate(0, index * 20 + 20);
 
       g.fill(hex);
-      g.text(key, 10, 0);
+      g.text(tagNames[key], 10, 0);
       g.circle(0, 0, this.shapeRadius * 2);
 
       g.pop();

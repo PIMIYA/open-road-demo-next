@@ -32,6 +32,10 @@ export default class Path {
       return;
     }
 
+    if (s.isStraight) {
+      return;
+    }
+
     if (!this.prevPoint) {
       // it's start point
       // modify this.control1
@@ -83,7 +87,7 @@ export default class Path {
       this.resetDrawingPoints();
     }
 
-    for (let i = 0; i < this.frameSpeed; i+= .1) {
+    for (let i = 0; i < this.frameSpeed; i+= .05) {
       const frameCount = this.frameCount + i;
       const progress = frameCount / this.speed;
 
@@ -102,9 +106,9 @@ export default class Path {
       }
 
       if (isInRange) {
-        const size = s.noise(frameCount * 0.05, i) * 3 + .8;
-        g.fill(0, 0, .1, s.random(.05, 1));
-        g.circle(lerpX + s.random(size), lerpY + s.random(size), 1);
+        const size = s.noise(frameCount * 0.05, i * .1) * 5 + .8;
+        g.fill(0, 0, .3, s.random(.05, 1));
+        g.circle(lerpX + s.random(size), lerpY + s.random(size), .8);
       }
 
       if (progress > 1) {

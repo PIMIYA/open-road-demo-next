@@ -145,7 +145,8 @@ export default function Mint() {
   // State variables for form
   let pinningMetadata = false;
   let mintingToken = false;
-  const serverUrl = "http://localhost:3030";
+  // const serverUrl = "http://localhost:3030";
+  const serverUrl = "https://mint.kairos-mint.art";
   const contractAddress = "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
   const contractId = 91040; //正式版kairos = 91087
   const { address, callcontract } = useConnection();
@@ -234,58 +235,58 @@ export default function Mint() {
       console.log(data);
 
       // Make a POST request to the server
-      // const response = await fetch(`${serverUrl}/mint`, {
-      //   method: "POST",
-      //   headers: {
-      //     "Access-Control-Allow-Origin": "*",
-      //   },
-      //   body: data,
-      // });
+      const response = await fetch(`${serverUrl}/mint`, {
+        method: "POST",
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+        },
+        body: data,
+      });
 
-      // // // Parse the JSON response
-      // if (response) {
-      //   const data = await response.json();
-      //   console.log(data);
-      //   if (
-      //     data.status === true &&
-      //     data.msg.metadataHash &&
-      //     data.msg.imageHash
-      //   ) {
-      //     pinningMetadata = false;
-      //     mintingToken = true;
+      // // Parse the JSON response
+      if (response) {
+        const data = await response.json();
+        console.log(data);
+        if (
+          data.status === true &&
+          data.msg.metadataHash &&
+          data.msg.imageHash
+        ) {
+          pinningMetadata = false;
+          mintingToken = true;
 
-      //     // Minting token
-      //     console.log("Minting token...");
+          // Minting token
+          console.log("Minting token...");
 
-      //     const metadataHash = `ipfs://${data.msg.metadataHash}`;
+          const metadataHash = `ipfs://${data.msg.metadataHash}`;
 
-      //     //quick test mint-factory
-      //     //Editions
-      //     const metadataHashes = [metadataHash];
+          //quick test mint-factory
+          //Editions
+          const metadataHashes = [metadataHash];
 
-      //     const creators = [userAddress];
+          const creators = [userAddress];
 
-      //     const contractCallDetails = {
-      //       contractId: contractId,
-      //       tokenQty: mintingTokenQty,
-      //       creators: creators,
-      //       tokens: metadataHashes,
-      //     };
+          const contractCallDetails = {
+            contractId: contractId,
+            tokenQty: mintingTokenQty,
+            creators: creators,
+            tokens: metadataHashes,
+          };
 
-      //     console.log(mintingTokenQty);
+          console.log(mintingTokenQty);
 
-      //     try {
-      //       const opHash = await callcontract(contractCallDetails);
-      //       console.log("Operation successful with hash:", opHash);
-      //     } catch (error) {
-      //       console.error("Error calling contract function:", error);
-      //     }
-      //   } else {
-      //     throw "No IPFS hash";
-      //   }
-      // } else {
-      //   throw "No response";
-      // }
+          try {
+            const opHash = await callcontract(contractCallDetails);
+            console.log("Operation successful with hash:", opHash);
+          } catch (error) {
+            console.error("Error calling contract function:", error);
+          }
+        } else {
+          throw "No IPFS hash";
+        }
+      } else {
+        throw "No response";
+      }
     } catch (error) {
       console.log(error);
     } finally {

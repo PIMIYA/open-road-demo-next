@@ -15,12 +15,8 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 const theme = createTheme({
   palette: {
-    primary: {
-      main: "#ffffff",
-    },
-    secondary: {
-      main: "#000000",
-    },
+    primary: { main: "#ffffff" },
+    secondary: { main: "#000000" },
   },
 });
 
@@ -42,9 +38,10 @@ export default function App({ Component, pageProps }: AppProps) {
 }
 
 const NavBar = () => {
+  /* Connected wallet */
   const { address, connect, disconnect } = useConnection();
+  // console.log(connect);
   const router = useRouter();
-
   const gotohome = () => {
     router.push("/");
   };
@@ -68,15 +65,26 @@ const NavBar = () => {
         {address ? (
           <>
             <Box component="span">
+              <Link href={{ pathname: "/mint" }} as="/mint">
+                <ThemeProvider theme={theme}>
+                  <Button variant="text" color="secondary">
+                    mint
+                  </Button>
+                </ThemeProvider>
+              </Link>
+            </Box>
+            <Box component="span">
               <Link
+                /* In order to fetch data every time load page, send address from URL  */
                 href={{
-                  pathname: "/form",
+                  pathname: `/creations`,
+                  // query: { address: address }
                 }}
-                as="/form"
+                // as="/creations"
               >
                 <ThemeProvider theme={theme}>
                   <Button variant="text" color="secondary">
-                    form
+                    creations
                   </Button>
                 </ThemeProvider>
               </Link>
@@ -84,14 +92,14 @@ const NavBar = () => {
             <Box component="span">
               <Link
                 href={{
-                  pathname: "/my_wallet",
-                  query: { data: address },
+                  pathname: `/wallet/${address}`,
+                  // query: { address: address },
                 }}
-                as="/my_wallet"
+                // as="/my_wallet"
               >
                 <ThemeProvider theme={theme}>
                   <Button variant="text" color="secondary">
-                    my wallet
+                    wallet
                   </Button>
                 </ThemeProvider>
               </Link>

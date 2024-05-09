@@ -89,10 +89,10 @@ export default function PoolsCreationCardGrid({ pools }) {
                   > */}
                   <Link
                     href={{
-                      pathname: "/poolsCreation/[contract]/[id]",
+                      pathname: "/creation/[contract]/[id]",
                       query: { contract: contract, id: id },
                     }}
-                    as="/poolsCreation"
+                    as="/creation"
                   >
                     <Card sx={{ maxWidth: 380 }}>
                       <CardMedia

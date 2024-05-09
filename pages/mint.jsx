@@ -13,11 +13,70 @@ import Button from "@mui/material/Button";
 import { styled } from "@mui/material/styles";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Container from "@mui/material/Container";
+import Slider from "@mui/material/Slider";
 // Get the lat and lng from the address
 import { getGeocode, getLatLng } from "use-places-autocomplete";
-
 // Kairos
 import { useConnection } from "@/packages/providers";
+//
+
+//List value of categories, tags, and licenses
+const categories = [
+  { label: "展覽" },
+  { label: "表演" },
+  { label: "課程" },
+  { label: "導覽" },
+  { label: "工作坊" },
+  { label: "黑客松" },
+  { label: "座談" },
+  { label: "親子" },
+  { label: "節祭／展會／市集" },
+  { label: "分享會／同好會／見面會" },
+];
+const tags = [
+  { main: "視覺", sub: "繪畫" },
+  { main: "視覺", sub: "裝置" },
+  { main: "視覺", sub: "工藝" },
+  { main: "視覺", sub: "雕塑" },
+  { main: "視覺", sub: "攝影" },
+  { main: "視覺", sub: "影像" },
+  { main: "表演", sub: "馬戲" },
+  { main: "表演", sub: "音樂劇（親子、百老匯）" },
+  { main: "表演", sub: "戲曲（歌仔戲、南管、京劇）" },
+  { main: "表演", sub: "現代戲劇" },
+  { main: "表演", sub: "讀劇" },
+  { main: "表演", sub: "音樂（搖滾、古典、電子、音像）" },
+  { main: "表演", sub: "說唱（漫才、相聲、站立喜劇）" },
+  { main: "表演", sub: "舞蹈（現代舞、舞踏、民俗）" },
+  { main: "設計", sub: "平面" },
+  { main: "設計", sub: "互動 ／媒體" },
+  { main: "設計", sub: "時尚" },
+  { main: "設計", sub: "建築" },
+  { main: "設計", sub: "工業／商品" },
+  { main: "電影", sub: "紀錄片" },
+  { main: "電影", sub: "劇情片" },
+  { main: "科技", sub: "區塊鏈" },
+  { main: "科技", sub: "AI" },
+  { main: "科技", sub: "VR／AR／MR" },
+  { main: "書籍", sub: "小說" },
+  { main: "書籍", sub: "詩歌" },
+  { main: "書籍", sub: "散文" },
+  { main: "書籍", sub: "漫畫" },
+  { main: "文化", sub: "公益（社會運動、地方創生、慈善捐贈）" },
+  { main: "文化", sub: "性別" },
+  { main: "文化", sub: "語言" },
+  { main: "文化", sub: "歷史" },
+  { main: "文化", sub: "環境" },
+  { main: "文化", sub: "動物" },
+  { main: "科學", sub: "社會科學（經濟、政治、國際關係）" },
+  { main: "科學", sub: "自然科學（天文、地理）" },
+];
+const licenses = [
+  { label: "All rights reserved" },
+  { label: "CC0 public (Public Domain)" },
+  { label: "CC BY (Attribution)" },
+  { label: "CC BY-SA (Attribution-ShareAlike)" },
+];
 
 // Custom styles for the file upload button and hide the input
 const VisuallyHiddenInput = styled("input")({
@@ -31,7 +90,6 @@ const VisuallyHiddenInput = styled("input")({
   whiteSpace: "nowrap",
   width: 1,
 });
-
 const theme = createTheme({
   palette: {
     primary: {
@@ -42,23 +100,19 @@ const theme = createTheme({
 
 // MUI + Google Maps Places Autocomplete
 const GOOGLE_MAPS_API_KEY = `${process.env.GoogleMapsAPIKey}`;
-console.log(GOOGLE_MAPS_API_KEY);
-
 function loadScript(src, position, id) {
   if (!position) {
     return;
   }
-
   const script = document.createElement("script");
   script.setAttribute("async", "");
   script.setAttribute("id", id);
   script.src = src;
   position.appendChild(script);
 }
+const autocompleteService = { current: null };
 
-export default function Form() {
-  // Ref for the Google Maps Places Autocomplete service
-  const autocompleteService = useRef(null);
+export default function Mint() {
   // State variables for places autocomplete
   const [value, setValue] = useState(null);
   const [inputValue, setInputValue] = useState("");
@@ -67,9 +121,8 @@ export default function Form() {
   // State variables for lat and lng
   const [lat, setLat] = useState(null);
   const [lng, setLng] = useState(null);
-  const [placePrediction, setPlacePrediction] = useState(null);
 
-
+  // Google autocomplete service
   if (typeof window !== "undefined" && !loaded.current) {
     if (!document.querySelector("#google-maps")) {
       loadScript(
@@ -78,50 +131,40 @@ export default function Form() {
         "google-maps"
       );
     }
-
     loaded.current = true;
   }
 
   const fetchPlacePredictions = useMemo(
     () =>
       debounce((request, callback) => {
-        console.log("Request:", request);
-        console.log("Autocomplete Service:", autocompleteService.current);
-        if (
-          autocompleteService.current &&
-          typeof autocompleteService.current.getPlacePredictions === "function"
-        ) {
-          autocompleteService.current.getPlacePredictions(request, (predictions, status) => {
-            if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-              // Store the first prediction in state
-              setPlacePrediction(predictions[0]);
-            }
-            callback(predictions, status);
-          });
-        }
+        autocompleteService.current.getPlacePredictions(request, callback);
       }, 400),
     []
   );
 
+  // State variables for form
   let pinningMetadata = false;
   let mintingToken = false;
   const serverUrl = "http://localhost:3030";
   const contractAddress = "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
   const contractId = 91040; //正式版kairos = 91087
   const { address, callcontract } = useConnection();
-
   const userAddress = address;
-
   const titleRef = useRef();
   const descriptionRef = useRef();
-  const fileRef = useRef();
-
+  // const fileRef = useRef();
+  const walletRef = useRef();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedTags, setSelectedTags] = useState([]);
-  const [license, setLicense] = useState("All rights reserved");
+  const [selectedLicense, setSelectedLicense] = useState(null);
   const [mintingTokenQty, setMintingTokenQty] = useState(1);
-  const [royaltyPercentage, setRoyaltyPercentage] = useState(0);
-  const [walletAddress, setWalletAddress] = useState("");
+  const [royaltyPercentage, setRoyaltyPercentage] = useState(10);
+  const [walletAddress, setWalletAddress] = useState(``);
+  const [file, setFile] = useState();
+
+  function handleChange(event) {
+    setFile(event.target.files[0]);
+  }
 
   const upload = async (event) => {
     event.preventDefault();
@@ -141,7 +184,7 @@ export default function Form() {
       data.append("category", selectedCategory.label);
 
       //solve ugly data tags
-      const transformedData = tags.reduce((acc, { main, sub }) => {
+      const transformedData = selectedTags.reduce((acc, { main, sub }) => {
         const mainFormatted =
           main.charAt(0).toUpperCase() + main.slice(1).toLowerCase();
         const subFormatted =
@@ -171,93 +214,78 @@ export default function Form() {
       data.append("mintingTool", mintingTool);
 
       // Append the copyright to the FormData instance,
-      // No license/All rights reserved
-      // CC0 public (Public Domain)
-      // CC BY (Attribution)
-      // CC BY-SA (Attribution-ShareAlike)
-      const right = "All rights reserved";
-      data.append("right", right);
+      data.append("rights", selectedLicense.label);
 
       // Append the royalties to the FormData instance
       const royalties = {
         decimals: 4,
-        shares: { [userAddress]: 1000 },
+        shares: { [userAddress]: royaltyPercentage * 100 },
       };
-      // {
-      //   "decimals": 4,
-      //   "shares": {
-      //   "tz1VcC6FbCHbiPRLGM1ahVPZwzRvmoUvuSRL": 1000,
-      //   "tz1VcC6FbCHbiPRLGM1ahVPZwzRvmoUvuSRL": 1000
-      // }
-      // {"tz1VcC6FbCHbiPRLGM1ahVPZwzRvmoUvuSRL": 1000} 1000 = 10%
-      // decimals: 4
       data.append("royalties", royalties);
 
-      // Append the rights to the FormData instance
-      const rights = "All rights reserved";
-      data.append("rights", rights);
-
       // Append the file to the FormData instance
-      if (fileRef.current.files[0]) {
-        data.append("image", fileRef.current.files[0]);
+      // if (fileRef) {
+      //   data.append("image", fileRef.current.files[0]);
+      // }
+      if (file) {
+        data.append("image", file);
       }
 
       console.log(data);
 
       // Make a POST request to the server
-      const response = await fetch(`${serverUrl}/mint`, {
-        method: "POST",
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: data,
-      });
+      // const response = await fetch(`${serverUrl}/mint`, {
+      //   method: "POST",
+      //   headers: {
+      //     "Access-Control-Allow-Origin": "*",
+      //   },
+      //   body: data,
+      // });
 
-      // // Parse the JSON response
-      if (response) {
-        const data = await response.json();
-        console.log(data);
-        if (
-          data.status === true &&
-          data.msg.metadataHash &&
-          data.msg.imageHash
-        ) {
-          pinningMetadata = false;
-          mintingToken = true;
+      // // // Parse the JSON response
+      // if (response) {
+      //   const data = await response.json();
+      //   console.log(data);
+      //   if (
+      //     data.status === true &&
+      //     data.msg.metadataHash &&
+      //     data.msg.imageHash
+      //   ) {
+      //     pinningMetadata = false;
+      //     mintingToken = true;
 
-          // Minting token
-          console.log("Minting token...");
+      //     // Minting token
+      //     console.log("Minting token...");
 
-          const metadataHash = `ipfs://${data.msg.metadataHash}`;
+      //     const metadataHash = `ipfs://${data.msg.metadataHash}`;
 
-          //quick test mint-factory
-          //Editions
-          const metadataHashes = [metadataHash];
+      //     //quick test mint-factory
+      //     //Editions
+      //     const metadataHashes = [metadataHash];
 
-          const creators = [userAddress];
+      //     const creators = [userAddress];
 
-          const contractCallDetails = {
-            contractId: contractId,
-            tokenQty: mintingTokenQty,
-            creators: creators,
-            tokens: metadataHashes,
-          };
+      //     const contractCallDetails = {
+      //       contractId: contractId,
+      //       tokenQty: mintingTokenQty,
+      //       creators: creators,
+      //       tokens: metadataHashes,
+      //     };
 
-          console.log(mintingTokenQty); 
+      //     console.log(mintingTokenQty);
 
-          try {
-            const opHash = await callcontract(contractCallDetails);
-            console.log("Operation successful with hash:", opHash);
-          } catch (error) {
-            console.error("Error calling contract function:", error);
-          }
-
-        } else {
-          throw "No IPFS hash";
-        }
-      } else {
-        throw "No response";
-      }
+      //     try {
+      //       const opHash = await callcontract(contractCallDetails);
+      //       console.log("Operation successful with hash:", opHash);
+      //     } catch (error) {
+      //       console.error("Error calling contract function:", error);
+      //     }
+      //   } else {
+      //     throw "No IPFS hash";
+      //   }
+      // } else {
+      //   throw "No response";
+      // }
     } catch (error) {
       console.log(error);
     } finally {
@@ -266,23 +294,26 @@ export default function Form() {
     }
   };
 
-
   useEffect(() => {
-    let active = true;
+    // Auto import wallet address to input field
+    if (!userAddress) {
+      return;
+    }
+    setWalletAddress(userAddress);
 
-    if (window.google && window.google.maps && window.google.maps.places) {
+    // Google autocomplete service
+    let active = true;
+    if (!autocompleteService.current && window.google) {
       autocompleteService.current =
         new window.google.maps.places.AutocompleteService();
     }
     if (!autocompleteService.current) {
       return undefined;
     }
-
     if (inputValue === "") {
       setOptions(value ? [value] : []);
       return undefined;
     }
-
     fetchPlacePredictions({ input: inputValue }, (results) => {
       if (active) {
         let newOptions = [];
@@ -298,20 +329,17 @@ export default function Form() {
         setOptions(newOptions);
       }
     });
-
     return () => {
       active = false;
     };
-  }, [value, inputValue, fetchPlacePredictions]);
+  }, [value, inputValue, fetchPlacePredictions, userAddress]);
 
   return (
     <>
       <Container maxWidth="lg">
         <Box
           component="form"
-          sx={{
-            "& > :not(style)": { m: 1, width: "25ch" },
-          }}
+          sx={{ "& > :not(style)": { m: 1, width: "25ch" } }}
           noValidate
           autoComplete="off"
         >
@@ -337,10 +365,13 @@ export default function Form() {
           </Box>
           <Box>
             <Autocomplete
-              disablePortal
+              // disablePortal
               id="categoriy"
               options={categories}
               getOptionLabel={(option) => option.label}
+              isOptionEqualToValue={(option, value) =>
+                option.label === value.label
+              }
               sx={{ width: 300 }}
               onChange={(event, newValue) => {
                 setSelectedCategory(newValue);
@@ -353,7 +384,6 @@ export default function Form() {
           <Box>
             <Autocomplete
               multiple
-              // disablePortal
               id="tag"
               options={tags}
               groupBy={(option) => option.main}
@@ -467,64 +497,67 @@ export default function Form() {
               </Box>
             ) : null}
           </Box>
-          <Box pt={3}>
-            <select
+          <Box>
+            <Autocomplete
+              // disablePortal
               id="license"
-              name="license"
-              value={license}
-              onChange={(event) => setLicense(event.target.value)}
-            >
-              <option value="All rights reserved">All rights reserved</option>
-              <option value="CC0 public (Public Domain)">
-                CC0 public (Public Domain)
-              </option>
-              <option value="CC BY (Attribution)">CC BY (Attribution)</option>
-              <option value="CC BY-SA (Attribution-ShareAlike)">
-                CC BY-SA (Attribution-ShareAlike)
-              </option>
-            </select>
+              options={licenses}
+              getOptionLabel={(option) => option.label}
+              isOptionEqualToValue={(option, value) =>
+                option.label === value.label
+              }
+              sx={{ width: 300 }}
+              onChange={(event, newValue) => {
+                setSelectedLicense(newValue);
+              }}
+              renderInput={(params) => (
+                <TextField {...params} label="License" variant="standard" />
+              )}
+            />
           </Box>
-          <Box pt={3}>
+          <Box>
             <TextField
               id="mintingTokenQty"
               label="Editions"
               type="number"
-              InputLabelProps={{
-                shrink: true,
-              }}
-              variant="outlined"
-              inputProps={{
-                min: 1,
-              }}
+              sx={{ width: 300 }}
+              InputLabelProps={{ shrink: true }}
+              variant="standard"
+              inputProps={{ min: 1 }}
               value={mintingTokenQty}
               onChange={(event) =>
                 setMintingTokenQty(Number(event.target.value))
               }
             />
           </Box>
-          <Box pt={3}>
-            <input
-              type="range"
-              label="royaltyPercentage"
-              id="royaltyPercentage"
-              name="royaltyPercentage"
-              min="0"
-              max="100"
+          <Box>
+            <TextField
+              id="royalty"
+              label="Royalty"
+              type="number"
+              sx={{ width: 300 }}
+              InputLabelProps={{ shrink: true }}
+              variant="standard"
+              inputProps={{ min: 10, max: 25 }}
               value={royaltyPercentage}
               onChange={(event) =>
-                setRoyaltyPercentage(Number(event.target.value ** 100))
+                setRoyaltyPercentage(Number(event.target.value))
               }
             />
-            <input
-              type="text"
-              label="walletAddress"
-              id="walletAddress"
-              name="walletAddress"
-              value={walletAddress}
-              onChange={(event) => setWalletAddress(event.target.value)}
-            />
           </Box>
-          <Box pt={3}>
+          <Box>
+            <Box>
+              <TextField
+                inputRef={walletRef}
+                id="walletAddress"
+                label="walletAddress"
+                variant="standard"
+                sx={{ width: 300 }}
+                value={walletAddress}
+              />
+            </Box>
+          </Box>
+          <Box>
             <ThemeProvider theme={theme}>
               <Button
                 id="thumbnail"
@@ -532,39 +565,32 @@ export default function Form() {
                 role={undefined}
                 variant="outlined"
                 tabIndex={-1}
-                color="primary"
               >
                 Upload file
-                <VisuallyHiddenInput type="file" ref={fileRef} />
+                <VisuallyHiddenInput
+                  type="file"
+                  // ref={fileRef}
+                  onChange={handleChange}
+                />
               </Button>
             </ThemeProvider>
+            <Box>
+              {file ? (
+                <Box sx={{ width: 300 }}>
+                  <Box component="span">{file.name}</Box>
+                </Box>
+              ) : null}
+            </Box>
           </Box>
-          <Box pt={3}>
-            <Button variant="contained" color="primary" onClick={upload}>
-              Mint
-            </Button>
+          <Box pt={6}>
+            <ThemeProvider theme={theme}>
+              <Button variant="contained" color="primary" onClick={upload}>
+                Mint
+              </Button>
+            </ThemeProvider>
           </Box>
         </Box>
       </Container>
     </>
   );
 }
-
-const categories = [
-  { label: "Performance" },
-  { label: "Exhibition" },
-  { label: "Concert" },
-  { label: "Festival" },
-  { label: "Other" },
-];
-
-const tags = [
-  { main: "Visual", sub: "Painting" },
-  { main: "Visual", sub: "Installation" },
-  { main: "Visual", sub: "Sculpture" },
-  { main: "Visual", sub: "Photography" },
-  { main: "Performance", sub: "Circus" },
-  { main: "Performance", sub: "Musical" },
-  { main: "Design", sub: "Interactive" },
-  { main: "Design", sub: "Graphic" },
-];

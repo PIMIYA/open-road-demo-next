@@ -1,3 +1,5 @@
+// previous version of wallet page
+
 /* NEXT */
 import dynamic from "next/dynamic";
 import styles from "@/styles/CardContent.module.css";
@@ -16,6 +18,8 @@ import { AkaDropAPI } from "@/lib/api";
 import PoolsCreationCardGrid from "@/components/poolsCreationCardGrid";
 import ClaimsTokenCardGrid from "@/components/claimsTokenCardGrid";
 import { useContext } from "react";
+/* Providers */
+import { ConnectionProvider, useConnection } from "@/packages/providers";
 
 export default function MyWallet({ role, pools, claims }) {
   /* Receive data from Nav */
@@ -41,15 +45,15 @@ export default function MyWallet({ role, pools, claims }) {
         {/* Wallet Info */}
         <Box pt={6} sx={{ textAlign: "center" }}>
           <Box pb={0} component="span" className={styles.fw700}>
-            {!address.data
+            {!address.address
               ? "please connect your wallet"
               : "My wallet address: "}
           </Box>
           <Box pb={0} component="span">
-            {address.data}
+            {address.address}
           </Box>
         </Box>
-        {address.data ? (
+        {address.address ? (
           <>
             <Box pt={0} sx={{ textAlign: "center" }}>
               {role.length == 0 ? (
@@ -92,7 +96,7 @@ export default function MyWallet({ role, pools, claims }) {
         ) : null}
 
         {/* Wallet Creations and Records */}
-        {address.data ? (
+        {address.address ? (
           <>
             <Box pb={4} pt={8}>
               {!role.length == 0 ? (
@@ -145,9 +149,9 @@ export async function getServerSideProps(context) {
   // console.log(address);
 
   const [role, pools, claims] = await Promise.all([
-    await WalletRoleAPI(`/${address.data}`),
-    await AkaDropAPI(`/${address.data}/pools?offset=0&limit=10`),
-    await AkaDropAPI(`/${address.data}/claims?offset=0&limit=10`),
+    await WalletRoleAPI(`/${address.address}`),
+    await AkaDropAPI(`/${address.address}/pools?offset=0&limit=10`),
+    await AkaDropAPI(`/${address.address}/claims?offset=0&limit=10`),
   ]);
 
   return {

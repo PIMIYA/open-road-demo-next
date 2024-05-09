@@ -37,8 +37,8 @@ export default function SelectedTokenCardGrid({ data }) {
               <Grid key={tokenId} xs={4} sm={4} md={4}>
                 <Item>
                   <Link
-                    href="/selectedTokens/[contract]/[tokenId]"
-                    as={`/selectedTokens/${contract}/${tokenId}`}
+                    href="/event/[contract]/[tokenId]"
+                    as={`/event/${contract}/${tokenId}`}
                   >
                     <Card sx={{ maxWidth: 380 }}>
                       <CardMedia

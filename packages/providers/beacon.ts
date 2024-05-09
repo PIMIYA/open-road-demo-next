@@ -125,7 +125,12 @@ tezosToolkit.setPackerProvider(new MichelCodecPacker());
 
 export const callContractBeaconFn =
   (beaconWallet: BeaconWallet) =>
-  async ({ contractId, tokenQty, creators, tokens }: ContractCallDetails) => {
+  async ({
+    contractId,
+    tokenQty,
+    creators,
+    tokens,
+  }: ContractCallDetails): Promise<string | undefined> => {
     try {
       await beaconWallet?.requestPermissions({
         network: {
@@ -134,19 +139,25 @@ export const callContractBeaconFn =
         scopes: [PermissionScope.OPERATION_REQUEST],
       });
 
+
       // console.log(stringToBytes(tokens[0]))
-      
+
       const minterContractAddress: string =
-      "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
+        "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
       const minter = await tezosToolkit.wallet.at(minterContractAddress);
       console.log("Calling contract function");
       const op = await minter.methods
-        .mint_artist(contractId, tokenQty, stringToBytes(tokens[0]), creators[0])
+        .mint_artist(
+          contractId,
+          tokenQty,
+          stringToBytes(tokens[0]),
+          creators[0]
+        )
         .send();
       console.log("Op hash:", op.opHash);
       const confirmation = await op.confirmation();
-      return confirmation;
-
+      console.log("Confirmation:", confirmation);
+      return op.opHash;
     } catch (error) {
       console.error("Error calling contract function:", error);
       throw error;

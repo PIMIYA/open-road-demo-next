@@ -202,7 +202,7 @@ export default function Mint() {
 
       // Append the lat and lng to the FormData instance
       const geolocation = [lat, lng];
-      data.append("geolocation", geolocation);
+      data.append("geoLocation", JSON.stringify(geolocation));
 
       // Append the creator address to the FormData instance
       data.append("creator", userAddress);
@@ -211,8 +211,9 @@ export default function Mint() {
       data.append("minter", contractAddress);
 
       // Append the minting tool to the FormData instance
-      const mintingTool = "https://kairos-mint.art/mint";
-      data.append("mintingTool", mintingTool);
+      // const mintingTool = "https://kairos-mint.art/mint";
+      // const mintingTool = "http://localhost:3030"
+      data.append("mintingTool", serverUrl);
 
       // Append the copyright to the FormData instance,
       data.append("rights", selectedLicense.label);
@@ -222,7 +223,7 @@ export default function Mint() {
         decimals: 4,
         shares: { [userAddress]: royaltyPercentage * 100 },
       };
-      data.append("royalties", royalties);
+      data.append("royalties", JSON.stringify(royalties));
 
       // Append the file to the FormData instance
       // if (fileRef) {

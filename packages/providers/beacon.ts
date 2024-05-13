@@ -143,7 +143,7 @@ export const callContractBeaconFn =
       // console.log(stringToBytes(tokens[0]))
 
       const minterContractAddress: string =
-        "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
+        "KT1PaXKr3sv6oEfNy5QSx2WVQBkWiZQutjUf";
       const minter = await tezosToolkit.wallet.at(minterContractAddress);
       console.log("Calling contract function");
       const op = await minter.methods

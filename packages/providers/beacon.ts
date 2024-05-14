@@ -163,17 +163,3 @@ export const callContractBeaconFn =
       throw error;
     }
   };
-
-  // export const getTokens = async (address: string): Promise<string[]> => {
-  //   try {
-  //     const minterContractAddress: string =
-  //       "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
-  //     const minter = await tezosToolkit.wallet.at(minterContractAddress);
-  //     const tokens = await minter.storage();
-  //     console.log("Tokens:", tokens);
-  //     return tokens;
-  //   } catch (error) {
-  //     console.error("Error getting tokens:", error);
-  //     throw error;
-  //   }
-  // }

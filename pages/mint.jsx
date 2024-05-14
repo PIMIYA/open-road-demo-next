@@ -148,7 +148,7 @@ export default function Mint() {
   // const serverUrl = "http://localhost:3030";
   const serverUrl = "https://mint.kairos-mint.art";
   const contractAddress = "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
-  const contractId = 91087; //正式版kairos = 91087
+  const contractId = 91040; //正式版kairos = 91087 //測試版kairos = 91040
   const { address, callcontract } = useConnection();
   const userAddress = address;
   const titleRef = useRef();

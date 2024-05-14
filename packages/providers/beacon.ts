@@ -143,7 +143,7 @@ export const callContractBeaconFn =
       // console.log(stringToBytes(tokens[0]))
 
       const minterContractAddress: string =
-        "KT1PaXKr3sv6oEfNy5QSx2WVQBkWiZQutjUf";
+        "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
       const minter = await tezosToolkit.wallet.at(minterContractAddress);
       console.log("Calling contract function");
       const op = await minter.methods
@@ -164,16 +164,16 @@ export const callContractBeaconFn =
     }
   };
 
-  export const getTokens = async (address: string): Promise<string[]> => {
-    try {
-      const minterContractAddress: string =
-        "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
-      const minter = await tezosToolkit.wallet.at(minterContractAddress);
-      const tokens = await minter.storage();
-      console.log("Tokens:", tokens);
-      return tokens;
-    } catch (error) {
-      console.error("Error getting tokens:", error);
-      throw error;
-    }
-  }
+  // export const getTokens = async (address: string): Promise<string[]> => {
+  //   try {
+  //     const minterContractAddress: string =
+  //       "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
+  //     const minter = await tezosToolkit.wallet.at(minterContractAddress);
+  //     const tokens = await minter.storage();
+  //     console.log("Tokens:", tokens);
+  //     return tokens;
+  //   } catch (error) {
+  //     console.error("Error getting tokens:", error);
+  //     throw error;
+  //   }
+  // }

@@ -7,6 +7,12 @@ declare module '@mui/material/Typography' {
   }
 }
 
+declare module "@mui/material/Button" {
+  interface ButtonPropsSizeOverrides {
+    extraLarge: true;
+  }
+}
+
 const theme = createTheme({
   components: {
     MuiCssBaseline: {
@@ -59,6 +65,16 @@ const theme = createTheme({
           }
         },
       },
+      variants: [
+        {
+          props: { size: "extraLarge" },
+          style: {
+            fontSize: 30,
+            borderRadius: 50,
+            padding: '10px 30px',
+          }
+        }
+      ]
     },
   },
   typography: {

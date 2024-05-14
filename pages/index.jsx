@@ -3,13 +3,14 @@ import { useGlobalContext } from "@/contexts/GlobalContext";
 import { useTheme } from "@emotion/react";
 
 /* Components */
-import { Box, Container } from "@mui/material";
+import { Box, Button, Container } from "@mui/material";
 
 import KeyVisual from "@/components/homepage/keyVisual";
 import FeatureBox from "@/components/homepage/featureBox";
 import FadeOnScroll from "@/components/fadeOnScroll";
 import GeneralTokenCardGrid from "@/components/GeneralTokenCardGrid";
 import Marquee from "@/components/homepage/Marquee";
+import Link from "next/link";
 
 const features = [
   {
@@ -65,9 +66,16 @@ export default function Home({ data }) {
         }
         {isLanded &&
           <Container maxWidth="lg">
-            <FadeOnScroll onceonly>
-              <GeneralTokenCardGrid data={data.tokens} />
-            </FadeOnScroll>
+            <GeneralTokenCardGrid data={data.tokens} />
+            <Box textAlign="center" mt={10}>
+              <FadeOnScroll onceonly>
+                <Link href="/events">
+                  <Button variant="contained" color="secondary" size="extraLarge">
+                    See more
+                  </Button>
+                </Link>
+              </FadeOnScroll>
+            </Box>
           </Container>
         }
     </>
@@ -75,7 +83,7 @@ export default function Home({ data }) {
 }
 
 export async function getStaticProps() {
-  const [data] = await Promise.all([await MainnetAPI(`/fa2tokens?limit=24`)]);
+  const [data] = await Promise.all([await MainnetAPI(`/fa2tokens?limit=12`)]);
   return {
     props: { data },
     // Next.js will attempt to re-generate the page:

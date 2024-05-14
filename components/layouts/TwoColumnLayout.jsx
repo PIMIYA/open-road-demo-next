@@ -39,7 +39,7 @@ export default function TwoColumnLayout({ children }) {
   return (
     <Container maxWidth="lg">
       <Stack direction={
-        { md: 'column', lg: 'row' }
+        { xs: 'column', lg: 'row' }
       } spacing={4}>
         <Box
           width={{

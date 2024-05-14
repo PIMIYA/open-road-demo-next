@@ -20,10 +20,11 @@ export default class Shape {
     this.rotate = options.s.random(360);
     this.nextAngle = options.nextAngle || options.s.random(360);
     this.position = options.s.createVector(options.position.x, options.position.y);
+    this.stripWidth = ~~(this.radius / 4);
 
     this.frameCount = 0;
     this.padding = 20;
-    this.framesForOneSide = ~~this.s.random(90, 130);
+    this.framesForOneSide = ~~this.s.random(100, 110);
 
     this.initGraphics();
     this.drawCenter();
@@ -145,6 +146,18 @@ export default class Shape {
       this.drawnPoints = [];
     }
 
+    if (Math.floor(this.frameCount / this.framesForOneSide) > this.drawnPoints.length) {
+      this.drawnPoints.push(this.nextPoint);
+      this.endPoint = this.nextPoint;
+      this.nextPoint = this.endPoints.shift();
+
+      if (!this.nextPoint) {
+        this.isNodeDrawn = true;
+        this.stop();
+        return;
+      }
+    }
+
     const g = this.graphics;
     let { x: startX, y: startY } = this.startPoint;
     let { x: endX, y: endY } = this.endPoint;
@@ -157,52 +170,50 @@ export default class Shape {
       g.translate(g.width / 2, g.height / 2);
       this.drawLine(startX, startY, endX, endY);
     g.pop();
-
-    if (Math.floor(this.frameCount / this.framesForOneSide) > this.drawnPoints.length) {
-      this.drawnPoints.push(this.nextPoint);
-      this.endPoint = this.nextPoint;
-      this.nextPoint = this.endPoints.shift();
-
-      if (!this.nextPoint) {
-        this.isNodeDrawn = true;
-        this.stop();
-      }
-    }
   }
 
   drawLine(startX, startY, endX, endY) {
     const s = this.s;
     const g = this.graphics;
 
-    const alphaBase = s.map(s.noise(this.frameCount * .01), 0, 1, 1, 5);
+    const alphaBase = s.map(s.noise(this.frameCount * .01), 0, 1, 1, 1.5);
 
-    for(let i = 0; i < 100; i+=.5) {
+    for(let i = 0; i < 100; i+=.7) {
+      let progress = i / 100;
+      let isLast = i >= 99;
+      let size = 2;
+      let sat = .8;
+      let bri = .9;
 
-      if (this.isStripped) {
-        if (~~(i / 8) % 2 == 0) continue;
+      if (!isLast && s.chance(10)) {
+        continue;
       }
 
-      let size = 1.2;
-      let alpha = g.map(i, 100, 0, .1, .01) * alphaBase;
-      let sat = g.map(s.noise(i * .01), 0, 1, .5, 1);
-      let bri = 1 - sat * .3;
+      if (this.isStripped) {
+        if (~~(i / this.stripWidth) % 2 == 0) continue;
+      }
 
-      if (s.chance(10)) {
-        sat = 1;
-        bri *= .9;
+      let x = g.lerp(startX, endX, progress);
+      let y = g.lerp(startY, endY, progress);
+      let alpha = g.map(progress, 1, 0, .1, .01) * alphaBase;
+
+      if (isLast) {
+        size *= 1 + s.noise(x * .08, y * .08) * 2;
         alpha *= 2;
       }
 
-      if (i >= 99) {
-        // alpha *= 2;
-        size = s.noise(this.frameCount * .1) * 5;
+      if (this.isPolygon) {
+        size *= .8;
       }
 
-      size *= .8;
+      if (s.chance(5)) {
+        sat = 1;
+        bri *= .9;
+        alpha = s.random(.5, .8) * .1;
+        size = s.random(1.5, 2) * 1;
+      }
 
       g.fill(this.hue, sat, bri, alpha);
-      const x = g.lerp(startX, endX, i / 100);
-      const y = g.lerp(startY, endY, i / 100);
       g.circle(x, y, size);
     }
   }
@@ -311,8 +322,16 @@ export default class Shape {
     }
     this.isShapeBuilt = true;
 
-    if (this.frameCount % (360 / this.sides) * 2 == 0) {
+    if (this.frameCount % this.framesForOneSide == 0) {
       this.updateHue();
     }
+  }
+
+  get isRound() {
+    return this.type === 'round';
+  }
+
+  get isPolygon() {
+    return this.type === 'polygon';
   }
 }

@@ -31,3 +31,7 @@ export interface WalletConnection {
     isNewConnection: boolean,
     connectionOptions?: BeaconOptions
   ) => Promise<WalletApi>;
+
+  export interface getTokensFn {
+    (address: string): Promise<string[]>;
+  }

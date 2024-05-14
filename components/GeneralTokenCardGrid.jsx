@@ -6,6 +6,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import Tags from "@/components/Tags";
 import { getAkaswapAssetUrl } from "@/lib/stringUtils";
 import { getRandomObjectType, getRandomPeriod } from "@/lib/dummy";
+import FadeOnScroll from "./fadeOnScroll";
 
 export default function GeneralTokenCardGrid(props) {
 
@@ -77,45 +78,53 @@ export default function GeneralTokenCardGrid(props) {
               eventDate,
               eventPlace,
             }, index) => (
-              <Grid key={index} xs={columnSettings.item.xs} >
-                <Box>
-                  <Link
-                    href="/claimsToken/[contract]/[tokenId]"
-                    as={`/claimsToken/${contract}/${tokenId}`}
-                  >
-                    <CardMedia
-                      component="img"
-                      alt="thumbnail"
-                      height="230"
-                      sx={{
-                        mb: 1,
-                      }}
-                      image={tokenImageUrl}
-                    />
-                    <Box id="primary-info" mb={1}>
-                      <Stack direction="row" spacing={1}>
-                        <Typography variant="cardTitle" component="h6" gutterBottom>
-                          {name}
+              <Grid key={index} xs={columnSettings.item.xs} sx={{
+                transform: 'perspective(1000px) translateY(0px)',
+                transition: 'transform 0.3s',
+                '&:hover': {
+                  transform: 'perspective(1000px) translateZ(100px)',
+                }
+              }}>
+                <FadeOnScroll onceonly>
+                  <Box>
+                    <Link
+                      href="/claimsToken/[contract]/[tokenId]"
+                      as={`/claimsToken/${contract}/${tokenId}`}
+                    >
+                      <CardMedia
+                        component="img"
+                        alt="thumbnail"
+                        height="230"
+                        sx={{
+                          mb: 1,
+                        }}
+                        image={tokenImageUrl}
+                      />
+                      <Box id="primary-info" mb={1}>
+                        <Stack direction="row" spacing={1}>
+                          <Typography variant="cardTitle" component="h6" gutterBottom>
+                            {name}
+                          </Typography>
+                          <Chip label={objectType} size="small" />
+                        </Stack>
+                        <Typography variant="body1">
+                          {creator}
                         </Typography>
-                        <Chip label={objectType} size="small" />
+                      </Box>
+                      <Box id="secondary-info" mb={2}>
+                        <Typography variant="body2">
+                          {eventDate}
+                        </Typography>
+                        <Typography variant="body2">
+                          {eventPlace}
+                        </Typography>
+                      </Box>
+                      <Stack direction="row" flexWrap="wrap">
+                        <Tags tags={tags.slice(0, 5)} />
                       </Stack>
-                      <Typography variant="body1">
-                        {creator}
-                      </Typography>
-                    </Box>
-                    <Box id="secondary-info" mb={2}>
-                      <Typography variant="body2">
-                        {eventDate}
-                      </Typography>
-                      <Typography variant="body2">
-                        {eventPlace}
-                      </Typography>
-                    </Box>
-                    <Stack direction="row" flexWrap="wrap">
-                      <Tags tags={tags.slice(0, 5)} />
-                    </Stack>
-                  </Link>
-                </Box>
+                    </Link>
+                  </Box>
+                </FadeOnScroll>
               </Grid>
             )
           )}

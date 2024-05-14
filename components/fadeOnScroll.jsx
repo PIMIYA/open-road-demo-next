@@ -3,9 +3,15 @@ import Box from '@mui/material/Box';
 
 function FadeOnScroll(props) {
   const [isVisible, setIsVisible] = useState(false);
+  const [delay, setDelay] = useState(0);  // Add delay to the animation
+  const [hideY, setHideY] = useState(50);  // Add delay to the animation
+
   const ref = useRef(null);
 
   useEffect(() => {
+    setDelay(Math.random() * 500);
+    setHideY(Math.random(500) + 50);
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (props.onceonly) {
@@ -38,8 +44,8 @@ function FadeOnScroll(props) {
   return (
     <Box ref={ref} sx={{
       opacity: isVisible ? 1 : 0,  // Control opacity
-      transform: isVisible ? 'translateY(0)' : 'translateY(50px)',  // Control translateY
-      transition: 'opacity 1s, transform 1s'  // Add transitions for both properties
+      transform: isVisible ? 'translateY(0)' : `translateY(${hideY}px)`,  // Control translateY
+      transition: `opacity 1s ${delay}ms, transform 1s ${delay}ms`  // Add transitions for both properties
     }}>
       {props.children}
     </Box>

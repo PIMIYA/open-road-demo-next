@@ -10,7 +10,6 @@ import PoolsCreationCardContent from "@/components/poolsCreationCardContent";
 
 export default function Id({ data }) {
   //   console.log(data);
-
   return (
     <>
       <Container maxWidth="lg">
@@ -21,11 +20,6 @@ export default function Id({ data }) {
 }
 
 export async function getServerSideProps(params) {
-  //   console.log(params.params.id);
-  // const res = await fetch(
-  //   `https://mars.akaswap.com/drop/api/pools/${params.params.contract}/${params.params.id}`
-  // );
-  // const data = await res.json();
   const [data] = await Promise.all([
     await AkaDropAPI(`/pools/${params.params.contract}/${params.params.id}`),
   ]);

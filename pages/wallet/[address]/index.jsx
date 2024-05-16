@@ -5,12 +5,23 @@ import { useState, useEffect } from "react";
 /* Providers */
 import { ConnectionProvider, useConnection } from "@/packages/providers";
 /* MUI */
-import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
+import { Box, Container, Paper, Stack } from "@mui/material";
 /* Fetch data */
 import { useRouter } from "next/router";
 import { WalletRoleAPI } from "@/lib/api";
 import { AkaDropAPI } from "@/lib/api";
+/* Dummy for mockup */
+import { getRandomText } from "@/lib/dummy";
+/* Sub Components */
+import TwoColumnLayout, {
+  Side,
+  Main,
+} from "@/components/layouts/TwoColumnLayout";
+import WalletProfile from "@/components/wallet/WalletProfile";
+import WalletTimeline from "@/components/wallet/WalletTimeline";
+import WalletCanvas from "@/components/wallet/WalletCanvas";
+import SidePaper from "@/components/SidePaper";
+import Filter from "@/components/Filter";
 /* Components */
 import ClaimsTokenCardGrid from "@/components/claimsTokenCardGrid";
 /* NEXT */
@@ -20,48 +31,42 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
   /* Connected wallet */
   const { address, connect, disconnect } = useConnection();
 
-  // const [claimData, setClaimData] = useState(null);
-  // const [isLoadingClaim, setLoadingClaim] = useState(true);
-
-  // useEffect(() => {
-  //   if (!address) {
-  //     return;
-  //   }
-
-  //   fetch("/api/walletClaims", {
-  //     method: "POST",
-  //     body: address,
-  //   })
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       setClaimData(data);
-  //       setLoadingClaim(false);
-  //     });
-  // }, [address]);
-
-  // if (isLoadingClaim) return <p>Loading...</p>;
-  // if (!claimData) return <p>No claim data</p>;
-  // console.log(claimData.data);
+  // TODO: get introduction from real data
+  const introduction = getRandomText();
 
   return (
-    <>
-      <Container maxWidth="lg">
-        {/* <Box>address from URL: {addressFromURL}</Box>
-        <Box>address from wallet: {address}</Box> */}
-
-        {/* Wallet Creations */}
-        <Box>
-          {claims.count > 0 ? (
-            <>
-              <ClaimsTokenCardGrid claims={claims} />
-              <Box>{address ? "i can comment" : ""}</Box>
-            </>
-          ) : (
-            "you do not claim anything yet."
-          )}
-        </Box>
-      </Container>
-    </>
+    <TwoColumnLayout>
+      <Side sticky={true}>
+        <SidePaper>
+          <WalletProfile
+            address={addressFromURL}
+            introduction={introduction}
+          ></WalletProfile>
+        </SidePaper>
+        {claims.count > 1 && (
+          <SidePaper>
+            <Filter />
+          </SidePaper>
+        )}
+      </Side>
+      <Main>
+        {claims.count === 0 ? (
+          <>No Token</>
+        ) : (
+          <Box>
+            <WalletCanvas />
+            <Stack direction="row">
+              <Box width={"100%"}>
+                {" "}
+                {/* timeline */}
+                <WalletTimeline rawClaims={claims} />
+              </Box>
+              {/* TODO: analytics */}
+            </Stack>
+          </Box>
+        )}
+      </Main>
+    </TwoColumnLayout>
   );
 }
 

@@ -6,9 +6,11 @@ import Container from "@mui/material/Container";
 /* Fetch data */
 import { MainnetAPI } from "@/lib/api";
 /* Components */
-import ClaimsTokenCardContnt from "@/components/claimsTokenCardContnt";
+import SingleToken from "@/components/singleToken";
 /* Routing */
 import { useRouter } from "next/router";
+
+import { getRandomCreator, getRandomObjectType, getRandomPeriod, getRandomPlace } from "@/lib/dummy";
 
 export default function Id({ data }) {
   //   console.log(data);
@@ -16,13 +18,15 @@ export default function Id({ data }) {
   // const query = router.query;
   // console.log(query);
 
-  return (
-    <>
-      <Container maxWidth="lg">
-        <ClaimsTokenCardContnt data={data} />
-      </Container>
-    </>
-  );
+  // TODO: replace dummy data with real data
+  if (data && !data.objectType) {
+    data.creator = getRandomCreator();
+    data.objectType = getRandomObjectType();
+    data.eventDate = getRandomPeriod();
+    data.eventPlace = getRandomPlace();
+  }
+
+  return <SingleToken data={data} />;
 }
 
 export async function getServerSideProps(params) {

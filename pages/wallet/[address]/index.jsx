@@ -75,7 +75,7 @@ export async function getStaticPaths() {
     paths: [
       {
         params: {
-          address: "",
+          address: "tz28X7QEXciMxDA1QF8jLp21FuqpqiHrRVZq",
         },
       },
     ],

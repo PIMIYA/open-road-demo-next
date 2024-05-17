@@ -1,27 +1,72 @@
 // claim token lists by this wallet address.
 // redirect from akadrop claim page.
-// when user connect to wallet, if role of user is audience.
 
+import { useState, useEffect } from "react";
 /* Providers */
 import { ConnectionProvider, useConnection } from "@/packages/providers";
 /* MUI */
-import Box from "@mui/material/Box";
+import { Box, Container, Paper, Stack } from "@mui/material";
 /* Fetch data */
 import { useRouter } from "next/router";
 import { WalletRoleAPI } from "@/lib/api";
 import { AkaDropAPI } from "@/lib/api";
+/* Dummy for mockup */
+import { getRandomText } from "@/lib/dummy";
+/* Sub Components */
+import TwoColumnLayout, {
+  Side,
+  Main,
+} from "@/components/layouts/TwoColumnLayout";
+import WalletProfile from "@/components/wallet/WalletProfile";
+import WalletTimeline from "@/components/wallet/WalletTimeline";
+import WalletCanvas from "@/components/wallet/WalletCanvas";
+import SidePaper from "@/components/SidePaper";
+import Filter from "@/components/Filter";
+/* Components */
+import ClaimsTokenCardGrid from "@/components/claimsTokenCardGrid";
+/* NEXT */
+import styles from "@/styles/CardContent.module.css";
 
 export default function Wallet({ role, pools, claims, addressFromURL }) {
   /* Connected wallet */
   const { address, connect, disconnect } = useConnection();
+
+  // TODO: get introduction from real data
+  const introduction = getRandomText();
+
   return (
-    <>
-      <Box>address from URL: {addressFromURL}</Box>
-      <Box>address from wallet: {address}</Box>
-      {/* <Box>{role.length}</Box> */}
-      {/* <Box>{pools}</Box>
-      <Box>{claims}</Box> */}
-    </>
+    <TwoColumnLayout>
+      <Side sticky={true}>
+        <SidePaper>
+          <WalletProfile
+            address={addressFromURL}
+            introduction={introduction}
+          ></WalletProfile>
+        </SidePaper>
+        {claims.count > 1 && (
+          <SidePaper>
+            <Filter />
+          </SidePaper>
+        )}
+      </Side>
+      <Main>
+        {claims.count === 0 ? (
+          <>No Token</>
+        ) : (
+          <Box>
+            <WalletCanvas />
+            <Stack direction="row">
+              <Box width={"100%"}>
+                {" "}
+                {/* timeline */}
+                <WalletTimeline rawClaims={claims} />
+              </Box>
+              {/* TODO: analytics */}
+            </Stack>
+          </Box>
+        )}
+      </Main>
+    </TwoColumnLayout>
   );
 }
 
@@ -30,7 +75,7 @@ export async function getStaticPaths() {
     paths: [
       {
         params: {
-          address: "tz1h4VfHkUNSpjV7Tc5MbH4PGvbB7ygdTjAR",
+          address: "tz28X7QEXciMxDA1QF8jLp21FuqpqiHrRVZq",
         },
       },
     ],

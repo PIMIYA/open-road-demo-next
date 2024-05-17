@@ -5,9 +5,12 @@ import {
   PermissionScope,
 } from "@airgap/beacon-types";
 
-import { MichelCodecPacker, TezosToolkit } from "@taquito/taquito";
+import { MichelCodecPacker, TezosToolkit, OpKind } from "@taquito/taquito";
 import { stringToBytes } from "@taquito/utils";
 import { ConnectFn, ContractCallDetails } from "./types";
+import { BeaconEvent } from "@airgap/beacon-sdk";
+import { InMemorySigner } from "@taquito/signer";
+
 
 const createBeaconWallet = () =>
   typeof window === "undefined"
@@ -27,7 +30,14 @@ const createBeaconWallet = () =>
 export const connectBeacon: ConnectFn = async (isNew) => {
   if (!isNew) {
     const existingWallet = createBeaconWallet();
-    tezosToolkit.setWalletProvider(existingWallet);
+
+    // Subscribe to events to get notified when the active account changes
+    existingWallet?.client.subscribeToEvent(
+      BeaconEvent.ACTIVE_ACCOUNT_SET,
+      (data) => {
+        console.log("Active account has been set: ", data);
+      }
+    );
     const acc = await existingWallet?.client.getActiveAccount();
 
     if (!existingWallet || !acc) {
@@ -121,7 +131,6 @@ export const tezosToolkit = new TezosToolkit(
   // for payments: todo: add prod url
   "https://mainnet.smartpy.io"
 );
-tezosToolkit.setPackerProvider(new MichelCodecPacker());
 
 export const callContractBeaconFn =
   (beaconWallet: BeaconWallet) =>
@@ -139,13 +148,28 @@ export const callContractBeaconFn =
         scopes: [PermissionScope.OPERATION_REQUEST],
       });
 
+      
+      tezosToolkit.setPackerProvider(new MichelCodecPacker());
 
-      // console.log(stringToBytes(tokens[0]))
+      if (!process.env.WALLET_PRIVATE_KEY)
+        throw new Error("Missing private key");
+
+      //add signer from original wallet creator to sign the transaction with objkt minting contract
+      const signer = await InMemorySigner.fromSecretKey(
+        process.env.WALLET_PRIVATE_KEY,
+        process.env.WALLET_PASSPHRASE
+      );
+      tezosToolkit.setProvider({signer});
 
       const minterContractAddress: string =
         "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
       const minter = await tezosToolkit.wallet.at(minterContractAddress);
-      console.log("Calling contract function");
+      // console.log("Calling contract function");
+      // console.log("contractId:", contractId);
+      // console.log("tokenQty:", tokenQty);
+      // console.log("token:", stringToBytes(tokens[0]));
+      // console.log("creators:", creators[0]);
+
       const op = await minter.methods
         .mint_artist(
           contractId,
@@ -153,7 +177,8 @@ export const callContractBeaconFn =
           stringToBytes(tokens[0]),
           creators[0]
         )
-        .send();
+        .send({ storageLimit: 350 });
+
       console.log("Op hash:", op.opHash);
       const confirmation = await op.confirmation();
       console.log("Confirmation:", confirmation);

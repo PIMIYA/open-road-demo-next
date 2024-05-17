@@ -10,7 +10,7 @@ export interface WalletConnection {
   export interface ContractCallDetails {
     contractId: number;
     tokenQty: number;
-    tokens: string;
+    tokens: string[];
     creators: string[];
   }
   

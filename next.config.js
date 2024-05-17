@@ -34,7 +34,10 @@ const nextConfig = {
   env: {
     WalletRoleURL: process.env.WalletRoleURL,
     AkaDropURL: process.env.AkaDropURL,
-    GoogleMapsAPIKey: process.env.GoogleMapsAPIKey
+    GoogleMapsAPIKey: process.env.GoogleMapsAPIKey,
+    WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+    WALLET_PASSPHRASE: process.env.WALLET_PASSPHRASE,
+    SERVER_URL: process.env.SERVER_URL,
   },
 
   // async headers() {

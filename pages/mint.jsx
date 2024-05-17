@@ -145,10 +145,9 @@ export default function Mint() {
   // State variables for form
   let pinningMetadata = false;
   let mintingToken = false;
-  // const serverUrl = "http://localhost:3030";
-  const serverUrl = "https://mint.kairos-mint.art";
+  const serverUrl = process.env.SERVER_URL;
   const contractAddress = "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
-  const contractId = 91040; //正式版kairos = 91087 //測試版kairos = 91040
+  const contractId = 91040;  // 正式版kairosNFTs = 91086 測試版blackpeople = 91040
   const { address, callcontract } = useConnection();
   const userAddress = address;
   const titleRef = useRef();
@@ -162,6 +161,8 @@ export default function Mint() {
   const [royaltyPercentage, setRoyaltyPercentage] = useState(10);
   const [walletAddress, setWalletAddress] = useState(``);
   const [file, setFile] = useState();
+
+  const [miningInProgress, setMiningInProgress] = useState(false);
 
   function handleChange(event) {
     setFile(event.target.files[0]);
@@ -198,7 +199,19 @@ export default function Mint() {
       const beautyResult = Object.keys(transformedData).map((key) => ({
         [key]: transformedData[key],
       }));
-      data.append("tags", JSON.stringify(beautyResult));
+
+      //tags to list of strings
+      let result = [];
+
+      beautyResult.forEach((obj) => {
+        for (let key in obj) {
+          obj[key].forEach((value) => {
+            result.push(`${key}:${value}`);
+          });
+        }
+      });
+
+      data.append("tags", JSON.stringify(result));
 
       // Append the lat and lng to the FormData instance
       const geolocation = [lat, lng];
@@ -274,9 +287,10 @@ export default function Mint() {
             tokens: metadataHashes,
           };
 
-          console.log(mintingTokenQty);
+          // console.log(mintingTokenQty);
 
           try {
+            setMiningInProgress(true);
             const opHash = await callcontract(contractCallDetails);
             console.log("Operation successful with hash:", opHash);
           } catch (error) {
@@ -291,12 +305,11 @@ export default function Mint() {
     } catch (error) {
       console.log(error);
     } finally {
+      setMiningInProgress(false);
       pinningMetadata = false;
       mintingToken = false;
     }
   };
-
-
 
   useEffect(() => {
     // Auto import wallet address to input field
@@ -591,6 +604,9 @@ export default function Mint() {
               <Button variant="contained" color="primary" onClick={upload}>
                 Mint
               </Button>
+              <div>
+                {miningInProgress ? <p>Mining in progress...</p> : null}
+              </div>
             </ThemeProvider>
           </Box>
         </Box>

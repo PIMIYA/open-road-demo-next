@@ -37,6 +37,7 @@ next-env.d.ts
 
 #ignore .env file
 .env
+.env.local
 
 #ignore bun.lockb file
 bun.lockb

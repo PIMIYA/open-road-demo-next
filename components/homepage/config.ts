@@ -1,7 +1,7 @@
 import { STROKE_TYPES, SHAPE_TYPES } from './const';
 
 export default {
-  DRAW_SPEED: 3,
+  DRAW_SPEED: 5,
   COLOR_CHANCE: {
     '#0016B9': 1,
     '#da46a7': 1,
@@ -18,7 +18,7 @@ export default {
     [STROKE_TYPES.MEDIUM]: 1,
     [STROKE_TYPES.THICK]: .5,
     [STROKE_TYPES.BLACK]: .2,
-    [STROKE_TYPES.BRUSH]: .1,
+    // [STROKE_TYPES.BRUSH]: .1,
   },
   PATH: {
     RANDOM_POSITION_FACTOR: Math.random(),

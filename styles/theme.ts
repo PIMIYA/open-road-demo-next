@@ -84,7 +84,7 @@ const theme = createTheme({
   } as TypographyOptions,
   palette: {
     background: {
-      default: "#ecf2eb",
+      default: "#ffefe9",
     },
     primary: {
       main: "#000",

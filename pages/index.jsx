@@ -19,15 +19,24 @@ const features = [
   },
   {
     title: "與創作者建立連結",
-    description: "透過在場證明，創作者將知道哪些人最常參與他們的活動，藉此獎勵自己的粉絲，建立會員。同時，持有在場證明者，可以對活動發表評論。"
+    description: "透過在場證明，創作者將知道哪些人最常參與他們的活動，藉此獎勵自己的粉絲，建立會員。同時，持有在場證明者，可以對活動發表評論。",
+    mt: {
+      lg: -60
+    },
   },
   {
     title: "探索喜好　認識環境",
     description: "透過在場證明，你能找到喜好相近的朋友；所有人可以一起看到當前藝術生態系的發展。",
+    mt: {
+      lg: -10
+    },
   },
   {
     title: "保有匿名性的開放",
-    description: "參與者保管個資，在場證明公開於鏈上。借助區塊鏈技術，建立安全、匿名但真實的開放資料。"
+    description: "參與者保管個資，在場證明公開於鏈上。借助區塊鏈技術，建立安全、匿名但真實的開放資料。",
+    mt: {
+      lg: -30
+    },
   },
 ];
 
@@ -37,23 +46,32 @@ export default function Home({ data }) {
 
   return (
     <>
-      <Container maxWidth="lg">
+      <Container maxWidth="lg" sx={{
+        position: "relative",
+        mt: -10,
+      }}>
         <KeyVisual />
       </Container>
         {isLanded &&
           <Container maxWidth="lg">
             {
               features.map((feature, index) => (
-                <FeatureBox key={index} bgIndex={index} title={feature.title} description={feature.description} />
+                <FeatureBox
+                  key={index}
+                  bgIndex={index}
+                  title={feature.title}
+                  description={feature.description}
+                  mt={feature.mt}
+                />
               ))
             }
           </Container>
         }
         {isLanded &&
           <Box sx={{
-            mt: 35,
-            mb: 15,
-            transform: "rotateZ(5deg)"
+            mt: 10,
+            mb: 20,
+            transform: "rotateZ(-5deg) scale(1.1)",
           }}>
             <Marquee
               variant="h3"

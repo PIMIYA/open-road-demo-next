@@ -9,7 +9,7 @@ import parse from "autosuggest-highlight/parse";
 import { debounce } from "@mui/material/utils";
 import { useState, useEffect, useRef, useMemo } from "react";
 // MUI
-import Button from "@mui/material/Button";
+import { Button, Checkbox, FormControlLabel } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Container from "@mui/material/Container";
@@ -18,7 +18,10 @@ import Slider from "@mui/material/Slider";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 // Kairos
 import { useConnection } from "@/packages/providers";
-//
+// Componenta
+import { Sharer } from "@/components/sharer";
+// Next
+import { useRouter } from "next/router";
 
 //List value of categories, tags, and licenses
 const categories = [
@@ -113,6 +116,7 @@ function loadScript(src, position, id) {
 const autocompleteService = { current: null };
 
 export default function Mint() {
+  const router = useRouter();
   // State variables for places autocomplete
   const [value, setValue] = useState(null);
   const [inputValue, setInputValue] = useState("");
@@ -133,7 +137,6 @@ export default function Mint() {
     }
     loaded.current = true;
   }
-
   const fetchPlacePredictions = useMemo(
     () =>
       debounce((request, callback) => {
@@ -147,12 +150,11 @@ export default function Mint() {
   let mintingToken = false;
   const serverUrl = process.env.SERVER_URL;
   const contractAddress = "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
-  const contractId = 91040;  // 正式版kairosNFTs = 91086 測試版blackpeople = 91040
+  const contractId = 91040; // 正式版kairosNFTs = 91086 測試版blackpeople = 91040
   const { address, callcontract } = useConnection();
   const userAddress = address;
   const titleRef = useRef();
   const descriptionRef = useRef();
-  // const fileRef = useRef();
   const walletRef = useRef();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedTags, setSelectedTags] = useState([]);
@@ -161,8 +163,16 @@ export default function Mint() {
   const [royaltyPercentage, setRoyaltyPercentage] = useState(10);
   const [walletAddress, setWalletAddress] = useState(``);
   const [file, setFile] = useState();
-
   const [miningInProgress, setMiningInProgress] = useState(false);
+  // royalties share
+  const [useRoyaltiesShare, setUseRoyaltiesShare] = useState();
+  const [royaltiesSharers, setRoyaltiesSharer] = useState([
+    {
+      id: 0,
+      address: walletAddress,
+      share: 100,
+    },
+  ]);
 
   function handleChange(event) {
     setFile(event.target.files[0]);
@@ -224,17 +234,22 @@ export default function Mint() {
       data.append("minter", contractAddress);
 
       // Append the minting tool to the FormData instance
-      // const mintingTool = "https://kairos-mint.art/mint";
-      // const mintingTool = "http://localhost:3030"
       data.append("mintingTool", serverUrl);
 
       // Append the copyright to the FormData instance,
       data.append("rights", selectedLicense.label);
 
       // Append the royalties to the FormData instance
+      const beautyShares = Object.fromEntries(
+        royaltiesSharers.map((sharer) => [
+          sharer.address,
+          royaltyPercentage * sharer.share,
+        ])
+      );
+      // console.log(JSON.stringify(beautyShares));
       const royalties = {
         decimals: 4,
-        shares: { [userAddress]: royaltyPercentage * 100 },
+        shares: beautyShares,
       };
       data.append("royalties", JSON.stringify(royalties));
 
@@ -311,12 +326,28 @@ export default function Mint() {
     }
   };
 
+  // API ROUTE : Fetch wallet role
+  const [roleData, setRoleData] = useState(null);
+  const [isLoadingRole, setLoadingRole] = useState(true);
+
   useEffect(() => {
-    // Auto import wallet address to input field
     if (!userAddress) {
       return;
     }
+
+    // Auto import wallet address to input field
     setWalletAddress(userAddress);
+
+    // Fetch wallet role
+    fetch("/api/walletRoles", {
+      method: "POST",
+      body: address,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setRoleData(data);
+        setLoadingRole(false);
+      });
 
     // Google autocomplete service
     let active = true;
@@ -334,15 +365,12 @@ export default function Mint() {
     fetchPlacePredictions({ input: inputValue }, (results) => {
       if (active) {
         let newOptions = [];
-
         if (value) {
           newOptions = [value];
         }
-
         if (results) {
           newOptions = [...newOptions, ...results];
         }
-
         setOptions(newOptions);
       }
     });
@@ -350,6 +378,15 @@ export default function Mint() {
       active = false;
     };
   }, [value, inputValue, fetchPlacePredictions, userAddress]);
+
+  // Fetch wallet role
+  if (isLoadingRole) return <p>Loading...</p>;
+  if (!roleData) return <p>No role data</p>;
+  // console.log(roleData.data.length);
+  // Redirect to cannotMint page if the wallet role is not allowed to mint or not connected to wallet
+  if (roleData.data.length == 0 || !userAddress) {
+    router.push("/cannotMint");
+  }
 
   return (
     <>
@@ -550,7 +587,7 @@ export default function Mint() {
           <Box>
             <TextField
               id="royalty"
-              label="Royalty"
+              label="Royalty(10-25%)"
               type="number"
               sx={{ width: 300 }}
               InputLabelProps={{ shrink: true }}
@@ -562,6 +599,39 @@ export default function Mint() {
               }
             />
           </Box>
+          <Box>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      let array = [
+                        {
+                          id: 0,
+                          address: walletAddress,
+                          share: 100,
+                        },
+                      ];
+                      setRoyaltiesSharer(array);
+                    }
+                    setUseRoyaltiesShare(e.target.checked);
+                  }}
+                  value={useRoyaltiesShare}
+                />
+              }
+              label="Apply royalty sharing"
+            />
+          </Box>
+
+          {useRoyaltiesShare && (
+            <Sharer
+              type="RoyaltiesShare"
+              sharers={royaltiesSharers}
+              maxSharer="10"
+              handleSetSharer={setRoyaltiesSharer}
+            />
+          )}
+
           <Box>
             <Box>
               <TextField

@@ -246,12 +246,24 @@ export default function Mint() {
           royaltyPercentage * sharer.share,
         ])
       );
-      // console.log(JSON.stringify(beautyShares));
+      // royalties share
       const royalties = {
         decimals: 4,
         shares: beautyShares,
       };
-      data.append("royalties", JSON.stringify(royalties));
+      // royalty not share
+      const royaltiy = {
+        decimals: 4,
+        shares: { [userAddress]: royaltyPercentage * 100 },
+      };
+
+      if (useRoyaltiesShare) {
+        data.append("royalties", JSON.stringify(royalties));
+      } else {
+        data.append("royalties", JSON.stringify(royaltiy));
+      }
+
+      // data.append("royalties", JSON.stringify(royalties));
 
       // Append the file to the FormData instance
       // if (fileRef) {

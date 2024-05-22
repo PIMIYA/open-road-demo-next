@@ -19,24 +19,15 @@ const features = [
   },
   {
     title: "與創作者建立連結",
-    description: "透過在場證明，創作者將知道哪些人最常參與他們的活動，藉此獎勵自己的粉絲，建立會員。同時，持有在場證明者，可以對活動發表評論。",
-    mt: {
-      lg: -60
-    },
+    description: "透過在場證明，創作者將知道哪些人最常參與他們的活動，藉此獎勵自己的粉絲，建立會員。同時，持有在場證明者，可以對活動發表評論。"
   },
   {
     title: "探索喜好　認識環境",
     description: "透過在場證明，你能找到喜好相近的朋友；所有人可以一起看到當前藝術生態系的發展。",
-    mt: {
-      lg: -10
-    },
   },
   {
     title: "保有匿名性的開放",
-    description: "參與者保管個資，在場證明公開於鏈上。借助區塊鏈技術，建立安全、匿名但真實的開放資料。",
-    mt: {
-      lg: -30
-    },
+    description: "參與者保管個資，在場證明公開於鏈上。借助區塊鏈技術，建立安全、匿名但真實的開放資料。"
   },
 ];
 
@@ -46,32 +37,23 @@ export default function Home({ data }) {
 
   return (
     <>
-      <Container maxWidth="lg" sx={{
-        position: "relative",
-        mt: -10,
-      }}>
+      <Container maxWidth="lg">
         <KeyVisual />
       </Container>
         {isLanded &&
           <Container maxWidth="lg">
             {
               features.map((feature, index) => (
-                <FeatureBox
-                  key={index}
-                  bgIndex={index}
-                  title={feature.title}
-                  description={feature.description}
-                  mt={feature.mt}
-                />
+                <FeatureBox key={index} bgIndex={index} title={feature.title} description={feature.description} />
               ))
             }
           </Container>
         }
         {isLanded &&
           <Box sx={{
-            mt: 10,
-            mb: 20,
-            transform: "rotateZ(-5deg) scale(1.1)",
+            mt: 35,
+            mb: 15,
+            transform: "rotateZ(5deg)"
           }}>
             <Marquee
               variant="h3"
@@ -101,9 +83,9 @@ export default function Home({ data }) {
 }
 
 export async function getStaticProps() {
-  // const [data] = await Promise.all([await MainnetAPI(`/fa2tokens?limit=12`)]);
+  const [data] = await Promise.all([await MainnetAPI(`/fa2tokens?limit=12`)]);
   return {
-    props: { data: [] },
+    props: { data },
     // Next.js will attempt to re-generate the page:
     // - When a request comes in
     // - At most once every 10 seconds

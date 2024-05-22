@@ -4,11 +4,10 @@ import Image from "next/image";
 import Typography from "@mui/material/Typography";
 import FadeOnScroll from "@/components/fadeOnScroll";
 
-import bg1 from "@/public/bubble1_bg_sketch.png";
-import bg2 from "@/public/bubble2_bg_sketch.png";
-import bg3 from "@/public/bubble3_bg_sketch.png";
-import bg4 from "@/public/bubble4_bg_sketch.png";
-
+import bg1 from "@/public/bubble1_bg.png";
+import bg2 from "@/public/bubble2_bg.png";
+import bg3 from "@/public/bubble3_bg.png";
+import bg4 from "@/public/bubble4_bg.png";
 import { useTheme } from '@emotion/react';
 import { useEffect, useRef, useState } from 'react';
 import { xx } from './utils';
@@ -16,26 +15,17 @@ import { useGlobalContext } from '@/contexts/GlobalContext';
 
 const bgs = [bg1, bg2, bg3, bg4];
 
-export default function FeatureBox({ bgIndex, title, description, mt = 0 }) {
+export default function FeatureBox({ bgIndex, title, description }) {
   const { mousePosition, setMousePosition } = useGlobalContext();
   const theme = useTheme();
   const cardRef = useRef(null);
 
   const bg = bgs[bgIndex];
-
-  const imageHeightMap = {
-    xs: [
-      '80vw',
-      '50vw',
-      '50vw',
-      '70vw',
-    ],
-    md: [
-      '35vw',
-      '23vw',
-      '22vw',
-      '30vw',
-    ]
+  const maxWidthMap = {
+    0: 400,
+    1: 440,
+    2: 500,
+    3: 550,
   };
 
   const [transform, setTransform] = useState('');
@@ -54,7 +44,6 @@ export default function FeatureBox({ bgIndex, title, description, mt = 0 }) {
     rotateX = Math.min(maxRotate, Math.max(-maxRotate, rotateX));
     rotateY = Math.min(maxRotate, Math.max(-maxRotate, rotateY));
 
-    return '';
     return `perspective(1300px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${50 + bgIndex * 30}px)`;
   }
 
@@ -79,7 +68,7 @@ export default function FeatureBox({ bgIndex, title, description, mt = 0 }) {
         maxWidth: {
           sm: 500,
           md: 600,
-          lg: 600,
+          lg: maxWidthMap[bgIndex],
         },
         margin: '0 auto',
         mb: 8,
@@ -89,7 +78,9 @@ export default function FeatureBox({ bgIndex, title, description, mt = 0 }) {
         ':nth-of-type(2n)': {
           transform: { lg: 'translateX(-60%)'},
         },
-        mt,
+        ':nth-of-type(n + 2)': {
+          mt: { lg: -30 },
+        },
       }}
     >
       <Box
@@ -102,34 +93,34 @@ export default function FeatureBox({ bgIndex, title, description, mt = 0 }) {
         <FadeOnScroll onceonly>
           <Box
             sx={{
-              maxHeight: 600,
-              height: { xs: imageHeightMap.xs[bgIndex], md: imageHeightMap.md[bgIndex] },
+              maxHeight: 300,
+              height: { xs: '45vw', md: '25vw' },
+              background: '#fff',
               position: 'relative',
               borderRadius: '4vw',
-              // background: '#fff',
-              // border: '1px solid #aaa',
+              border: '1px solid #aaa',
               margin: '0 auto',
             }}
           >
-            <Image
-              src={bg}
-              alt={title}
-              style={{
-                width: 'auto',
-                height: '110%',
-                position: 'absolute',
-                left: '50%',
-                top: '50%',
-                transform: 'translate(-50%, -50%)',
-                pointerEvents: 'none',
-              }}
-            />
+          <Image
+            src={bg}
+            alt={title}
+            style={{
+              width: 'auto',
+              height: '100%',
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              pointerEvents: 'none',
+            }}
+          />
           </Box>
+        </FadeOnScroll>
+        <FadeOnScroll onceonly>
           <Box
             sx={{
-              px: { xs: 2, md: 6 },
+              px: { xs: 2, md: 6},
               py: { xs: 2, md: 4 },
-              mb: 2,
             }}
           >
             <Typography
@@ -146,9 +137,6 @@ export default function FeatureBox({ bgIndex, title, description, mt = 0 }) {
             </Typography>
             <Typography
               fontSize={18}
-              sx={{
-                background: '#fff',
-              }}
             >
               {description}
             </Typography>

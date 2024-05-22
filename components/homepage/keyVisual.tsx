@@ -16,13 +16,11 @@ const sketch: Sketch = (s) => {
   const keyPoints: Point[] = [];
   const originalSize = [1152, 2130];
 
-  let totalPoints = 0;
-
   const strokeType = pick(CONFIG.STROKE_CHANCE);
   const isStraightPath = chance(1);
-  const isSeparate = chance(40);
+  const isSeparate = chance(10);
 
-  let strokeRandomFactor = chance(90) ? 0 : s.random(3);
+  let strokeRandomFactor = chance(90) ? 0 : s.random(10, 20);
 
   if (isSeparate) {
     strokeRandomFactor = s.random(2);
@@ -173,7 +171,6 @@ const sketch: Sketch = (s) => {
 
       if (d) {
         points.push(...getSvgPoints(d));
-        totalPoints += points.length;
       }
     });
   }
@@ -201,8 +198,9 @@ const sketch: Sketch = (s) => {
     g.textSize(8 * size);
     g.text(keyPointIndex, point.position.x + s.random(5, 10) * size, point.position.y + s.random(5, 10) * size);
 
-    if (keyPoints.length < 10 && !s.isAllPointsReady) {
-      s.isAllPointsReady = true;
+    if (!keyPoints.length) {
+      s.isLanded = true;
+      s.setIsLanded(true);
     }
   }
 
@@ -267,11 +265,6 @@ const sketch: Sketch = (s) => {
       if (!point) {
         isFinished = true;
         break;
-      }
-
-      if (points.length < totalPoints * .05 && !s.isLanded) {
-        s.isLanded = true;
-        s.setIsLanded(true);
       }
 
       if (point.type == POINT_TYPES.KEY_POINT) {
@@ -403,7 +396,7 @@ const sketch: Sketch = (s) => {
 
     drawNumbers();
 
-    if (s.isAllPointsReady) {
+    if (s.isLanded) {
       drawPoints();
     }
 

@@ -6,31 +6,36 @@ export default async function handler(
   res: NextApiResponse
 ) {
     const body = await req.body;
-    /*** convert string to array ***/
+    // Convert string to array
     const string2array = body.split(",");
-    /*** convert array to object with key=url ***/
-    const array2object = string2array.map((url: any) => ({ url }));
-    // array2object.map((b) => {
-    //   console.log(b.url);
-    // });
+    const contractAndTokenId = string2array.map((i: any) => {
+      const tid = i.split("/");
+      const contract = tid[0];
+      const tokenId = tid[1];
+      return { contract, tokenId };
+    });
+    // Filter out only contract KT1PBwbt2aEWunSse2E3tCc5hbYJ3gbqsNBN
+    let filterd = contractAndTokenId.filter((e: { contract: string }) => e.contract == "KT1PBwbt2aEWunSse2E3tCc5hbYJ3gbqsNBN");
+    // Create a array of tokenId
+    let tokenIdArray: number[] = [];
+    filterd.map((cAndT: { contract: string; tokenId: number }) => {
+      tokenIdArray.push(cAndT.tokenId);
+    });
     
     /*** async/await with fetch and map, and then send result to where use api route ***/
     async function getData() {
-      const data = Promise.all(
-        array2object.map(async (i: { url: any; }) => await (await fetch(`${process.env.MainnetURL}/fa2tokens/${i.url}`)).json())
-      )
-      return data
+      const data =  (await fetch(`${process.env.TZKT_URL}/v1/tokens?contract=KT1PBwbt2aEWunSse2E3tCc5hbYJ3gbqsNBN&tokenId.in=${tokenIdArray}`)).json();      
+      return data;
     }
 
     getData()
     .then(data => {
-      // console.log(data)
-      res.status(200).send({ data })
+      // console.log(data);
+      res.status(200).send({ data });
     })
     .catch (err => {
-        res.status(500).send({ error: 'failed to fetch data' })
-      })
-    
+      res.status(500).send({ error: 'failed to fetch data' });
+    });
 }
 
 export const config = {

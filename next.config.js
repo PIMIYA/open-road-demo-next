@@ -38,6 +38,7 @@ const nextConfig = {
     WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
     WALLET_PASSPHRASE: process.env.WALLET_PASSPHRASE,
     SERVER_URL: process.env.SERVER_URL,
+    TZKT_URL: process.env.TZKT_URL,
   },
 
   // async headers() {

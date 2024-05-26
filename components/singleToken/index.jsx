@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import Image from "next/image";
 import { Box, Button, Container, Stack, Typography } from "@mui/material";
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
 import Tags from "@/components/Tags";
 import TokenCollectors from "./TokenCollectors";
@@ -13,13 +13,13 @@ import TokenClaimedProgress from "./TokenClaimedProgress";
 import { getAkaswapAssetUrl } from "@/lib/stringUtils";
 import { encrypt } from "@/lib/dummy";
 
-export default function SingleToken({data}) {
+export default function SingleToken({ data }) {
   const router = useRouter();
   const theme = useTheme();
-  const tokenImageUrl = getAkaswapAssetUrl(data.displayUri);
+  const tokenImageUrl = getAkaswapAssetUrl(data.metadata.displayUri);
   const total = data.amount;
-  const collected = Object.values(data.owners).reduce((a, b) => a + b, 0);
-  const ownerAddresses = Object.keys(data.owners);
+  // const collected = Object.values(data.owners).reduce((a, b) => a + b, 0);
+  // const ownerAddresses = Object.keys(data.owners);
 
   const url = `${router.query.contract}/${router.query.tokenId}`;
   const hash = encrypt(url);
@@ -29,7 +29,7 @@ export default function SingleToken({data}) {
 
   return (
     <>
-      <Box sx={{ background: '#fff' }} mx={3} borderRadius={2}>
+      <Box sx={{ background: "#fff" }} mx={3} borderRadius={2}>
         <Container maxWidth="lg">
           <Box py={6}>
             <Stack direction={{ xs: "column", md: "row" }} spacing={8}>
@@ -67,35 +67,28 @@ export default function SingleToken({data}) {
               >
                 <Box>
                   <Box mb={2} width={400} maxWidth="100%">
-                    <TokenClaimedProgress collected={collected} total={total} />
+                    {/* <TokenClaimedProgress collected={collected} total={total} /> */}
                   </Box>
 
                   <Typography variant="h4" component="h1">
-                    {data.name}
+                    {data.metadata.name}
                   </Typography>
                   <Typography variant="h6" component="div" mb={2}>
                     {data.creator}
                   </Typography>
 
-                  <Typography>
-                    {data.eventDate}
-                  </Typography>
-                  <Typography mb={2}>
-                    {data.eventPlace}
-                  </Typography>
+                  <Typography>{data.eventDate}</Typography>
+                  <Typography mb={2}>{data.eventPlace}</Typography>
 
-                  {data.tags &&
+                  {data.tags && (
                     <Box mb={8}>
                       <Tags tags={data.tags} />
                     </Box>
-                  }
+                  )}
 
                   {isShowcasePageLinkAvailable && (
                     <Box mb={3}>
-                      <Button
-                        variant="outlined"
-                        startIcon={<OpenInNewIcon />}
-                      >
+                      <Button variant="outlined" startIcon={<OpenInNewIcon />}>
                         <Link href={showcaseUrl} target="_blank">
                           Showcase Page
                         </Link>
@@ -104,9 +97,13 @@ export default function SingleToken({data}) {
                   )}
 
                   <Box>
-                    {data.description.split("\n").map((paragraph, index) => (
-                      <Typography key={index} paragraph>{paragraph}</Typography>
-                    ))}
+                    {data.metadata.description
+                      .split("\n")
+                      .map((paragraph, index) => (
+                        <Typography key={index} paragraph>
+                          {paragraph}
+                        </Typography>
+                      ))}
                   </Box>
                 </Box>
               </Box>
@@ -114,7 +111,11 @@ export default function SingleToken({data}) {
           </Box>
         </Container>
       </Box>
-      <TokenCollectors owners={data.owners} ownerAddresses={ownerAddresses} ownerAliases={data.ownerAliases} />
+      {/* <TokenCollectors
+        owners={data.owners}
+        ownerAddresses={ownerAddresses}
+        ownerAliases={data.ownerAliases}
+      /> */}
     </>
-  )
+  );
 }

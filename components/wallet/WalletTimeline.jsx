@@ -1,20 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import WalletTimelineCard from "./WalletTimelineCard";
 
-import Timeline from '@mui/lab/Timeline';
-import TimelineItem from '@mui/lab/TimelineItem';
-import TimelineSeparator from '@mui/lab/TimelineSeparator';
-import TimelineConnector from '@mui/lab/TimelineConnector';
-import TimelineContent from '@mui/lab/TimelineContent';
-import TimelineDot from '@mui/lab/TimelineDot';
+import Timeline from "@mui/lab/Timeline";
+import TimelineItem from "@mui/lab/TimelineItem";
+import TimelineSeparator from "@mui/lab/TimelineSeparator";
+import TimelineConnector from "@mui/lab/TimelineConnector";
+import TimelineContent from "@mui/lab/TimelineContent";
+import TimelineDot from "@mui/lab/TimelineDot";
 
-import { getContractFromUid, getIdFromUid, getUrlFromUid } from "@/lib/stringUtils";
+import {
+  getContractFromUid,
+  getIdFromUid,
+  getUrlFromUid,
+} from "@/lib/stringUtils";
 import { getRandomDate, getRandomPlace, getRandomCreator } from "@/lib/dummy";
 
 // TODO: infinite scroll
 // TODO: skeleton loading
 export default function WalletTimeline({ rawClaims }) {
-
   const [cardData, setCardData] = useState([null, null, null]);
   const [isLoading, setLoading] = useState(true);
 
@@ -30,9 +33,13 @@ export default function WalletTimeline({ rawClaims }) {
   });
 
   /*** array poolURL to do api route ***/
-  const claimTokenURLs = useMemo(() => claims.map(c => c.tokenURL), [rawClaims]); // useMemo to avoid re-render
+  const claimTokenURLs = useMemo(
+    () => claims.map((c) => c.tokenURL),
+    [rawClaims]
+  ); // useMemo to avoid re-render
+  // console.log(claimTokenURLs);
 
-  /*** API ROUTE : using POST to send poolURLs to api/walletRecords, and then get back all data by poolid after client side fetching ***/
+  // Fetch data of claim's tokens from tzkt api
   useEffect(() => {
     fetch("/api/walletRecords", {
       method: "POST",
@@ -41,11 +48,12 @@ export default function WalletTimeline({ rawClaims }) {
       .then((res) => res.json())
       .then((res) => {
         let data = res.data;
+        // console.log("claim's tokens", data);
 
         if (data) {
           // TODO: remove dummy data after api ready
           data = data.map((d) => {
-            d.cliamDate = getRandomDate();
+            d.cliamDate = getRandomDate(); // 還不清楚可以從哪裡取得？
             d.eventPlace = getRandomPlace();
             d.creator = getRandomCreator();
             return d;
@@ -69,7 +77,7 @@ export default function WalletTimeline({ rawClaims }) {
       sx={{
         mt: 0,
         padding: 0,
-        '> li::before': {
+        "> li::before": {
           flex: 0,
         },
       }}

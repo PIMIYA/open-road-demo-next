@@ -1,13 +1,11 @@
 // claim token lists by this wallet address.
 // redirect from akadrop claim page.
 
-import { useState, useEffect } from "react";
 /* Providers */
-import { ConnectionProvider, useConnection } from "@/packages/providers";
+import { useConnection } from "@/packages/providers";
 /* MUI */
-import { Box, Container, Paper, Stack } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 /* Fetch data */
-import { useRouter } from "next/router";
 import { WalletRoleAPI } from "@/lib/api";
 import { AkaDropAPI } from "@/lib/api";
 /* Dummy for mockup */
@@ -22,10 +20,6 @@ import WalletTimeline from "@/components/wallet/WalletTimeline";
 import WalletCanvas from "@/components/wallet/WalletCanvas";
 import SidePaper from "@/components/SidePaper";
 import Filter from "@/components/Filter";
-/* Components */
-import ClaimsTokenCardGrid from "@/components/claimsTokenCardGrid";
-/* NEXT */
-import styles from "@/styles/CardContent.module.css";
 
 export default function Wallet({ role, pools, claims, addressFromURL }) {
   /* Connected wallet */

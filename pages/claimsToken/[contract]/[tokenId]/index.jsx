@@ -4,36 +4,56 @@ import dynamic from "next/dynamic";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 /* Fetch data */
-import { MainnetAPI } from "@/lib/api";
+import { TZKT_API } from "@/lib/api";
 /* Components */
 import SingleToken from "@/components/singleToken";
 /* Routing */
 import { useRouter } from "next/router";
 
-import { getRandomCreator, getRandomObjectType, getRandomPeriod, getRandomPlace } from "@/lib/dummy";
+import {
+  getRandomCreator,
+  getRandomObjectType,
+  getRandomPeriod,
+  getRandomPlace,
+} from "@/lib/dummy";
 
 export default function Id({ data }) {
-  //   console.log(data);
-  // const router = useRouter();
-  // const query = router.query;
-  // console.log(query);
+  // console.log(data);
 
-  // TODO: replace dummy data with real data
-  if (data && !data.objectType) {
-    data.creator = getRandomCreator();
-    data.objectType = getRandomObjectType();
-    data.eventDate = getRandomPeriod();
-    data.eventPlace = getRandomPlace();
+  // TODO: remove dummy data after api ready
+  if (data) {
+    data = data.map((d) => {
+      d.creator = getRandomCreator();
+      d.objectType = getRandomObjectType();
+      d.eventDate = getRandomPeriod();
+      d.eventPlace = getRandomPlace();
+
+      return d;
+    });
   }
 
-  return <SingleToken data={data} />;
+  // return <SingleToken data={data} />;
+  return (
+    <>
+      {data.map((d, index) => {
+        return (
+          <div key={index}>
+            <SingleToken data={d} />
+          </div>
+        );
+      })}
+    </>
+  );
 }
 
 export async function getServerSideProps(params) {
   //   console.log(params.params.id);
   const [data] = await Promise.all([
-    await MainnetAPI(
-      `/fa2tokens/${params.params.contract}/${params.params.tokenId}`
+    // await MainnetAPI(
+    //   `/fa2tokens/${params.params.contract}/${params.params.tokenId}`
+    // ),
+    await TZKT_API(
+      `/v1/tokens?contract=${params.params.contract}&tokenId=${params.params.tokenId}`
     ),
   ]);
 

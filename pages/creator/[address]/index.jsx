@@ -34,32 +34,37 @@ export default function ({ address, pools }) {
   const [dropInfo, setDropInfo] = useState(null);
   const [isLoading, setLoading] = useState(true);
 
-  /*** API ROUTE : using POST to send poolURLs to api/walletCreations, and then get back all data by poolid after client side fetching ***/
+  // Fetch data of creator's tokens from akadrop api, and then pass the tokens_uid to the next fetch
   useEffect(() => {
     fetch("/api/walletCreations", {
       method: "POST",
       body: poolURLs,
     })
       .then((res) => res.json())
-      .then((data) => {
+      .then((res) => {
+        let data = res.data;
+        // console.log("creator's tokens", data);
+        if (data) {
+          data = data.map((d) => {
+            let result = {
+              tokens_uid: d.tokens.map((t) => {
+                return t.uid;
+              }),
+            };
+            return result;
+          });
+        }
         setDropInfo(data);
+
         setLoading(false);
       });
   }, [poolURLs]);
 
   if (isLoading) return <p>Loading...</p>;
-  if (!dropInfo) return <p>No drop info</p>;
+  if (!dropInfo) return <p>No drop data</p>;
   // console.log(data.data[0].id);
 
   /*** orginze tokens_uid for the fetch in api route ***/
-  const mytoken = dropInfo.data.map((d) => {
-    let result = {
-      tokens_uid: d.tokens.map((t) => {
-        return t.uid;
-      }),
-    };
-    return result;
-  });
 
   return (
     <TwoColumnLayout>
@@ -86,7 +91,7 @@ export default function ({ address, pools }) {
           <Typography variant="body1">{description}</Typography>
         </Box>
 
-        <CreatorCardGrid rawPools={mytoken} />
+        <CreatorCardGrid rawPools={dropInfo} />
       </Main>
     </TwoColumnLayout>
   );

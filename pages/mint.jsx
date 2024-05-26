@@ -14,6 +14,10 @@ import { styled } from "@mui/material/styles";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Container from "@mui/material/Container";
 import Slider from "@mui/material/Slider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+
 // Get the lat and lng from the address
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 // Kairos
@@ -154,6 +158,7 @@ export default function Mint() {
   const { address, callcontract } = useConnection();
   const userAddress = address;
   const titleRef = useRef();
+  const organizerRef = useRef();
   const descriptionRef = useRef();
   const walletRef = useRef();
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -164,6 +169,8 @@ export default function Mint() {
   const [walletAddress, setWalletAddress] = useState(``);
   const [file, setFile] = useState();
   const [miningInProgress, setMiningInProgress] = useState(false);
+  const [startTime, setStartTime] = useState();
+  const [endTime, setEndTime] = useState();
   // royalties share
   const [useRoyaltiesShare, setUseRoyaltiesShare] = useState();
   const [royaltiesSharers, setRoyaltiesSharer] = useState([
@@ -191,6 +198,7 @@ export default function Mint() {
       const data = new FormData();
 
       // Append each form field to the FormData instance
+      data.append("organizer", organizerRef.current.value);
       data.append("title", titleRef.current.value);
       data.append("description", descriptionRef.current.value);
       data.append("category", selectedCategory.label);
@@ -223,9 +231,16 @@ export default function Mint() {
 
       data.append("tags", JSON.stringify(result));
 
+      // Append the location name to the FormData instance
+      data.append("eventPlace", inputValue);
+
       // Append the lat and lng to the FormData instance
       const geolocation = [lat, lng];
       data.append("geoLocation", JSON.stringify(geolocation));
+
+      // Append the start time to the FormData instance
+      data.append("startTime", startTime);
+      data.append("endTime", endTime);
 
       // Append the creator address to the FormData instance
       data.append("creator", userAddress);
@@ -246,21 +261,25 @@ export default function Mint() {
           royaltyPercentage * sharer.share,
         ])
       );
+      console.log(beautyShares);
       // royalties share
       const royalties = {
         decimals: 4,
         shares: beautyShares,
       };
       // royalty not share
-      const royaltiy = {
+      const royalty = {
         decimals: 4,
         shares: { [userAddress]: royaltyPercentage * 100 },
       };
 
+      const testRoyalty = {};
+      testRoyalty[userAddress] = royaltyPercentage * 100;
+
       if (useRoyaltiesShare) {
-        data.append("royalties", JSON.stringify(royalties));
+        data.append("royalties", JSON.stringify(beautyShares));
       } else {
-        data.append("royalties", JSON.stringify(royaltiy));
+        data.append("royalties", JSON.stringify(testRoyalty));
       }
 
       // data.append("royalties", JSON.stringify(royalties));
@@ -411,9 +430,18 @@ export default function Mint() {
         >
           <Box>
             <TextField
+              inputRef={organizerRef}
+              id="organizer"
+              label="Organizer"
+              variant="standard"
+              sx={{ width: 300 }}
+            />
+          </Box>
+          <Box>
+            <TextField
               inputRef={titleRef}
               id="title"
-              label="Title"
+              label="Event name"
               variant="standard"
               sx={{ width: 300 }}
             />
@@ -468,7 +496,9 @@ export default function Mint() {
               id="google-place-geocode"
               sx={{ width: 300 }}
               getOptionLabel={(option) =>
-                typeof option === "string" ? option : option.description
+                typeof option === "string"
+                  ? option
+                  : option.structured_formatting.main_text
               }
               filterOptions={(x) => x}
               options={options}
@@ -562,6 +592,26 @@ export default function Mint() {
                 </Box>
               </Box>
             ) : null}
+          </Box>
+          <Box>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label="start time"
+                sx={{ width: 300 }}
+                value={startTime}
+                onChange={(newValue) => setStartTime(newValue)}
+              />
+            </LocalizationProvider>
+          </Box>
+          <Box>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label="end time"
+                sx={{ width: 300 }}
+                value={endTime}
+                onChange={(newValue) => setEndTime(newValue)}
+              />
+            </LocalizationProvider>
           </Box>
           <Box>
             <Autocomplete

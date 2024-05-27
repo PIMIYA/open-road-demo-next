@@ -154,9 +154,9 @@ export default function Mint() {
   let mintingToken = false;
   const serverUrl = process.env.SERVER_URL;
   const contractAddress = "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
-  const contractId = 91040; // 正式版kairosNFTs = 91086 測試版blackpeople = 91040
+  const contractId = 91040; // 正式版kairosNFTs = 92340 測試版blackpeople = 91040
   const { address, callcontract } = useConnection();
-  const userAddress = address;
+  const userAddress = "tz1XBEMJfYoMoMMZafjYv3Q5V9u3QKv1xuBR"; // address, address will be used in the future, now it is a fixed value
   const titleRef = useRef();
   const organizerRef = useRef();
   const descriptionRef = useRef();
@@ -273,13 +273,13 @@ export default function Mint() {
         shares: { [userAddress]: royaltyPercentage * 100 },
       };
 
-      const testRoyalty = {};
-      testRoyalty[userAddress] = royaltyPercentage * 100;
+      // const testRoyalty = {};
+      // testRoyalty[userAddress] = royaltyPercentage * 100;
 
       if (useRoyaltiesShare) {
-        data.append("royalties", JSON.stringify(beautyShares));
+        data.append("royalties", JSON.stringify(royalties));
       } else {
-        data.append("royalties", JSON.stringify(testRoyalty));
+        data.append("royalties", JSON.stringify(royalty));
       }
 
       // data.append("royalties", JSON.stringify(royalties));

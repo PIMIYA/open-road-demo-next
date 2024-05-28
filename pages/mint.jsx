@@ -154,7 +154,7 @@ export default function Mint() {
   let mintingToken = false;
   const serverUrl = process.env.SERVER_URL;
   const contractAddress = "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
-  const contractId = 91040; // 正式版kairosNFTs = 92340 測試版blackpeople = 91040
+  const contractId = 92340; // 正式版kairosNFTs = 92340 測試版blackpeople = 91040
   const { address, callcontract } = useConnection();
   const userAddress = "tz1XBEMJfYoMoMMZafjYv3Q5V9u3QKv1xuBR"; // address, address will be used in the future, now it is a fixed value
   const titleRef = useRef();

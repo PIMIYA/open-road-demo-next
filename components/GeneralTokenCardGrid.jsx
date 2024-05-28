@@ -57,6 +57,8 @@ export default function GeneralTokenCardGrid(props) {
           ? getAkaswapAssetUrl(item.thumbnailUri)
           : "https://via.placeholder.com/400";
       }
+
+      // item.start_time = item.start_time ? new Date(item.start_time) : "";
     });
   }
 
@@ -85,6 +87,8 @@ export default function GeneralTokenCardGrid(props) {
                 objectType,
                 eventDate,
                 eventPlace,
+                start_time,
+                end_time,
               },
               index
             ) => (
@@ -129,6 +133,11 @@ export default function GeneralTokenCardGrid(props) {
                       </Box>
                       <Box id="secondary-info" mb={2}>
                         <Typography variant="body2">{eventDate}</Typography>
+                        <Typography variant="body2">
+                          {new Date(start_time).toLocaleDateString()} -{" "}
+                          {new Date(end_time).toLocaleDateString()}
+                        </Typography>
+                        {/* <Typography variant="body2">{end_time}</Typography> */}
                         <Typography variant="body2">{eventPlace}</Typography>
                       </Box>
                       <Stack direction="row" flexWrap="wrap">

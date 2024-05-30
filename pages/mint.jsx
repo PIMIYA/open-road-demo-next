@@ -168,6 +168,7 @@ export default function Mint() {
   const [royaltyPercentage, setRoyaltyPercentage] = useState(10);
   const [walletAddress, setWalletAddress] = useState(``);
   const [file, setFile] = useState();
+  const [thumb, setThumb] = useState();
   const [miningInProgress, setMiningInProgress] = useState(false);
   const [startTime, setStartTime] = useState();
   const [endTime, setEndTime] = useState();
@@ -181,8 +182,13 @@ export default function Mint() {
     },
   ]);
 
-  function handleChange(event) {
+  function handleFileChange(event) {
+    // console.log("file", file);
     setFile(event.target.files[0]);
+  }
+  function handleThumbChange(event) {
+    // console.log("thumb", thumb);
+    setThumb(event.target.files[0]);
   }
 
   const upload = async (event) => {
@@ -290,6 +296,9 @@ export default function Mint() {
       // }
       if (file) {
         data.append("image", file);
+      }
+      if (thumb) {
+        data.append("thumbnail", thumb);
       }
 
       console.log(data);
@@ -709,18 +718,14 @@ export default function Mint() {
           <Box>
             <ThemeProvider theme={theme}>
               <Button
-                id="thumbnail"
+                id="myfile"
                 component="label"
                 role={undefined}
                 variant="outlined"
                 tabIndex={-1}
               >
                 Upload file
-                <VisuallyHiddenInput
-                  type="file"
-                  // ref={fileRef}
-                  onChange={handleChange}
-                />
+                <VisuallyHiddenInput type="file" onChange={handleFileChange} />
               </Button>
             </ThemeProvider>
             <Box>
@@ -729,6 +734,37 @@ export default function Mint() {
                   <Box component="span">{file.name}</Box>
                 </Box>
               ) : null}
+            </Box>
+            <Box>
+              {(file && file.type == "image/jpeg") ||
+              (file && file.type == "image/png") ? (
+                <></>
+              ) : (
+                <Box>
+                  <ThemeProvider theme={theme}>
+                    <Button
+                      id="thumbnail"
+                      component="label"
+                      role={undefined}
+                      variant="outlined"
+                      tabIndex={-1}
+                    >
+                      Upload thumbnail
+                      <VisuallyHiddenInput
+                        type="file"
+                        onChange={handleThumbChange}
+                      />
+                    </Button>
+                  </ThemeProvider>
+                  <Box>
+                    {thumb ? (
+                      <Box sx={{ width: 300 }}>
+                        <Box component="span">{thumb.name}</Box>
+                      </Box>
+                    ) : null}
+                  </Box>
+                </Box>
+              )}
             </Box>
           </Box>
           <Box pt={6}>

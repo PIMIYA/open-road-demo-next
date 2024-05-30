@@ -736,7 +736,7 @@ export default function Mint() {
               ) : null}
             </Box>
             <Box>
-              {file && file.type.startsWith("image/") ? (
+              {(file && file.type.startsWith("image/")) || !file ? (
                 <></>
               ) : (
                 <Box>

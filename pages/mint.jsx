@@ -156,7 +156,7 @@ export default function Mint() {
   const contractAddress = "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
   const contractId = 92340; // 正式版kairosNFTs = 92340 測試版blackpeople = 91040
   const { address, callcontract } = useConnection();
-  const userAddress = "tz1XBEMJfYoMoMMZafjYv3Q5V9u3QKv1xuBR"; // address, address will be used in the future, now it is a fixed value
+  const createrAddress = "tz1XBEMJfYoMoMMZafjYv3Q5V9u3QKv1xuBR"; // address, address will be used in the future, now it is a fixed value
   const titleRef = useRef();
   const organizerRef = useRef();
   const descriptionRef = useRef();
@@ -183,7 +183,7 @@ export default function Mint() {
   ]);
 
   function handleFileChange(event) {
-    // console.log("file", file);
+    console.log("file", file);
     setFile(event.target.files[0]);
   }
   function handleThumbChange(event) {
@@ -249,7 +249,7 @@ export default function Mint() {
       data.append("endTime", endTime);
 
       // Append the creator address to the FormData instance
-      data.append("creator", userAddress);
+      data.append("creator", createrAddress);
 
       // Append the minter address to the FormData instance
       data.append("minter", contractAddress);
@@ -267,7 +267,7 @@ export default function Mint() {
           royaltyPercentage * sharer.share,
         ])
       );
-      console.log(beautyShares);
+      // console.log(beautyShares);
       // royalties share
       const royalties = {
         decimals: 4,
@@ -276,11 +276,11 @@ export default function Mint() {
       // royalty not share
       const royalty = {
         decimals: 4,
-        shares: { [userAddress]: royaltyPercentage * 100 },
+        shares: { [address]: royaltyPercentage * 100 },
       };
 
       // const testRoyalty = {};
-      // testRoyalty[userAddress] = royaltyPercentage * 100;
+      // testRoyalty[address] = royaltyPercentage * 100;
 
       if (useRoyaltiesShare) {
         data.append("royalties", JSON.stringify(royalties));
@@ -333,7 +333,7 @@ export default function Mint() {
           //Editions
           const metadataHashes = [metadataHash];
 
-          const creators = [userAddress];
+          const creators = [createrAddress, address];
 
           const contractCallDetails = {
             contractId: contractId,
@@ -371,12 +371,12 @@ export default function Mint() {
   const [isLoadingRole, setLoadingRole] = useState(true);
 
   useEffect(() => {
-    if (!userAddress) {
+    if (!address) {
       return;
     }
 
     // Auto import wallet address to input field
-    setWalletAddress(userAddress);
+    setWalletAddress(address);
 
     // Fetch wallet role
     fetch("/api/walletRoles", {
@@ -417,14 +417,14 @@ export default function Mint() {
     return () => {
       active = false;
     };
-  }, [value, inputValue, fetchPlacePredictions, userAddress]);
+  }, [value, inputValue, fetchPlacePredictions, address]);
 
   // Fetch wallet role
   if (isLoadingRole) return <p>Loading...</p>;
   if (!roleData) return <p>No role data</p>;
   // console.log(roleData.data.length);
   // Redirect to cannotMint page if the wallet role is not allowed to mint or not connected to wallet
-  if (roleData.data.length == 0 || !userAddress) {
+  if (roleData.data.length == 0 || !address) {
     router.push("/cannotMint");
   }
 
@@ -711,7 +711,7 @@ export default function Mint() {
                 label="walletAddress"
                 variant="standard"
                 sx={{ width: 300 }}
-                value={walletAddress}
+                value={address}
               />
             </Box>
           </Box>
@@ -736,8 +736,7 @@ export default function Mint() {
               ) : null}
             </Box>
             <Box>
-              {(file && file.type == "image/jpeg") ||
-              (file && file.type == "image/png") ? (
+              {file && file.type.startsWith("image/") ? (
                 <></>
               ) : (
                 <Box>

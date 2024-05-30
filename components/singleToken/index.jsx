@@ -77,7 +77,13 @@ export default function SingleToken({ data }) {
                     {data.creator}
                   </Typography>
 
-                  <Typography>{data.eventDate}</Typography>
+                  <Typography variant="body2">
+                    {data.start_time
+                      ? new Date(data.start_time).toLocaleDateString() +
+                        " - " +
+                        new Date(data.end_time).toLocaleDateString()
+                      : eventDate}
+                  </Typography>
                   <Typography mb={2}>{data.eventPlace}</Typography>
 
                   {data.tags && (

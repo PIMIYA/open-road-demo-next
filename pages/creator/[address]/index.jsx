@@ -43,7 +43,7 @@ export default function ({ address, pools }) {
       .then((res) => res.json())
       .then((res) => {
         let data = res.data;
-        // console.log("creator's tokens", data);
+        console.log("creator's tokens", data);
         if (data) {
           data = data.map((d) => {
             let result = {

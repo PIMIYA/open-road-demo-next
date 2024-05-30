@@ -53,9 +53,9 @@ export default function WalletTimeline({ rawClaims }) {
         if (data) {
           // TODO: remove dummy data after api ready
           data = data.map((d) => {
-            d.cliamDate = getRandomDate(); // 還不清楚可以從哪裡取得？
-            d.eventPlace = getRandomPlace();
-            d.creator = getRandomCreator();
+            // d.cliamDate = getRandomDate(); // 還不知道要去哪裡得到akadrop claim的時間
+            d.eventPlace = d.metadata.event_location;
+            d.creator = d.metadata.organizer;
             return d;
           });
 

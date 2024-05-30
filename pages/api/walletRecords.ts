@@ -14,8 +14,8 @@ export default async function handler(
       const tokenId = tid[1];
       return { contract, tokenId };
     });
-    // Filter out only contract KT1PBwbt2aEWunSse2E3tCc5hbYJ3gbqsNBN
-    let filterd = contractAndTokenId.filter((e: { contract: string }) => e.contract == "KT1PBwbt2aEWunSse2E3tCc5hbYJ3gbqsNBN");
+    // Filter out only contract 測試：KT1PBwbt2aEWunSse2E3tCc5hbYJ3gbqsNBN 正式：KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW
+    let filterd = contractAndTokenId.filter((e: { contract: string }) => e.contract == "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW");
     // Create a array of tokenId
     let tokenIdArray: number[] = [];
     filterd.map((cAndT: { contract: string; tokenId: number }) => {
@@ -24,7 +24,7 @@ export default async function handler(
     
     /*** async/await with fetch and map, and then send result to where use api route ***/
     async function getData() {
-      const data =  (await fetch(`${process.env.TZKT_URL}/v1/tokens?contract=KT1PBwbt2aEWunSse2E3tCc5hbYJ3gbqsNBN&tokenId.in=${tokenIdArray}`)).json();      
+      const data =  (await fetch(`${process.env.TZKT_URL}/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.in=${tokenIdArray}`)).json();      
       return data;
     }
 

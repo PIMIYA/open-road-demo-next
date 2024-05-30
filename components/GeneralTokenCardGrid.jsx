@@ -43,6 +43,7 @@ export default function GeneralTokenCardGrid(props) {
 
   // TODO: replace dummy data with real data
   if (data) {
+    // console.log(data);
     data.forEach((item) => {
       if (!item.objectType) {
         item.objectType = getRandomObjectType();
@@ -57,7 +58,7 @@ export default function GeneralTokenCardGrid(props) {
           ? getAkaswapAssetUrl(item.thumbnailUri)
           : "https://via.placeholder.com/400";
       }
-
+      // console.log(item.contract.address);
       // item.start_time = item.start_time ? new Date(item.start_time) : "";
     });
   }
@@ -89,6 +90,7 @@ export default function GeneralTokenCardGrid(props) {
                 eventPlace,
                 start_time,
                 end_time,
+                metadata,
               },
               index
             ) => (
@@ -107,7 +109,7 @@ export default function GeneralTokenCardGrid(props) {
                   <Box>
                     <Link
                       href="/claimsToken/[contract]/[tokenId]"
-                      as={`/claimsToken/${contract}/${tokenId}`}
+                      as={`/claimsToken/${contract.address}/${tokenId}`}
                     >
                       <CardMedia
                         component="img"
@@ -116,7 +118,7 @@ export default function GeneralTokenCardGrid(props) {
                         sx={{
                           mb: 1,
                         }}
-                        image={tokenImageUrl}
+                        image={getAkaswapAssetUrl(metadata.image)}
                       />
                       <Box id="primary-info" mb={1}>
                         <Stack direction="row" spacing={1}>
@@ -125,23 +127,30 @@ export default function GeneralTokenCardGrid(props) {
                             component="h6"
                             gutterBottom
                           >
-                            {name}
+                            {metadata.name}
                           </Typography>
-                          <Chip label={objectType} size="small" />
+                          <Chip label={metadata.category} size="small" />
                         </Stack>
-                        <Typography variant="body1">{creator}</Typography>
+                        <Typography variant="body1">
+                          {metadata.organizer}
+                        </Typography>
                       </Box>
                       <Box id="secondary-info" mb={2}>
-                        <Typography variant="body2">{eventDate}</Typography>
                         <Typography variant="body2">
-                          {new Date(start_time).toLocaleDateString()} -{" "}
-                          {new Date(end_time).toLocaleDateString()}
+                          {metadata.start_time
+                            ? new Date(
+                                metadata.start_time
+                              ).toLocaleDateString() +
+                              " - " +
+                              new Date(metadata.end_time).toLocaleDateString()
+                            : eventDate}
                         </Typography>
-                        {/* <Typography variant="body2">{end_time}</Typography> */}
-                        <Typography variant="body2">{eventPlace}</Typography>
+                        <Typography variant="body2">
+                          {metadata.event_location}
+                        </Typography>
                       </Box>
                       <Stack direction="row" flexWrap="wrap">
-                        <Tags tags={tags} />
+                        <Tags tags={metadata.tags} />
                       </Stack>
                     </Link>
                   </Box>

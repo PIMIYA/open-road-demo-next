@@ -10,16 +10,20 @@ import { useRouter } from "next/router";
 /* MUI */
 import Box from "@mui/material/Box";
 /* Fetch data */
-import { MainnetAPI } from "@/lib/api";
+import { TZKT_API, MainnetAPI } from "@/lib/api";
 /* Components */
-import TwoColumnLayout, { Main, Side } from "@/components/layouts/TwoColumnLayout";
+import TwoColumnLayout, {
+  Main,
+  Side,
+} from "@/components/layouts/TwoColumnLayout";
 import GeneralTokenCardGrid from "@/components/GeneralTokenCardGrid";
 import MyPagination from "@/components/myPagination";
 import SidePaper from "@/components/SidePaper";
 import Filter from "@/components/Filter";
 
-export default function Events({ data }) {
-  // console.log(data.tokens)
+export default function Events({ data, nDAta }) {
+  // console.log("data", data.tokens);
+  // console.log("nDAta", nDAta);
 
   /* Pagination */
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,7 +31,7 @@ export default function Events({ data }) {
   const onPageChange = (page) => {
     setCurrentPage(page);
   };
-  const paginatedPosts = paginate(data.tokens, currentPage, pageSize);
+  const paginatedPosts = paginate(nDAta, currentPage, pageSize);
 
   return (
     <TwoColumnLayout>
@@ -40,7 +44,7 @@ export default function Events({ data }) {
         <GeneralTokenCardGrid data={paginatedPosts} />
         <Box pt={3}>
           <MyPagination
-            items={data.tokens.length} // 24
+            items={nDAta.length} // 24
             currentPage={currentPage} // 1
             pageSize={pageSize} // 6
             onPageChange={onPageChange}
@@ -52,9 +56,14 @@ export default function Events({ data }) {
 }
 
 export async function getStaticProps() {
-  const [data] = await Promise.all([await MainnetAPI(`/fa2tokens?limit=24`)]);
+  const [data, nDAta] = await Promise.all([
+    await MainnetAPI(
+      `/fa2tokens?limit=24&contracts=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
+    ),
+    await TZKT_API(`/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`),
+  ]);
   return {
-    props: { data },
+    props: { data, nDAta },
     // Next.js will attempt to re-generate the page:
     // - When a request comes in
     // - At most once every 10 seconds

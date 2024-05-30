@@ -40,31 +40,31 @@ export default function ({ rawPools }) {
         let data = res.data;
         // console.log("creator's tokens", data);
         // TODO: remove dummy data after api ready
-        if (data) {
-          data = data.map((d) => {
-            d.eventPlace = d.metadata.event_location
-              ? d.metadata.event_location
-              : getRandomPlace();
-            d.creator = d.metadata.organizer
-              ? d.metadata.organizer
-              : getRandomCreator();
-            // d.date = d.createTime; //還沒有create time
-            d.tokenImageUrl = getAkaswapAssetUrl(d.metadata.displayUri);
-            d.contract = getContractFromUid(d.contract.address);
-            d.tokenId = getIdFromUid(d.tokenId);
-            d.tags = d.metadata.tags;
-            d.name = d.metadata.name;
-            d.start_time = d.metadata.start_time;
-            d.end_time = d.metadata.end_time;
+        // if (data) {
+        //   data = data.map((d) => {
+        //     d.eventPlace = d.metadata.event_location
+        //       ? d.metadata.event_location
+        //       : getRandomPlace();
+        //     d.creator = d.metadata.organizer
+        //       ? d.metadata.organizer
+        //       : getRandomCreator();
+        //     // d.date = d.createTime; //還沒有create time
+        //     d.tokenImageUrl = getAkaswapAssetUrl(d.metadata.displayUri);
+        //     d.contract = getContractFromUid(d.contract.address);
+        //     d.tokenId = getIdFromUid(d.tokenId);
+        //     d.tags = d.metadata.tags;
+        //     d.name = d.metadata.name;
+        //     d.start_time = d.metadata.start_time;
+        //     d.end_time = d.metadata.end_time;
 
-            return d;
-          });
+        //     return d;
+        //   });
 
-          // sort cartData by date
-          // data.sort((a, b) => {
-          //   return new Date(b.date) - new Date(a.date);
-          // });
-        }
+        //   // sort cartData by date
+        //   // data.sort((a, b) => {
+        //   //   return new Date(b.date) - new Date(a.date);
+        //   // });
+        // }
 
         setCardData(data);
         setLoading(false);

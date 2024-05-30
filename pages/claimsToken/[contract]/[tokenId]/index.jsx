@@ -23,10 +23,16 @@ export default function Id({ data }) {
   // TODO: remove dummy data after api ready
   if (data) {
     data = data.map((d) => {
-      d.creator = getRandomCreator();
+      d.eventPlace = d.metadata.event_location
+        ? d.metadata.event_location
+        : getRandomPlace();
+      d.creator = d.metadata.organizer
+        ? d.metadata.organizer
+        : getRandomCreator();
       d.objectType = getRandomObjectType();
       d.eventDate = getRandomPeriod();
-      d.eventPlace = getRandomPlace();
+      d.start_time = d.metadata.start_time;
+      d.end_time = d.metadata.end_time;
 
       return d;
     });

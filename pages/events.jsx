@@ -60,7 +60,9 @@ export async function getStaticProps() {
     await MainnetAPI(
       `/fa2tokens?limit=24&contracts=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
     ),
-    await TZKT_API(`/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`),
+    await TZKT_API(
+      `/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.ni=1,2,3,4,5,6,7,8`
+    ),
   ]);
   return {
     props: { data, nDAta },

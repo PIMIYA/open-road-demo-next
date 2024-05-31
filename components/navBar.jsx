@@ -164,9 +164,9 @@ export default function () {
           <MenuItem onClick={handleClose}>
             <Link href="/events">所有活動</Link>
           </MenuItem>
-          <MenuItem onClick={handleClose}>
+          {/* <MenuItem onClick={handleClose}>
             <Link href="/creators">所有創作者</Link>
-          </MenuItem>
+          </MenuItem> */}
           <Divider />
         </Box>
         <MenuItem onClick={handleClose}>
@@ -284,7 +284,7 @@ export default function () {
         <Box>
           <Stack direction="row" alignItems="center" spacing={4}>
             <NavLink label="所有活動" href="/events" />
-            <NavLink label="所有創作者" href="/creators" />
+            {/* <NavLink label="所有創作者" href="/creators" /> */}
             {address ? connectedMenu : connectBtn}
           </Stack>
         </Box>

@@ -34,38 +34,11 @@ export default function ({ rawPools }) {
         if (!res.ok) {
           throw new Error("Network response was not ok");
         }
+        // console.log(res);
         return res.json();
       })
       .then((res) => {
         let data = res.data;
-        // console.log("creator's tokens", data);
-        // TODO: remove dummy data after api ready
-        // if (data) {
-        //   data = data.map((d) => {
-        //     d.eventPlace = d.metadata.event_location
-        //       ? d.metadata.event_location
-        //       : getRandomPlace();
-        //     d.creator = d.metadata.organizer
-        //       ? d.metadata.organizer
-        //       : getRandomCreator();
-        //     // d.date = d.createTime; //還沒有create time
-        //     d.tokenImageUrl = getAkaswapAssetUrl(d.metadata.displayUri);
-        //     d.contract = getContractFromUid(d.contract.address);
-        //     d.tokenId = getIdFromUid(d.tokenId);
-        //     d.tags = d.metadata.tags;
-        //     d.name = d.metadata.name;
-        //     d.start_time = d.metadata.start_time;
-        //     d.end_time = d.metadata.end_time;
-
-        //     return d;
-        //   });
-
-        //   // sort cartData by date
-        //   // data.sort((a, b) => {
-        //   //   return new Date(b.date) - new Date(a.date);
-        //   // });
-        // }
-
         setCardData(data);
         setLoading(false);
       })
@@ -75,7 +48,7 @@ export default function ({ rawPools }) {
       });
   }, [poolURLs]);
 
-  if (!isLoading && !cardData) return <p>No profile data</p>;
+  if ((!isLoading && !cardData) || cardData == null) return <p>No mint data</p>;
 
   const columnSettings = {
     grid: {

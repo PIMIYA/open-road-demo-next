@@ -32,24 +32,24 @@ export default function () {
   const [anchorEl, setAnchorEl] = useState(null);
   const { address, connect, disconnect } = useConnection();
 
-  // const [roleData, setRoleData] = useState(null);
-  // const [isLoadingRole, setLoadingRole] = useState(true);
+  const [roleData, setRoleData] = useState(null);
+  const [isLoadingRole, setLoadingRole] = useState(true);
 
-  // useEffect(() => {
-  //   if (!address) {
-  //     return;
-  //   }
+  useEffect(() => {
+    if (!address) {
+      return;
+    }
 
-  //   fetch("/api/walletRoles", {
-  //     method: "POST",
-  //     body: address,
-  //   })
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       setRoleData(data);
-  //       setLoadingRole(false);
-  //     });
-  // }, [address]);
+    fetch("/api/walletRoles", {
+      method: "POST",
+      body: address,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setRoleData(data);
+        setLoadingRole(false);
+      });
+  }, [address]);
 
   // if (isLoadingRole) return <p>Loading...</p>;
   // if (!roleData) return <p>No role data</p>;
@@ -178,43 +178,50 @@ export default function () {
             My Wallet
           </Link>
         </MenuItem>
-        {/* {roleData.data.length == 0 ? null : <Divider />} */}
-        <Divider />
+        {roleData && roleData.data.length == 0 ? null : <Divider />}
 
         <MenuItem
           onClick={handleClose}
-          // sx={{ display: `${roleData.data.length == 0 ? "none" : "block"}` }}
+          sx={{
+            display: `${
+              roleData && roleData.data.length == 0 ? "none" : "block"
+            }`,
+          }}
         >
-          {/* {roleData.data.length == 0 ? null : (
-            <> */}
-          <Link
-            href={{
-              pathname: "/creator/[address]",
-              query: { address },
-            }}
-          >
-            My Creator Page
-          </Link>
-          {/* </>
-          )} */}
+          {roleData && roleData.data.length == 0 ? null : (
+            <>
+              <Link
+                href={{
+                  pathname: "/creator/[address]",
+                  query: { address },
+                }}
+              >
+                My Creator Page
+              </Link>
+            </>
+          )}
         </MenuItem>
 
         <MenuItem
           onClick={handleClose}
-          // sx={{ display: `${roleData.data.length == 0 ? "none" : "block"}` }}
+          sx={{
+            display: `${
+              roleData && roleData.data.length == 0 ? "none" : "block"
+            }`,
+          }}
         >
-          {/* {roleData.data.length == 0 ? null : (
-            <> */}
-          <Link
-            href={{
-              pathname: "/mint",
-            }}
-            as="/mint"
-          >
-            Mint
-          </Link>
-          {/* </>
-          )} */}
+          {roleData && roleData.data.length == 0 ? null : (
+            <>
+              <Link
+                href={{
+                  pathname: "/mint",
+                }}
+                as="/mint"
+              >
+                Mint
+              </Link>
+            </>
+          )}
         </MenuItem>
         <Divider />
 

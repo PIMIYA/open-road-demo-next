@@ -118,7 +118,7 @@ export default function GeneralTokenCardGrid(props) {
                         sx={{
                           mb: 1,
                         }}
-                        image={getAkaswapAssetUrl(metadata.image)}
+                        image={getAkaswapAssetUrl(metadata.thumbnailUri)}
                       />
                       <Box id="primary-info" mb={1}>
                         <Stack direction="row" spacing={1}>

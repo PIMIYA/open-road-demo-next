@@ -31,12 +31,12 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
   return (
     <TwoColumnLayout>
       <Side sticky={true}>
-        <SidePaper>
+        {/* <SidePaper>
           <WalletProfile
             address={addressFromURL}
             introduction={introduction}
           ></WalletProfile>
-        </SidePaper>
+        </SidePaper> */}
         {claims.count > 1 && (
           <SidePaper>
             <Filter />

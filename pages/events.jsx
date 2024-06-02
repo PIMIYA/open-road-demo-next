@@ -23,7 +23,12 @@ import Filter from "@/components/Filter";
 
 export default function Events({ data, nDAta }) {
   // console.log("data", data.tokens);
+
   // console.log("nDAta", nDAta);
+  // const newData = nDAta.filter(function (category) {
+  //   return category.metadata.category == "展覽";
+  // });
+  // console.log("newData", newData);
 
   /* Pagination */
   const [currentPage, setCurrentPage] = useState(1);

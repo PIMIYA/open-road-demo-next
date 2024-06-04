@@ -13,13 +13,14 @@ import TokenClaimedProgress from "./TokenClaimedProgress";
 import { getAkaswapAssetUrl } from "@/lib/stringUtils";
 import { encrypt } from "@/lib/dummy";
 
-export default function SingleToken({ data }) {
+export default function SingleToken({ ownersData, data }) {
   const router = useRouter();
   const theme = useTheme();
   const tokenImageUrl = getAkaswapAssetUrl(data.metadata.displayUri);
   const total = data.amount;
-  // const collected = Object.values(data.owners).reduce((a, b) => a + b, 0);
-  // const ownerAddresses = Object.keys(data.owners);
+
+  const collected = Object.values(ownersData.owners).reduce((a, b) => a + b, 0);
+  const ownerAddresses = Object.keys(ownersData.owners);
 
   const url = `${router.query.contract}/${router.query.tokenId}`;
   const hash = encrypt(url);
@@ -67,7 +68,7 @@ export default function SingleToken({ data }) {
               >
                 <Box>
                   <Box mb={2} width={400} maxWidth="100%">
-                    {/* <TokenClaimedProgress collected={collected} total={total} /> */}
+                    <TokenClaimedProgress collected={collected} total={total} />
                   </Box>
 
                   <Typography variant="h4" component="h1">
@@ -92,7 +93,7 @@ export default function SingleToken({ data }) {
                     </Box>
                   )}
 
-                  {isShowcasePageLinkAvailable && (
+                  {/* {isShowcasePageLinkAvailable && (
                     <Box mb={3}>
                       <Button variant="outlined" startIcon={<OpenInNewIcon />}>
                         <Link href={showcaseUrl} target="_blank">
@@ -100,7 +101,7 @@ export default function SingleToken({ data }) {
                         </Link>
                       </Button>
                     </Box>
-                  )}
+                  )} */}
 
                   <Box>
                     {data.metadata.description
@@ -117,11 +118,11 @@ export default function SingleToken({ data }) {
           </Box>
         </Container>
       </Box>
-      {/* <TokenCollectors
-        owners={data.owners}
+      <TokenCollectors
+        owners={ownersData.owners}
         ownerAddresses={ownerAddresses}
-        ownerAliases={data.ownerAliases}
-      /> */}
+        ownerAliases={ownersData.ownerAliases}
+      />
     </>
   );
 }

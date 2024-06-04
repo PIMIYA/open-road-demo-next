@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 /* Fetch data */
-import { TZKT_API } from "@/lib/api";
+import { TZKT_API, MainnetAPI } from "@/lib/api";
 /* Components */
 import SingleToken from "@/components/singleToken";
 /* Routing */
@@ -17,8 +17,8 @@ import {
   getRandomPlace,
 } from "@/lib/dummy";
 
-export default function Id({ data }) {
-  // console.log(data);
+export default function Id({ ownersData, data }) {
+  // console.log(ownersData);
 
   // TODO: remove dummy data after api ready
   if (data) {
@@ -44,7 +44,7 @@ export default function Id({ data }) {
       {data.map((d, index) => {
         return (
           <div key={index}>
-            <SingleToken data={d} />
+            <SingleToken data={d} ownersData={ownersData} />
           </div>
         );
       })}
@@ -54,16 +54,16 @@ export default function Id({ data }) {
 
 export async function getServerSideProps(params) {
   //   console.log(params.params.id);
-  const [data] = await Promise.all([
-    // await MainnetAPI(
-    //   `/fa2tokens/${params.params.contract}/${params.params.tokenId}`
-    // ),
+  const [ownersData, data] = await Promise.all([
+    await MainnetAPI(
+      `/fa2tokens/${params.params.contract}/${params.params.tokenId}`
+    ),
     await TZKT_API(
       `/v1/tokens?contract=${params.params.contract}&tokenId=${params.params.tokenId}`
     ),
   ]);
 
   return {
-    props: { data },
+    props: { ownersData, data },
   };
 }

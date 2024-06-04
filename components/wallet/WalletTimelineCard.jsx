@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Box, Stack, Skeleton, Typography } from "@mui/material";
+import { Box, Stack, Skeleton, Typography, Chip } from "@mui/material";
 import Tags from "@/components/Tags";
 
 export default function WalletTimelineCard({ data, index }) {
@@ -34,13 +34,13 @@ export default function WalletTimelineCard({ data, index }) {
       </Box>
     );
   }
-  const tokenImageUrl = `https://assets.akaswap.com/ipfs/${data.metadata.displayUri.replace(
+  const tokenImageUrl = `https://assets.akaswap.com/ipfs/${data.token.metadata.thumbnailUri.replace(
     "ipfs://",
     ""
   )}`;
   // const { contract, tokenId } = data;
-  const contract = data.contract.address;
-  const tokenId = data.tokenId;
+  const contract = data.token.contract.address;
+  const tokenId = data.token.tokenId;
 
   return (
     <Box mb={10}>
@@ -53,7 +53,9 @@ export default function WalletTimelineCard({ data, index }) {
       >
         <Box width={200}>
           <Typography variant="body1">{data.cliamDate}</Typography>
-          <Typography variant="body2">{data.eventPlace}</Typography>
+          <Typography variant="body2">
+            {data.token.metadata.event_location}
+          </Typography>
         </Box>
         <Box width={"100%"}>
           <Box
@@ -92,12 +94,15 @@ export default function WalletTimelineCard({ data, index }) {
                   query: { contract, tokenId },
                 }}
               >
-                {data.metadata.name}
+                {data.token.metadata.name}
               </Link>
             </Typography>
-            <Typography variant="body1">{data.creator}</Typography>
+            <Typography variant="body1">
+              {data.token.metadata.organizer}
+            </Typography>
           </Box>
-          <Tags tags={data.metadata.tags} />
+          {/* <Tags tags={data.token.metadata.tags} /> */}
+          <Chip label={data.token.metadata.category} size="small" />
         </Box>
       </Stack>
     </Box>

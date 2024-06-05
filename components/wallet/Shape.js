@@ -9,14 +9,13 @@ export default class Shape {
     this.title = this.token.title;
     this.nextToken = this.s.tokens[this.index + 1];
     this.distanceToNext = this.getDistanceToNext();
-    this.cliamedPercentage = this.token.cliamedPercentage;
 
     this.type = shapeMap[this.token.categoryId].type;
     this.sides = shapeMap[this.token.categoryId].sides;
     this.isStripped = shapeMap[this.token.categoryId].strip;
 
     this.hue = this.getHue();
-    this.radius = this.token.totalAmount * .5;
+    this.radius = this.s.random(25, 50);
     this.rotate = options.s.random(360);
     this.nextAngle = options.nextAngle || options.s.random(360);
     this.position = options.s.createVector(options.position.x, options.position.y);
@@ -70,8 +69,17 @@ export default class Shape {
     const {lat, lan} = this.token;
     const {lat: nextLat, lan: nextLan} = this.nextToken;
     const s = this.s;
+    let dist = s.dist(lat, lan, nextLat, nextLan);
 
-    return s.dist(lat, lan, nextLat, nextLan) * s.distanceScale;
+    if (!s.distanceScale) {
+      return 100;
+    }
+
+    if (dist == 0) {
+      dist = s.random(5, 30);
+    }
+
+    return dist * s.distanceScale;
   }
 
   activate() {

@@ -1,6 +1,6 @@
 // all event lists
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { paginate } from "@/lib/paginate";
 
 /* NEXT */
@@ -125,6 +125,31 @@ export default function Events({ data }) {
   };
   const paginatedPosts = paginate(filteredData, currentPage, pageSize);
 
+  /* Router */
+  const router = useRouter();
+  const catState = router.query.cat ? router.query.cat : "";
+  const tagState = router.query.tag ? router.query.tag : "";
+  // console.log(tagState);
+
+  useEffect(() => {
+    if (catState || tagState) {
+      setCatValue(catState);
+      setTagValue(tagState);
+      // console.log(tagState);
+      // handleFilter();
+      const filterdByCat = data.filter(
+        (c) =>
+          c.metadata.tags.find((tag) => tag.includes(tagState)) &&
+          c.metadata.category.includes(catState)
+      );
+      setFilteredData(filterdByCat);
+    } else {
+      setCatValue("");
+      setTagValue("");
+      setFilteredData(data);
+    }
+  }, [catState, tagState]);
+
   return (
     <TwoColumnLayout>
       <Side sticky>
@@ -139,6 +164,7 @@ export default function Events({ data }) {
                 isOptionEqualToValue={(option, value) =>
                   option.label === value.label
                 }
+                // value={catValue}
                 onChange={(event, newValue) => {
                   // handleFilter(newValue);
                   if (newValue) {

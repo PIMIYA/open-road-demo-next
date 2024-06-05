@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 import {
   Box,
@@ -16,6 +17,8 @@ import { getRandomObjectType, getRandomPeriod } from "@/lib/dummy";
 import FadeOnScroll from "./fadeOnScroll";
 
 export default function GeneralTokenCardGrid(props) {
+  const router = useRouter();
+
   const data = props.data;
   const pageSize = props.pageSize || 6;
   const defaultColumnSettings = {
@@ -120,39 +123,46 @@ export default function GeneralTokenCardGrid(props) {
                         }}
                         image={getAkaswapAssetUrl(metadata.thumbnailUri)}
                       />
-                      <Box id="primary-info" mb={1}>
-                        <Stack direction="row" spacing={1}>
-                          <Typography
-                            variant="cardTitle"
-                            component="h6"
-                            gutterBottom
-                          >
-                            {metadata.name}
-                          </Typography>
-                          <Chip label={metadata.category} size="small" />
-                        </Stack>
-                        <Typography variant="body1">
-                          {metadata.organizer}
-                        </Typography>
-                      </Box>
-                      <Box id="secondary-info" mb={2}>
-                        <Typography variant="body2">
-                          {metadata.start_time
-                            ? new Date(
-                                metadata.start_time
-                              ).toLocaleDateString() +
-                              " - " +
-                              new Date(metadata.end_time).toLocaleDateString()
-                            : eventDate}
-                        </Typography>
-                        <Typography variant="body2">
-                          {metadata.event_location}
-                        </Typography>
-                      </Box>
-                      <Stack direction="row" flexWrap="wrap">
-                        <Tags tags={metadata.tags} />
-                      </Stack>
                     </Link>
+                    <Box id="primary-info" mb={1}>
+                      <Stack direction="row" spacing={1}>
+                        <Typography
+                          variant="cardTitle"
+                          component="h6"
+                          gutterBottom
+                        >
+                          {metadata.name}
+                        </Typography>
+                        <Chip
+                          label={metadata.category}
+                          size="small"
+                          onClick={() => {
+                            router.push({
+                              pathname: "/events",
+                              query: { cat: metadata.category },
+                            });
+                          }}
+                        />
+                      </Stack>
+                      <Typography variant="body1">
+                        {metadata.organizer}
+                      </Typography>
+                    </Box>
+                    <Box id="secondary-info" mb={2}>
+                      <Typography variant="body2">
+                        {metadata.start_time
+                          ? new Date(metadata.start_time).toLocaleDateString() +
+                            " - " +
+                            new Date(metadata.end_time).toLocaleDateString()
+                          : eventDate}
+                      </Typography>
+                      <Typography variant="body2">
+                        {metadata.event_location}
+                      </Typography>
+                    </Box>
+                    <Stack direction="row" flexWrap="wrap">
+                      <Tags tags={metadata.tags} />
+                    </Stack>
                   </Box>
                 </FadeOnScroll>
               </Grid>

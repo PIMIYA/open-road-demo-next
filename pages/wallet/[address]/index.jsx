@@ -131,12 +131,9 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
   return (
     <TwoColumnLayout>
       <Side sticky={true}>
-        {/* <SidePaper>
-          <WalletProfile
-            address={addressFromURL}
-            introduction={introduction}
-          ></WalletProfile>
-        </SidePaper> */}
+        {<SidePaper>
+          <WalletProfile address={addressFromURL} />
+        </SidePaper>}
         {cardData && cardData.length > 0 && (
           <SidePaper>
             <Box>

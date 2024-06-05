@@ -24,7 +24,7 @@ export default function TokenId({ data }) {
 // /* This function gets called at build time */
 export async function getStaticPaths() {
   /* Call an external API endpoint to get all tokens */
-  const [data] = await Promise.all([await MainnetAPI("/fa2tokens?limit=0")]);
+  const [data] = await Promise.all([await MainnetAPI("/fa2tokens?limit=12")]);
   /* Get the paths we want to pre-render based on contract and tokenId */
   const paths = data.tokens.map((token) => ({
     params: {

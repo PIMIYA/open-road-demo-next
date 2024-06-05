@@ -18,7 +18,7 @@ import {
 } from "@/lib/dummy";
 
 export default function Id({ ownersData, data }) {
-  // console.log(ownersData);
+  console.log(ownersData);
 
   // TODO: remove dummy data after api ready
   if (data) {

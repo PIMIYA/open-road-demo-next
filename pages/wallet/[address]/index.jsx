@@ -100,7 +100,7 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
 
           // sort cartData by cliamDate
           data.sort((a, b) => {
-            return new Date(b.cliamDate) - new Date(a.cliamDate);
+            return new Date(b.timestamp) - new Date(a.timestamp);
           });
         }
 
@@ -164,9 +164,11 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
   return (
     <TwoColumnLayout>
       <Side sticky={true}>
-        {<SidePaper>
-          <WalletProfile address={addressFromURL} />
-        </SidePaper>}
+        {
+          <SidePaper>
+            <WalletProfile address={addressFromURL} />
+          </SidePaper>
+        }
         {cardData && cardData.length > 0 && (
           <SidePaper>
             {/* <Box>

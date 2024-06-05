@@ -17,10 +17,9 @@ export default function SingleToken({ ownersData, data }) {
   const router = useRouter();
   const theme = useTheme();
   const tokenImageUrl = getAkaswapAssetUrl(data.metadata.displayUri);
-  const total = data.amount;
-
-  const collected = Object.values(ownersData.owners).reduce((a, b) => a + b, 0);
-  const ownerAddresses = Object.keys(ownersData.owners);
+  const total = ownersData.amount;
+  const collected = ownersData ? Object.keys(ownersData.owners).length - 2 : 0;
+  const ownerAddresses = ownersData ? Object.keys(ownersData.owners) : 0;
 
   const url = `${router.query.contract}/${router.query.tokenId}`;
   const hash = encrypt(url);
@@ -68,7 +67,16 @@ export default function SingleToken({ ownersData, data }) {
               >
                 <Box>
                   <Box mb={2} width={400} maxWidth="100%">
-                    <TokenClaimedProgress collected={collected} total={total} />
+                    {collected !== 0 ? (
+                      <TokenClaimedProgress
+                        collected={collected}
+                        total={total}
+                      />
+                    ) : (
+                      <Typography variant="h6" component="h1">
+                        No Owner
+                      </Typography>
+                    )}
                   </Box>
 
                   <Typography variant="h4" component="h1">
@@ -118,11 +126,13 @@ export default function SingleToken({ ownersData, data }) {
           </Box>
         </Container>
       </Box>
-      <TokenCollectors
-        owners={ownersData.owners}
-        ownerAddresses={ownerAddresses}
-        ownerAliases={ownersData.ownerAliases}
-      />
+      {ownerAddresses === 0 ? null : (
+        <TokenCollectors
+          owners={ownersData.owners}
+          ownerAddresses={ownerAddresses}
+          ownerAliases={ownersData.ownerAliases}
+        />
+      )}
     </>
   );
 }

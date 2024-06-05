@@ -150,8 +150,8 @@ export async function getServerSideProps(context) {
 
   const [role, pools, claims] = await Promise.all([
     await WalletRoleAPI(`/${address.address}`),
-    await AkaDropAPI(`/${address.address}/pools?offset=0&limit=10`),
-    await AkaDropAPI(`/${address.address}/claims?offset=0&limit=10`),
+    await AkaDropAPI(`/${address.address}/pools?offset=0&limit=0`),
+    await AkaDropAPI(`/${address.address}/claims?offset=0&limit=0`),
   ]);
 
   return {

@@ -49,6 +49,20 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
   const [isLoading, setLoading] = useState(true);
   /* Filter tokens' data */
   const [filteredData, setFilteredData] = useState(null);
+  /* Locations */
+  const locations = useMemo(() => {
+    if (cardData) {
+      let locations = [];
+      // console.log("cardData", cardData);
+      cardData.forEach((c) => {
+        if (!locations.includes(c.token.metadata.event_location)) {
+          locations.push(c.token.metadata.event_location);
+        }
+      });
+      return locations;
+    }
+  }, [cardData]);
+  // console.log("locations", locations);
 
   const myclaims = claims.claims.map((claim) => {
     let result = {
@@ -80,6 +94,7 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
         if (data) {
           data = data.map((d) => {
             d.cliamDate = new Date(d.timestamp).toLocaleDateString();
+            d.claimTime = new Date(d.timestamp).toLocaleTimeString();
             return d;
           });
 
@@ -96,32 +111,50 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
   }, [claimTokenURLs]);
 
   // Location Search Filter
-  const handleFilter = (event) => {
-    if (event === null) return;
-    const value_loc = event.main || event.target.value || event.input;
-    // console.log("value_loc", value_loc);
-    if (!event || value_loc === undefined) {
-      setFilteredData(cardData);
-      return;
-    } else {
-      const filterdByCat = cardData.filter((c) =>
-        c.token.metadata.event_location.includes(value_loc)
-      );
-      setFilteredData(filterdByCat);
-    }
-  };
+  // const handleFilter = (event) => {
+  //   if (event === null) return;
+  //   const value_loc = event.main || event.target.value || event.input;
+  //   // console.log("value_loc", value_loc);
+  //   if (!event || value_loc === undefined) {
+  //     setFilteredData(cardData);
+  //     return;
+  //   } else {
+  //     const filterdByCat = cardData.filter((c) =>
+  //       c.token.metadata.event_location.includes(value_loc)
+  //     );
+  //     setFilteredData(filterdByCat);
+  //   }
+  // };
 
   // Category Selection Filter
-  const handleFilterC = (event) => {
+  // const handleFilterC = (event) => {
+  //   if (event === null) return;
+  //   const value_cat = event.label || event;
+  //   // console.log("value_cat", value_cat);
+  //   if (!event) {
+  //     setFilteredData(cardData);
+  //     return;
+  //   } else {
+  //     const filterdByCat = cardData.filter((c) =>
+  //       c.token.metadata.category.includes(value_cat)
+  //     );
+  //     setFilteredData(filterdByCat);
+  //   }
+  // };
+
+  // Selection Filter
+  const [catValue, setCatValue] = useState("");
+  const [locValue, setLocValue] = useState("");
+  const handleFilter = (event) => {
     if (event === null) return;
-    const value_cat = event.label || event;
-    // console.log("value_cat", value_cat);
     if (!event) {
       setFilteredData(cardData);
       return;
     } else {
-      const filterdByCat = cardData.filter((c) =>
-        c.token.metadata.category.includes(value_cat)
+      const filterdByCat = cardData.filter(
+        (c) =>
+          c.token.metadata.event_location.includes(locValue) &&
+          c.token.metadata.category.includes(catValue)
       );
       setFilteredData(filterdByCat);
     }
@@ -139,15 +172,39 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
         </SidePaper> */}
         {cardData && cardData.length > 0 && (
           <SidePaper>
-            <Box>
+            {/* <Box>
               <TextField
                 id="Location"
                 label="Location"
                 variant="standard"
                 onChange={handleFilter}
               />
-            </Box>
+            </Box> */}
             <Box component="form">
+              <Box>
+                <Autocomplete
+                  id="location"
+                  options={locations}
+                  getOptionLabel={(option) => option}
+                  isOptionEqualToValue={(option, value) => option === value}
+                  onChange={(event, newValue) => {
+                    // handleFilter(newValue);
+                    if (newValue) {
+                      setLocValue(newValue);
+                    }
+                    if (!newValue) {
+                      setLocValue("");
+                    }
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Location"
+                      variant="standard"
+                    />
+                  )}
+                />
+              </Box>
               <Box>
                 <Autocomplete
                   id="category"
@@ -158,9 +215,15 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
                   }
                   onChange={(event, newValue) => {
                     // console.log("newValue", newValue);
-                    handleFilterC(newValue);
-                    if (newValue === null) {
-                      setFilteredData(cardData);
+                    // handleFilterC(newValue);
+                    // if (newValue === null) {
+                    //   setFilteredData(cardData);
+                    // }
+                    if (newValue) {
+                      setCatValue(newValue.label);
+                    }
+                    if (!newValue) {
+                      setCatValue("");
                     }
                   }}
                   renderInput={(params) => (
@@ -173,16 +236,16 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
                 />
               </Box>
             </Box>
-            {/* <Box mt={4}>
+            <Box mt={4}>
               <Button
                 variant="contained"
                 color="primary"
                 size="small"
-                onClick={handleFilterC}
+                onClick={handleFilter}
               >
                 Apply
               </Button>
-            </Box> */}
+            </Box>
           </SidePaper>
         )}
       </Side>
@@ -239,8 +302,8 @@ export async function getStaticProps({ params }) {
   /* Fetch data */
   const [role, pools, claims] = await Promise.all([
     await WalletRoleAPI(`/${addressFromURL}`),
-    await AkaDropAPI(`/${addressFromURL}/pools?offset=0&limit=10`),
-    await AkaDropAPI(`/${addressFromURL}/claims?offset=0&limit=10`),
+    await AkaDropAPI(`/${addressFromURL}/pools?offset=0&limit=0`),
+    await AkaDropAPI(`/${addressFromURL}/claims?offset=0&limit=0`),
   ]);
 
   return {

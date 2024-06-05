@@ -49,6 +49,11 @@ export default function Home({ data }) {
   const { isLanded } = useGlobalContext();
   const theme = useTheme();
 
+  // sort data by tokenId
+  if (data) {
+    data.sort((a, b) => b.tokenId - a.tokenId);
+  }
+
   return (
     <>
       <Container

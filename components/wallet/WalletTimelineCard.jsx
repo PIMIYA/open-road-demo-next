@@ -53,6 +53,7 @@ export default function WalletTimelineCard({ data, index }) {
       >
         <Box width={200}>
           <Typography variant="body1">{data.cliamDate}</Typography>
+          <Typography variant="body1">{data.claimTime}</Typography>
           <Typography variant="body2">
             {data.token.metadata.event_location}
           </Typography>

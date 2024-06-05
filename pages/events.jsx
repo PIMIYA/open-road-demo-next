@@ -74,6 +74,10 @@ const tags = [
 ];
 
 export default function Events({ data }) {
+  // sort data by tokenId
+  if (data) {
+    data.sort((a, b) => b.tokenId - a.tokenId);
+  }
   const [filteredData, setFilteredData] = useState(data);
   // Search Filter(works but not used)
   // const handleFilter = (event) => {

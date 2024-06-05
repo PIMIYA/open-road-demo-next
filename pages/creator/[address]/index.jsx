@@ -102,7 +102,7 @@ export async function getServerSideProps(context) {
   const address = query.address;
 
   let [pools] = await Promise.all([
-    await AkaDropAPI(`/${address}/pools?offset=0&limit=10`),
+    await AkaDropAPI(`/${address}/pools?offset=0&limit=0`),
   ]);
 
   return {

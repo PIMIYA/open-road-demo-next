@@ -4,12 +4,15 @@ import { NextReactP5Wrapper } from "@p5-wrapper/next";
 import { Box } from "@mui/material";
 
 import { useGlobalContext } from "@/contexts/GlobalContext";
+import mobileBg from "@/public/kv-mobile.png";
 
 import { type Point, POINT_TYPES, STROKE_TYPES, SHAPE_TYPES } from "./const";
 import { xx, chance, pick } from "./utils";
 import svgData from './svgData';
 
 import CONFIG from './config';
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
 const sketch: Sketch = (s) => {
   const points: Point[] = [];
@@ -395,6 +398,10 @@ const sketch: Sketch = (s) => {
     if (!s.setIsLanded) {
       s.setIsLanded = props.setIsLanded;
     }
+
+    if (!s.setKeyVisualImgUrl) {
+      s.setKeyVisualImgUrl = props.setKeyVisualImgUrl;
+    }
   };
 
   s.draw = () => {
@@ -421,12 +428,14 @@ const sketch: Sketch = (s) => {
 
     if (isFinished) {
       s.noLoop();
+      const keyVisualImgUrl = s.canvas.toDataURL();
+      s.setKeyVisualImgUrl(keyVisualImgUrl);
     }
   };
 
   s.windowResized = () => {
     const ratio = originalSize[0] / originalSize[1];
-    const width = Math.min(originalSize[0], window.innerWidth);
+    const width = Math.min(originalSize[0], s._userNode.clientWidth);
     const height = width / ratio;
 
     s.resizeCanvas(width, height);
@@ -434,7 +443,7 @@ const sketch: Sketch = (s) => {
 };
 
 export default () => {
-  const { setIsLanded } = useGlobalContext();
+  const { isMobile, setIsLanded, keyVisualImgUrl, setKeyVisualImgUrl } = useGlobalContext();
   const theme = useTheme();
 
   return (
@@ -450,8 +459,17 @@ export default () => {
       <Box sx={{
         position: 'absolute',
         zIndex: (theme.zIndex as any).keyVisual,
+        width: '100%',
       }}>
-        <NextReactP5Wrapper sketch={sketch} setIsLanded={setIsLanded} />
+        {isMobile ? (
+          <Image src={mobileBg} alt="key visual" layout="responsive" width={1152} height={2130} />
+        ) : (
+          keyVisualImgUrl ? (
+            <img src={keyVisualImgUrl} alt="key visual" style={{maxWidth: '100%', width: '1152px'}} />
+          ) : (
+            <NextReactP5Wrapper sketch={sketch} setIsLanded={setIsLanded} setKeyVisualImgUrl={setKeyVisualImgUrl} />
+          )
+        )}
       </Box>
     </Box>
   );

@@ -3,6 +3,8 @@ import type { AppProps } from "next/app";
 import Head from "next/head";
 import NavBar from "@/components/navBar";
 
+import { useEffect } from 'react';
+
 /* Providers */
 import { ConnectionProvider } from "@/packages/providers";
 import { GlobalProvider } from "@/contexts/GlobalContext";
@@ -13,11 +15,24 @@ import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import theme from "@/styles/theme";
 import { Footer } from "@/components/footer";
 
+
+
 export default function App({ Component, pageProps }: AppProps) {
   let isMinimal = false;
   if (['ShowCase'].includes(Component.displayName || '')) {
     isMinimal = true;
   }
+
+  // FastClick quick dirty fix
+  useEffect(() => {
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
+      import('fastclick').then((FastClick) => {
+        FastClick.default.attach(document.body);
+      });
+    }
+  }, []);
+
+
 
   return (
     <>

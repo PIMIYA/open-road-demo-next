@@ -114,12 +114,24 @@ export default function Home({ data }) {
 }
 
 export async function getStaticProps() {
+  const burnedData = await Promise.all([
+    await TZKT_API(
+      `/v1/tokens/transfers?to.eq=tz1burnburnburnburnburnburnburjAYjjX&token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
+    ),
+  ]);
+
+  // add burned tokenIds to query and remove burned tokens from the list
+  const burned_tokenIds = burnedData[0].map(item => item.token.tokenId);
+  // console.log(burned_tokenIds);
+  const joined_burned_tokenIds = burned_tokenIds.join(',');
+  // console.log(joined_burned_tokenIds); 
+
   const [data] = await Promise.all([
     // await MainnetAPI(
     //   `/fa2tokens?limit=12&contracts=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
     // ),
     await TZKT_API(
-      `/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.ni=1,2,3,4,5,6,7,8&limit=12`
+      `/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.ni=${joined_burned_tokenIds}&limit=12`
     ),
   ]);
   return {

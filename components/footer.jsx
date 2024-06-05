@@ -66,8 +66,8 @@ export function Footer() {
           </Box>
           <List>
             {/* <FooterLink href="/about" label="About" /> */}
-            <FooterLink href="/faq" label="FAQ" />
-            <FooterLink href="/privacy_policy" label="Privacy Policy" />
+            {/* <FooterLink href="/faq" label="FAQ" /> */}
+            {/* <FooterLink href="/privacy_policy" label="Privacy Policy" /> */}
             {/* <FooterLink href="/press_kit" label="Press Kit" /> */}
           </List>
           <Typography variant="smallest">

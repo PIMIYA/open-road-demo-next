@@ -3,23 +3,64 @@ import { useRouter } from "next/router";
 import { NextReactP5Wrapper } from "@p5-wrapper/next";
 
 import { Box, Button, Chip, Popper, Stack, Typography } from "@mui/material";
-import { getWalletCanvasData } from "@/lib/dummy";
 import InfoIcon from "@mui/icons-material/Info";
 
 import sketch from "./sketch";
 import infoSketch from "./infoSketch";
 
-import {
-  getContractFromUid,
-  getIdFromUid,
-  getUrlFromUid,
-} from "@/lib/stringUtils";
+import { random } from "@/lib/dummy";
+import { categoryNames, tagNames } from "./const";
+
+function getWalletCanvasData(canvasData) {
+  let count = canvasData.length;
+
+  const result = {
+    claimedTokens: [],
+    count,
+  };
+
+  function getEnglishTagName(chineseName) {
+    for (const [english, chinese] of Object.entries(tagNames)) {
+      if (chinese === chineseName) {
+        return english;
+      }
+    }
+
+    return null;
+  }
+
+  for (let i = 0; i < count; i++) {
+    const data = canvasData[i];
+    // const totalAmount = ~~random(50, 150);
+    // const claimedAmount = ~~random(1, totalAmount);
+
+    let tags = data.token.metadata.tags;
+    tags = tags.map(tag => tag.split(':')[0]);
+    tags = tags.filter((tag, index) => tags.indexOf(tag) === index);
+    tags = tags.map(tag => getEnglishTagName(tag));
+
+    result.claimedTokens.push({
+      title: data.token.metadata.name,
+      claimedDate: data.token.metadata.date,
+      categoryId: Object.values(categoryNames).indexOf(data.token.metadata.category) + 1,
+      tags,
+      lat: +data.token.metadata.geoLocation[0],
+      lan: +data.token.metadata.geoLocation[1],
+      // totalAmount,
+      // claimedAmount,
+      // cliamedPercentage: claimedAmount / totalAmount,
+    });
+  }
+
+  // sort
+  result.claimedTokens.sort((a, b) => {
+    return new Date(a.claimedDate) - new Date(b.claimedDate);
+  });
+
+  return result;
+}
 
 export default function WalletCanvas({ canvasData, address }) {
-  // console.log("canvasData", canvasData);
-  // console.log("address", address);
-  const [isLoading, setLoading] = useState(true);
-  const [dataCount, setDataCount] = useState(null);
   const [tokens, setTokens] = useState(canvasData);
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -27,11 +68,8 @@ export default function WalletCanvas({ canvasData, address }) {
     if (!canvasData) {
       return;
     }
-    // console.log("canvasData", canvasData);
-    setDataCount(canvasData.length);
-    const data_g = getWalletCanvasData(dataCount);
-    setTokens(data_g.claimedTokens);
-    // console.log("data_g.claimedTokens", canvasData.claimedTokens);
+    const walletCanvasData = getWalletCanvasData(canvasData);
+    setTokens(walletCanvasData.claimedTokens);
   }, [canvasData]);
 
   const handleMouseOver = (event) => {
@@ -144,7 +182,7 @@ export default function WalletCanvas({ canvasData, address }) {
               p: 1,
               bgcolor: "background.paper",
               color: "text.primary",
-              lineHeight: 1,
+              lineHeight: 1.5,
               width: 200,
             }}
           >
@@ -153,30 +191,6 @@ export default function WalletCanvas({ canvasData, address }) {
           </Typography>
         </Popper>
       </Box>
-      {/* <Box>
-        {JSON.stringify(data)}
-      </Box> */}
-      <Stack direction="row" spacing={2} mb={2} alignItems="center">
-        {/* <Button
-          onClick={() => {
-            minus(3);
-          }}
-          variant="outlined"
-          size="small"
-        >
-          -3
-        </Button>
-        <Button
-          onClick={() => {
-            plus(3);
-          }}
-          variant="outlined"
-          size="small"
-        >
-          +3
-        </Button> */}
-        {/* <Box>{dataCount}</Box> */}
-      </Stack>
     </>
   ) : null;
 }

@@ -144,6 +144,11 @@ export default function sketch(s) {
   }
 
   s.getDistanceScale = (tokens) => {
+    // if all tokens are in the same location
+    if (tokens.every((token) => token.lat === tokens[0].lat && token.lan === tokens[0].lan)) {
+      return null;
+    }
+
     const points = tokens.map((token) => (s.createVector(token.lat, token.lan)));
 
     let minX, minY, maxX, maxY;

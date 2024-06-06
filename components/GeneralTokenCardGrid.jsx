@@ -101,11 +101,13 @@ export default function GeneralTokenCardGrid(props) {
                 key={index}
                 xs={columnSettings.item.xs}
                 sx={{
-                  transform: "perspective(1000px) translateY(0px)",
-                  transition: "transform 0.3s",
-                  "&:hover": {
-                    transform: "perspective(1000px) translateZ(100px)",
-                  },
+                  "img": {
+                    transform: "perspective(1000px) translateY(0px)",
+                    transition: "transform 0.3s",
+                    "&:hover": {
+                      transform: "perspective(1000px) translateZ(100px)",
+                    },
+                  }
                 }}
               >
                 <FadeOnScroll onceonly>
@@ -114,15 +116,26 @@ export default function GeneralTokenCardGrid(props) {
                       href="/claimsToken/[contract]/[tokenId]"
                       as={`/claimsToken/${contract.address}/${tokenId}`}
                     >
-                      <CardMedia
-                        component="img"
-                        alt="thumbnail"
-                        height="230"
+                      <Box
                         sx={{
-                          mb: 1,
+                          bgcolor: "white",
+                          height: 200,
+                          padding: 3,
+                          mb: 1.5,
                         }}
-                        image={getAkaswapAssetUrl(metadata.thumbnailUri)}
-                      />
+                      >
+                        <CardMedia
+                          component="img"
+                          alt="thumbnail"
+                          sx={{
+                            objectFit: "contain",
+                            height: "100%",
+                            width: "100%",
+                            margin: "auto",
+                          }}
+                          image={getAkaswapAssetUrl(metadata.thumbnailUri)}
+                        />
+                      </Box>
                     </Link>
                     <Box id="primary-info" mb={1}>
                       <Stack direction="row" spacing={1}>

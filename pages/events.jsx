@@ -1,7 +1,7 @@
 // all event lists
 
-import { useState, useEffect } from "react";
-import { paginate } from "@/lib/paginate";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { paginateAppend } from "@/lib/paginate";
 
 /* NEXT */
 import Link from "next/link";
@@ -74,11 +74,6 @@ const tags = [
 ];
 
 export default function Events({ data }) {
-  // sort data by tokenId
-  if (data) {
-    data.sort((a, b) => b.tokenId - a.tokenId);
-  }
-  const [filteredData, setFilteredData] = useState(data);
   // Search Filter(works but not used)
   // const handleFilter = (event) => {
   //   if (event === null) return;
@@ -98,49 +93,50 @@ export default function Events({ data }) {
   //   }
   // };
 
-  // Selection Filter
   const [catValue, setCatValue] = useState("");
   const [tagValue, setTagValue] = useState("");
-  const handleFilter = (event) => {
-    if (event === null) return;
-    if (!event) {
-      setFilteredData(data);
-      return;
-    } else {
-      const filterdByCat = data.filter(
-        (c) =>
-          c.metadata.tags.find((tag) => tag.includes(tagValue)) &&
-          c.metadata.category.includes(catValue)
-      );
-      setFilteredData(filterdByCat);
-    }
+  const [filteredData, setFilteredData] = useState(data);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+
+  const loaderRef = useRef(null);
+  const observerRef = useRef(null);
+
+  const handleFilter = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+
+    const filterdByCat = data.filter(
+      (c) =>
+        (!catValue || c.metadata.category.includes(catValue)) &&
+        (!tagValue || c.metadata.tags.some((tag) => tag.includes(tagValue)))
+    );
+    changePage(1);
+    setFilteredData(filterdByCat);
   };
-  // console.log("filteredData", filteredData);
 
   /* Pagination */
-  const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 6;
-  const onPageChange = (page) => {
+  const changePage = (page) => {
+    if (!hasMore && page != 1) return;
     setCurrentPage(page);
   };
-  const paginatedPosts = paginate(filteredData, currentPage, pageSize);
 
   /* Router */
   const router = useRouter();
   const catState = router.query.cat ? router.query.cat : "";
   const tagState = router.query.tag ? router.query.tag : "";
-  // console.log(tagState);
 
   useEffect(() => {
     if (catState || tagState) {
       setCatValue(catState);
       setTagValue(tagState);
-      // console.log(tagState);
-      // handleFilter();
       const filterdByCat = data.filter(
         (c) =>
-          c.metadata.tags.find((tag) => tag.includes(tagState)) &&
-          c.metadata.category.includes(catState)
+          (!catState || c.metadata.category.includes(catState)) &&
+          (!tagState || c.metadata.tags.some((tag) => tag.includes(tagState)))
       );
       setFilteredData(filterdByCat);
     } else {
@@ -149,6 +145,35 @@ export default function Events({ data }) {
       setFilteredData(data);
     }
   }, [catState, tagState]);
+
+  useLayoutEffect(() => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          changePage(currentPage + 1);
+        }
+      },
+      { threshold: 1 }
+    );
+
+    if (loaderRef.current) {
+      observerRef.current.observe(loaderRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [hasMore, currentPage]);
+
+  useEffect(() => {
+    setHasMore(currentPage * pageSize < filteredData.length);
+  }, [currentPage, filteredData]);
 
   return (
     <TwoColumnLayout>
@@ -164,15 +189,10 @@ export default function Events({ data }) {
                 isOptionEqualToValue={(option, value) =>
                   option.label === value.label
                 }
-                // value={catValue}
+                value={categories.find((cat) => cat.label === catValue) || null}
                 onChange={(event, newValue) => {
                   // handleFilter(newValue);
-                  if (newValue) {
-                    setCatValue(newValue.label);
-                  }
-                  if (!newValue) {
-                    setCatValue("");
-                  }
+                  setCatValue(newValue ? newValue.label : "");
                 }}
                 renderInput={(params) => (
                   <TextField {...params} label="Category" variant="standard" />
@@ -185,17 +205,13 @@ export default function Events({ data }) {
                 options={tags}
                 groupBy={(option) => option.main}
                 getOptionLabel={(option) => option.sub}
+                value={tags.find((tag) => tag.main === tagValue.split(':')[0] && tag.sub === tagValue.split(':')[1]) || null}
                 // isOptionEqualToValue={(option, value) =>
                 //   option.label === value.label
                 // }
                 onChange={(event, newValue) => {
                   // handleFilter(newValue);
-                  if (newValue) {
-                    setTagValue(newValue.sub);
-                  }
-                  if (!newValue) {
-                    setTagValue("");
-                  }
+                  setTagValue(newValue ? newValue.sub : "");
                 }}
                 renderInput={(params) => (
                   <TextField {...params} label="Tag" variant="standard" />
@@ -217,15 +233,20 @@ export default function Events({ data }) {
       </Side>
       <Main>
         <Box>{filteredData.length == 0 ? "no data" : ""}</Box>
-        <GeneralTokenCardGrid data={paginatedPosts} />
-        <Box pt={3}>
-          <MyPagination
-            items={filteredData.length} // 24
-            currentPage={currentPage} // 1
-            pageSize={pageSize} // 6
-            onPageChange={onPageChange}
-          />
-        </Box>
+        <GeneralTokenCardGrid data={paginateAppend(filteredData, currentPage, pageSize)} />
+        {filteredData.length > 0 && (
+          <Box
+            ref={loaderRef}
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              pt: 4,
+              color: "text.secondary",
+            }}
+          >
+            {hasMore ? "Loading..." : "No more data"}
+          </Box>
+        )}
       </Main>
     </TwoColumnLayout>
   );
@@ -245,7 +266,7 @@ export async function getStaticProps() {
 
   const [data] = await Promise.all([
     await TZKT_API(
-      `/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.ni=${joined_burned_tokenIds}`
+      `/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.ni=${joined_burned_tokenIds}&sort.desc=tokenId`
     ),
   ]);
   return {

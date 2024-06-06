@@ -9,8 +9,8 @@ function FadeOnScroll(props) {
   const ref = useRef(null);
 
   useEffect(() => {
-    setDelay(Math.random() * 500);
-    setHideY(Math.random(500) + 50);
+    setDelay(0);
+    setHideY(50);
 
     const observer = new IntersectionObserver(
       ([entry]) => {

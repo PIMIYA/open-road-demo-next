@@ -3,7 +3,15 @@ import { useRouter } from "next/router";
 
 import Link from "next/link";
 import Image from "next/image";
-import { Box, Button, Container, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Container,
+  Stack,
+  Paper,
+  Typography,
+} from "@mui/material";
+import { styled } from "@mui/material/styles";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
 import Tags from "@/components/Tags";
@@ -12,6 +20,12 @@ import TokenClaimedProgress from "./TokenClaimedProgress";
 
 import { getAkaswapAssetUrl } from "@/lib/stringUtils";
 import { encrypt } from "@/lib/dummy";
+
+/* stack Item setting */
+const Item = styled(Paper)(({ theme }) => ({
+  textAlign: "left",
+  boxShadow: "none",
+}));
 
 export default function SingleToken({ ownersData, data }) {
   const router = useRouter();
@@ -33,7 +47,7 @@ export default function SingleToken({ ownersData, data }) {
         <Container maxWidth="lg">
           <Box py={6}>
             <Stack direction={{ xs: "column", md: "row" }} spacing={8}>
-              <Box
+              <Item
                 sx={{
                   width: { xs: "100%", md: "55%" },
                   height: { xs: "100%", md: "auto" },
@@ -42,9 +56,7 @@ export default function SingleToken({ ownersData, data }) {
                 <Box
                   sx={{
                     width: { xs: "100%", md: "100%" },
-                    height: { xs: "100vw", md: "70vh" },
-                    position: "sticky",
-                    top: theme.spacing(6),
+                    height: { xs: "100%", md: "auto" },
                   }}
                 >
                   <Image
@@ -56,52 +68,59 @@ export default function SingleToken({ ownersData, data }) {
                       objectPosition: "top",
                     }}
                     alt="Picture of the author"
+                    sizes="(max-width: 600px) 100vw, 600px"
                   />
-                </Box>
+                </Box> */}
               </Box>
               <Box
                 sx={{
                   width: { xs: "100%", md: "45%" },
-                  height: { xs: "auto", md: "auto" },
+                  height: { xs: "100%", md: "auto" },
                 }}
               >
-                <Box>
-                  <Box mb={2} width={400} maxWidth="100%">
-                    {collected !== 0 ? (
-                      <TokenClaimedProgress
-                        collected={collected}
-                        total={total}
-                      />
-                    ) : (
-                      <Typography variant="h6" component="h1">
-                        No Owner
-                      </Typography>
-                    )}
-                  </Box>
-
-                  <Typography variant="h4" component="h1">
-                    {data.metadata.name}
-                  </Typography>
-                  <Typography variant="h6" component="div" mb={2}>
-                    {data.creator}
-                  </Typography>
-
-                  <Typography variant="body2">
-                    {data.start_time
-                      ? new Date(data.start_time).toLocaleDateString() +
-                        " - " +
-                        new Date(data.end_time).toLocaleDateString()
-                      : eventDate}
-                  </Typography>
-                  <Typography mb={2}>{data.eventPlace}</Typography>
-
-                  {data.tags && (
-                    <Box mb={8}>
-                      <Tags tags={data.tags} />
+                <Box
+                  sx={{
+                    width: { xs: "100%", md: "100%" },
+                    height: { xs: "auto", md: "auto" },
+                  }}
+                >
+                  <Box>
+                    <Box mb={2} width={400} maxWidth="100%">
+                      {collected !== 0 ? (
+                        <TokenClaimedProgress
+                          collected={collected}
+                          total={total}
+                        />
+                      ) : (
+                        <Typography variant="h6" component="h1">
+                          No Owner
+                        </Typography>
+                      )}
                     </Box>
-                  )}
 
-                  {/* {isShowcasePageLinkAvailable && (
+                    <Typography variant="h4" component="h1">
+                      {data.metadata.name}
+                    </Typography>
+                    <Typography variant="h6" component="div" mb={2}>
+                      {data.creator}
+                    </Typography>
+
+                    <Typography variant="body2">
+                      {data.start_time
+                        ? new Date(data.start_time).toLocaleDateString() +
+                          " - " +
+                          new Date(data.end_time).toLocaleDateString()
+                        : eventDate}
+                    </Typography>
+                    <Typography mb={2}>{data.eventPlace}</Typography>
+
+                    {data.tags && (
+                      <Box mb={8}>
+                        <Tags tags={data.tags} />
+                      </Box>
+                    )}
+
+                    {/* {isShowcasePageLinkAvailable && (
                     <Box mb={3}>
                       <Button variant="outlined" startIcon={<OpenInNewIcon />}>
                         <Link href={showcaseUrl} target="_blank">
@@ -111,17 +130,18 @@ export default function SingleToken({ ownersData, data }) {
                     </Box>
                   )} */}
 
-                  <Box>
-                    {data.metadata.description
-                      .split("\n")
-                      .map((paragraph, index) => (
-                        <Typography key={index} paragraph>
-                          {paragraph}
-                        </Typography>
-                      ))}
+                    <Box>
+                      {data.metadata.description
+                        .split("\n")
+                        .map((paragraph, index) => (
+                          <Typography key={index} paragraph>
+                            {paragraph}
+                          </Typography>
+                        ))}
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
+              </Item>
             </Stack>
           </Box>
         </Container>

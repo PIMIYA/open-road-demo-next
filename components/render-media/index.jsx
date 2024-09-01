@@ -21,7 +21,7 @@ export default function RenderMedia({ mimeType, src }) {
     src: tokenImageUrl,
     fill: true,
     style: {
-      objectFit: "contain", // cover, contain, none
+      objectFit: "contain",
       objectPosition: "top",
     },
     alt: "display image",
@@ -47,12 +47,22 @@ export default function RenderMedia({ mimeType, src }) {
   }, []);
 
   switch (mimeType) {
+    /* IMAGES */
+    case "image/bmp":
+    case "image/gif":
+    case "image/jpeg":
     case "image/png":
+    case "image/webp":
       return (
         <Box {...boxProps}>
           <Image {...imageProps} />
         </Box>
       );
+    /* VECTOR */
+    // case "image/svg+xml":
+    //     return <Box {...boxProps}>VECTOR</Box>;
+    /* 3D */
+    case "model/gltf+json":
     case "model/gltf-binary":
       return (
         <>
@@ -67,6 +77,25 @@ export default function RenderMedia({ mimeType, src }) {
           </Box>
         </>
       );
+    /* VIDEO */
+    // case "video/mp4":
+    // case "video/ogg":
+    // case "video/quicktime":
+    // case "video/webm":
+    //   return <Box {...boxProps}>VIDEO</Box>;
+    /* AUDIO */
+    // case "audio/mpeg":
+    // case "audio/ogg":
+    //   return <Box {...boxProps}>AUDIO</Box>;
+    /* HTML ZIP */
+    // case "application/x-directory":
+    // case "application/zip":
+    // case "application/x-zip-compressed":
+    // case "application/multipart/x-zip":
+    //   return <Box {...boxProps}>HTML ZIP</Box>;
+    /* PDF */
+    // case "application/pdf":
+    //   return <Box {...boxProps}>PDF</Box>;
     default:
       return (
         <Box {...boxProps}>

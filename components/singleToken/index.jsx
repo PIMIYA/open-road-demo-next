@@ -9,6 +9,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import Tags from "@/components/Tags";
 import TokenCollectors from "./TokenCollectors";
 import TokenClaimedProgress from "./TokenClaimedProgress";
+import RenderMedia from "@/components/render-media";
 
 import { getAkaswapAssetUrl } from "@/lib/stringUtils";
 import { encrypt } from "@/lib/dummy";
@@ -24,8 +25,11 @@ export default function SingleToken({ ownersData, data }) {
   const url = `${router.query.contract}/${router.query.tokenId}`;
   const hash = encrypt(url);
   const showcaseUrl = `/showcase/${hash}`;
-
   const isShowcasePageLinkAvailable = true; // TODO: depends on wallet
+
+  const mimeType = data.metadata.formats[0].mimeType;
+  const src = data.metadata;
+  // console.log(mimeType);
 
   return (
     <>
@@ -39,7 +43,8 @@ export default function SingleToken({ ownersData, data }) {
                   height: { xs: "100%", md: "auto" },
                 }}
               >
-                <Box
+                <RenderMedia mimeType={mimeType} src={src} />
+                {/* <Box
                   sx={{
                     width: { xs: "100%", md: "100%" },
                     height: { xs: "100vw", md: "70vh" },
@@ -56,8 +61,9 @@ export default function SingleToken({ ownersData, data }) {
                       objectPosition: "top",
                     }}
                     alt="Picture of the author"
+                    sizes="(max-width: 600px) 100vw, 600px"
                   />
-                </Box>
+                </Box> */}
               </Box>
               <Box
                 sx={{

@@ -43,7 +43,10 @@ export default function SingleToken({ ownersData, data }) {
 
   const mimeType = data.metadata.formats[0].mimeType;
   const src = data.metadata;
+  const poolId = data.poolId;
+  const duration = data.duration;
   // console.log(mimeType);
+  // console.log(duration);
 
   return (
     <>
@@ -64,6 +67,30 @@ export default function SingleToken({ ownersData, data }) {
                   }}
                 >
                   <RenderMedia mimeType={mimeType} src={src} />
+                  {/* add poolID for claim page and event time from akadrop  */}
+                  <Box
+                    sx={{
+                      position: "relative",
+                      top: 16,
+                      right: 16,
+                      backgroundColor: "rgba(0, 0, 0, 0.7)",
+                      color: "#fff",
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    {poolId !== null ? (
+                      <>
+                        Pool ID: {poolId} <br />
+                        end_time: {duration.end_time}
+                        <br />
+                        start_time: {duration.start_time}
+                      </>
+                    ) : (
+                      "Expired or not able to claim"
+                    )}
+                  </Box>
+                  {/*  */}
                 </Box>
               </Item>
               <Item

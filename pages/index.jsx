@@ -1,5 +1,5 @@
 /* Fetch data */
-import { TZKT_API, MainnetAPI } from "@/lib/api";
+import { TZKT_API, MainnetAPI, GetClaimablePoolID } from "@/lib/api";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { useTheme } from "@emotion/react";
 
@@ -113,32 +113,37 @@ export default function Home({ data }) {
   );
 }
 
+const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
+const targetContractAddress = "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW";
+
 export async function getStaticProps() {
-  const burnedData = await Promise.all([
-    await TZKT_API(
-      `/v1/tokens/transfers?to.eq=tz1burnburnburnburnburnburnburjAYjjX&token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
-    ),
-  ]);
+  // Fetch burned tokens data
+  const burnedData = await TZKT_API(
+    `/v1/tokens/transfers?to.eq=tz1burnburnburnburnburnburnburjAYjjX&token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
+  );
 
-  // add burned tokenIds to query and remove burned tokens from the list
-  const burned_tokenIds = burnedData[0].map(item => item.token.tokenId);
-  // console.log(burned_tokenIds);
-  const joined_burned_tokenIds = burned_tokenIds.join(',');
-  // console.log(joined_burned_tokenIds); 
+  // Extract burned tokenIds and join them into a comma-separated string
+  const burned_tokenIds = burnedData.map((item) => item.token.tokenId).join(",");
 
-  const [data] = await Promise.all([
-    // await MainnetAPI(
-    //   `/fa2tokens?limit=12&contracts=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
-    // ),
-    await TZKT_API(
-      `/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.ni=${joined_burned_tokenIds}&limit=12`
-    ),
-  ]);
+  // Fetch tokens data excluding burned tokens
+  const data = await TZKT_API(
+    `/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.ni=${burned_tokenIds}&sort.desc=tokenId`
+  );
+
+  // Check if tokens are claimable and add claimable status and poolID
+  const claimableData = await Promise.all(
+    data.map(async (item) => {
+      const data_from_pool = await GetClaimablePoolID(contractAddress, targetContractAddress, item.tokenId);
+      return {
+        ...item,
+        claimable: !!data_from_pool,
+        poolID: data_from_pool ? data_from_pool[0].key : null,
+      };
+    })
+  );
+
   return {
-    props: { data },
-    // Next.js will attempt to re-generate the page:
-    // - When a request comes in
-    // - At most once every 10 seconds
+    props: { data: claimableData },
     revalidate: 10, // In seconds
   };
 }

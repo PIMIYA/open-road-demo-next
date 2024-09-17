@@ -10,7 +10,7 @@ import { useRouter } from "next/router";
 /* MUI */
 import { Box, Autocomplete, TextField, Button } from "@mui/material";
 /* Fetch data */
-import { TZKT_API, MainnetAPI } from "@/lib/api";
+import { TZKT_API, MainnetAPI, GetClaimablePoolID } from "@/lib/api";
 /* Components */
 import TwoColumnLayout, {
   Main,
@@ -74,6 +74,7 @@ const tags = [
 ];
 
 export default function Events({ data }) {
+  // console.log("data", data);
   // Search Filter(works but not used)
   // const handleFilter = (event) => {
   //   if (event === null) return;
@@ -105,7 +106,7 @@ export default function Events({ data }) {
   const handleFilter = () => {
     window.scrollTo({
       top: 0,
-      behavior: 'smooth'
+      behavior: "smooth",
     });
 
     const filterdByCat = data.filter(
@@ -129,6 +130,10 @@ export default function Events({ data }) {
   const catState = router.query.cat ? router.query.cat : "";
   const tagState = router.query.tag ? router.query.tag : "";
 
+  // Custom hook to conditionally use useLayoutEffect on the client side
+  const useIsomorphicLayoutEffect =
+    typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
   useEffect(() => {
     if (catState || tagState) {
       setCatValue(catState);
@@ -144,9 +149,9 @@ export default function Events({ data }) {
       setTagValue("");
       setFilteredData(data);
     }
-  }, [catState, tagState]);
+  }, [catState, tagState, data]);
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (observerRef.current) {
       observerRef.current.disconnect();
     }
@@ -205,7 +210,13 @@ export default function Events({ data }) {
                 options={tags}
                 groupBy={(option) => option.main}
                 getOptionLabel={(option) => option.sub}
-                value={tags.find((tag) => tag.main === tagValue.split(':')[0] && tag.sub === tagValue.split(':')[1]) || null}
+                value={
+                  tags.find(
+                    (tag) =>
+                      tag.main === tagValue.split(":")[0] &&
+                      tag.sub === tagValue.split(":")[1]
+                  ) || null
+                }
                 // isOptionEqualToValue={(option, value) =>
                 //   option.label === value.label
                 // }
@@ -233,7 +244,9 @@ export default function Events({ data }) {
       </Side>
       <Main>
         <Box>{filteredData.length == 0 ? "no data" : ""}</Box>
-        <GeneralTokenCardGrid data={paginateAppend(filteredData, currentPage, pageSize)} />
+        <GeneralTokenCardGrid
+          data={paginateAppend(filteredData, currentPage, pageSize)}
+        />
         {filteredData.length > 0 && (
           <Box
             ref={loaderRef}
@@ -252,28 +265,37 @@ export default function Events({ data }) {
   );
 }
 
-export async function getStaticProps() {
-  const burnedData = await Promise.all([
-    await TZKT_API(
-      `/v1/tokens/transfers?to.eq=tz1burnburnburnburnburnburnburjAYjjX&token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
-    ),
-  ]);
-  // add burned tokenIds to query and remove burned tokens from the list
-  const burned_tokenIds = burnedData[0].map((item) => item.token.tokenId);
-  // console.log(burned_tokenIds);
-  const joined_burned_tokenIds = burned_tokenIds.join(",");
-  // console.log(joined_burned_tokenIds);
+const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
+const targetContractAddress = "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW";
 
-  const [data] = await Promise.all([
-    await TZKT_API(
-      `/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.ni=${joined_burned_tokenIds}&sort.desc=tokenId`
-    ),
-  ]);
+export async function getStaticProps() {
+  // Fetch burned tokens data
+  const burnedData = await TZKT_API(
+    `/v1/tokens/transfers?to.eq=tz1burnburnburnburnburnburnburjAYjjX&token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
+  );
+
+  // Extract burned tokenIds and join them into a comma-separated string
+  const burned_tokenIds = burnedData.map((item) => item.token.tokenId).join(",");
+
+  // Fetch tokens data excluding burned tokens
+  const data = await TZKT_API(
+    `/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.ni=${burned_tokenIds}&sort.desc=tokenId`
+  );
+
+  // Check if tokens are claimable and add claimable status and poolID
+  const claimableData = await Promise.all(
+    data.map(async (item) => {
+      const data_from_pool = await GetClaimablePoolID(contractAddress, targetContractAddress, item.tokenId);
+      return {
+        ...item,
+        claimable: !!data_from_pool,
+        poolID: data_from_pool ? data_from_pool[0].key : null,
+      };
+    })
+  );
+
   return {
-    props: { data },
-    // Next.js will attempt to re-generate the page:
-    // - When a request comes in
-    // - At most once every 10 seconds
+    props: { data: claimableData },
     revalidate: 10, // In seconds
   };
 }

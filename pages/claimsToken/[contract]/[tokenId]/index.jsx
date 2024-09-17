@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 /* Fetch data */
-import { TZKT_API, MainnetAPI } from "@/lib/api";
+import { TZKT_API, MainnetAPI, GetClaimablePoolID } from "@/lib/api";
 /* Components */
 import SingleToken from "@/components/singleToken";
 /* Routing */
@@ -17,8 +17,11 @@ import {
   getRandomPlace,
 } from "@/lib/dummy";
 
-export default function Id({ ownersData, data }) {
-  // console.log(data);
+
+const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
+
+export default function Id({ ownersData, data, data_from_pool }) {
+  // console.log("current active claimable token data", data_from_pool[0].key);
 
   // TODO: remove dummy data after api ready
   if (data) {
@@ -33,6 +36,13 @@ export default function Id({ ownersData, data }) {
       d.eventDate = getRandomPeriod();
       d.start_time = d.metadata.start_time;
       d.end_time = d.metadata.end_time;
+      if(data_from_pool){
+        d.poolId = data_from_pool[0].key;
+        d.duration = data_from_pool[0].value.duration;
+      }else{
+        d.poolId = null;
+        d.duration = null;
+      }
 
       return d;
     });
@@ -54,16 +64,19 @@ export default function Id({ ownersData, data }) {
 
 export async function getServerSideProps(params) {
   //   console.log(params.params.id);
-  const [ownersData, data] = await Promise.all([
+  const [ownersData, data, data_from_pool] = await Promise.all([
     await MainnetAPI(
       `/fa2tokens/${params.params.contract}/${params.params.tokenId}`
     ),
     await TZKT_API(
       `/v1/tokens?contract=${params.params.contract}&tokenId=${params.params.tokenId}`
     ),
+    await GetClaimablePoolID(
+      contractAddress, params.params.contract, params.params.tokenId
+    ),
   ]);
 
   return {
-    props: { ownersData, data },
+    props: { ownersData, data, data_from_pool },
   };
 }

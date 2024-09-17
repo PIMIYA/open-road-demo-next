@@ -94,6 +94,7 @@ export default function GeneralTokenCardGrid(props) {
                 start_time,
                 end_time,
                 metadata,
+                poolID,
               },
               index
             ) => (
@@ -101,13 +102,13 @@ export default function GeneralTokenCardGrid(props) {
                 key={index}
                 xs={columnSettings.item.xs}
                 sx={{
-                  "img": {
+                  img: {
                     transform: "perspective(1000px) translateY(0px)",
                     transition: "transform 0.3s",
                     "&:hover": {
                       transform: "perspective(1000px) translateZ(100px)",
                     },
-                  }
+                  },
                 }}
               >
                 <Box>
@@ -176,6 +177,27 @@ export default function GeneralTokenCardGrid(props) {
                     <Tags tags={metadata.tags} />
                   </Stack>
                 </Box>
+                {/* add poolID for claim page and event time from akadrop  */}
+                <Box
+                  sx={{
+                    position: "relative",
+                    top: 16,
+                    right: 16,
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "#fff",
+                    padding: "4px 8px",
+                    borderRadius: "4px",
+                  }}
+                >
+                  {poolID !== null ? (
+                    <>
+                      Pool ID: {poolID} <br />
+                    </>
+                  ) : (
+                    "Expired or not able to claim"
+                  )}
+                </Box>
+                {/*  */}
               </Grid>
             )
           )}

@@ -40,6 +40,8 @@ export default function () {
       return;
     }
 
+    console.log("fetching wallet roles");
+
     fetch("/api/walletRoles", {
       method: "POST",
       body: address,
@@ -50,6 +52,8 @@ export default function () {
         setLoadingRole(false);
       });
   }, [address]);
+
+    console.log("roleData", roleData);
 
   // if (isLoadingRole) return <p>Loading...</p>;
   // if (!roleData) return <p>No role data</p>;
@@ -178,17 +182,17 @@ export default function () {
             My Wallet
           </Link>
         </MenuItem>
-        {roleData && roleData.data.length == 0 ? null : <Divider />}
+        {roleData && roleData.data && roleData.data.length === 0 ? null : <Divider />}
 
         <MenuItem
           onClick={handleClose}
           sx={{
             display: `${
-              roleData && roleData.data.length == 0 ? "none" : "block"
+              roleData && roleData.data && roleData.data.length === 0 ? "none" : "block"
             }`,
           }}
         >
-          {roleData && roleData.data.length == 0 ? null : (
+          {roleData && roleData.data && roleData.data.length === 0 ? null : (
             <>
               <Link
                 href={{
@@ -206,11 +210,11 @@ export default function () {
           onClick={handleClose}
           sx={{
             display: `${
-              roleData && roleData.data.length == 0 ? "none" : "block"
+              roleData && roleData.data && roleData.data.length === 0 ? "none" : "block"
             }`,
           }}
         >
-          {roleData && roleData.data.length == 0 ? null : (
+          {roleData && roleData.data && roleData.data.length === 0 ? null : (
             <>
               <Link
                 href={{

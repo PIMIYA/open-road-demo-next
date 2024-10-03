@@ -286,6 +286,7 @@ export default function () {
             <NavLink label="所有活動" href="/events" />
             {/* <NavLink label="所有創作者" href="/creators" /> */}
             {address ? connectedMenu : connectBtn}
+            {/* {router.pathname !== '/claim' && (address ? connectedMenu : connectBtn)} */}
           </Stack>
         </Box>
       </Stack>

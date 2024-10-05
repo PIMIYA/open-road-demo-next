@@ -1,15 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { TZKT_API, MainnetAPI, GetClaimablePoolID } from "@/lib/api";
+import React, { useState, useRef } from "react";
+import {
+  TZKT_API,
+  MainnetAPI,
+  GetClaimablePoolID,
+  postClaimData,
+} from "@/lib/api";
 import SingleToken from "@/components/singleToken";
-import { useConnection } from '@/packages/providers';
+import KukaiEmbedComponent from "../../components/KukaiEmbedComponent";
 
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 const AkaDropAPI = "https://mars.akaswap.com/drop/api/pools";
-const partnerId = "your-partner-id"; // Replace with partner ID
 
 async function getNFTData(contract, poolId) {
   const url = `${AkaDropAPI}/${contract}/${poolId}`;
-  
+
   try {
     const response = await fetch(url);
     if (!response.ok) {
@@ -31,12 +35,12 @@ export async function getServerSideProps(context) {
 
   if (!nftData) {
     return {
-      props: { error: 'Error fetching NFT data' },
+      props: { error: "Error fetching NFT data" },
     };
   }
 
   // Extract targetContract and tokenId from uid
-  const [targetContract, tokenId] = nftData.tokens[0].uid.split('-');
+  const [targetContract, tokenId] = nftData.tokens[0].uid.split("-");
 
   // Fetch additional information using targetContract and tokenId
   const [ownersData, data, data_from_pool] = await Promise.all([
@@ -50,52 +54,116 @@ export async function getServerSideProps(context) {
   };
 }
 
-export default function NFTPage({ ownersData, data, data_from_pool, nftData, error }) {
-  const { address, connect, disconnect } = useConnection();
-  const [email, setEmail] = useState(null);
-  const [claimStatus, setClaimStatus] = useState(null);
+export default function NFTPage({
+  ownersData,
+  data,
+  data_from_pool,
+  nftData,
+  error,
+}) {
+  const [claimStatus, setClaimStatus] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const embedRef = useRef(null);
 
-  useEffect(() => {
-    if (address) {
-      //  still need  to get email from Kukai wallet
-      //dont know how to get email from Kukai wallet yet???
-    }
-  }, [address]);
+  const handleClaim = async (userInfo) => {
+    const {
+      pkh: address,
+      userData: { email },
+    } = userInfo;
+    // console.log(`userInfo is : ${JSON.stringify(userInfo)}`);
+    console.log(`address is : ${address}`);
+    console.log(`email is : ${email}`);
 
-  const handleClaim = async () => {
     if (!address || !email) {
       setClaimStatus("Wallet not connected or email not available.");
       return;
     }
 
-    const claimData = {
-      contract: contractAddress,
-      poolId: data_from_pool[0].key,
-      email: email,
-      address: address,
-    };
-
-    const auth = btoa('your-username:your-password'); // Replace with your actual username and password
-
     try {
-      const response = await fetch(`https://mars.akaswap.com/drop/api/partners/${partnerId}/claims`, {
-        method: 'POST',
+      // Lookup Wallet Address by Gmail
+      const lookupResponse = await fetch(`/api/lookup?email=${email}`, {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${auth}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!lookupResponse.ok) {
+        throw new Error(
+          `HTTP error during lookup! status: ${lookupResponse.status}`
+        );
+      }
+
+      const lookupResult = await lookupResponse.json();
+      const lookup_address = lookupResult.address;
+      // console.log(`lookupResult wallet address is : ${lookupResult.address}`);
+
+      // if (lookupResult.isInvalid) {
+      //   setClaimStatus("Invalid address or pool.");
+      //   return;
+      // }
+
+      //check if the wallet address from kukai is the same as the one from the lookup
+      // if (lookupResult.address !== address) {
+      //   setClaimStatus("Invalid address or pool.");
+      //   return;
+      // }
+
+      // Claim NFT
+      const claimData = {
+        contract: contractAddress,
+        poolId: parseInt(data_from_pool[0].key, 10),
+        email: email,
+        address: address,
+      };
+
+      console.log("Sending claim data:", claimData);
+
+      const claimResponse = await fetch(`/api/claim`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(claimData),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      console.log("Claim response status:", claimResponse.status);
+      console.log(
+        "Claim response headers:",
+        JSON.stringify([...claimResponse.headers])
+      );
+
+      if (!claimResponse.ok) {
+        const errorData = await claimResponse.json();
+        console.log("Claim error response:", errorData);
+        throw new Error(
+          `HTTP error during claim! status: ${claimResponse.status}, message: ${errorData.message}`
+        );
       }
 
-      const result = await response.json();
-      setClaimStatus(`Claim successful: ${JSON.stringify(result)}`);
+      const claimResult = await claimResponse.json();
+      console.log("Claim result:", claimResult);
+
+      if (claimResult.isInvalid) {
+        setClaimStatus(`Claim failed: Invalid address or pool`);
+      } else if (!claimResult.isEnrolled && claimResult.isSoldOut) {
+        setClaimStatus(`Claim failed: Sold out`);
+      } else if (!claimResult.isEnrolled && !claimResult.isSoldOut) {
+        setClaimStatus(`Claim failed: Already claimed`);
+      } else if (claimResult.isEnrolled && !claimResult.isSoldOut) {
+        setClaimStatus(`Claim successful: ${JSON.stringify(claimResult)}`);
+      }
+
     } catch (error) {
       console.error("Error claiming NFT:", error);
       setClaimStatus(`Error claiming NFT: ${error.message}`);
+    } finally {
+      // Logout from Kukai wallet after processing claim result
+      if (embedRef.current) {
+        await embedRef.current.logout();
+        setIsLoggedIn(false);
+        console.log("Logged out successfully");
+      }
     }
   };
 
@@ -107,7 +175,6 @@ export default function NFTPage({ ownersData, data, data_from_pool, nftData, err
     return <div>Error fetching NFT data.</div>;
   }
 
-
   if (data) {
     data = data.map((d) => {
       d.eventPlace = d.metadata.event_location
@@ -118,10 +185,10 @@ export default function NFTPage({ ownersData, data, data_from_pool, nftData, err
         : getRandomCreator();
       d.start_time = d.metadata.start_time;
       d.end_time = d.metadata.end_time;
-      if(data_from_pool){
+      if (data_from_pool) {
         d.poolId = data_from_pool[0].key;
         d.duration = data_from_pool[0].value.duration;
-      }else{
+      } else {
         d.poolId = null;
         d.duration = null;
       }
@@ -132,26 +199,14 @@ export default function NFTPage({ ownersData, data, data_from_pool, nftData, err
 
   return (
     <div>
-      <div>
-        {address ? (
-          <div>
-            <p>Wallet is connected</p>
-            <p>Address: {address}</p>
-            {email && <p>Email: {email}</p>}
-            <button onClick={handleClaim}>Claim NFT</button>
-            {claimStatus && <p>{claimStatus}</p>}
+      <KukaiEmbedComponent ref={embedRef} onLoginSuccess={handleClaim} />
+      {claimStatus && <div>{claimStatus}</div>}
+      {data &&
+        data.map((d, index) => (
+          <div key={index}>
+            <SingleToken data={d} ownersData={ownersData} />
           </div>
-        ) : (
-          <div>
-            <p>Wallet is not connected</p>
-          </div>
-        )}
-      </div>
-      {data && data.map((d, index) => (
-        <div key={index}>
-          <SingleToken data={d} ownersData={ownersData} />
-        </div>
-      ))}
+        ))}
     </div>
   );
 }

@@ -287,10 +287,11 @@ export default function () {
         </Box>
         <Box>
           <Stack direction="row" alignItems="center" spacing={4}>
-            <NavLink label="所有活動" href="/events" />
+            {/* <NavLink label="所有活動" href="/events" /> */}
             {/* <NavLink label="所有創作者" href="/creators" /> */}
-            {address ? connectedMenu : connectBtn}
-            {/* {router.pathname !== '/claim' && (address ? connectedMenu : connectBtn)} */}
+            {/* {address ? connectedMenu : connectBtn} */}
+            {router.pathname!== '/claim' && <NavLink label="所有活動" href="/events" />}
+            {router.pathname !== '/claim' && (address ? connectedMenu : connectBtn)}
           </Stack>
         </Box>
       </Stack>

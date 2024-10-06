@@ -5,7 +5,7 @@ import {
   GetClaimablePoolID,
   postClaimData,
 } from "@/lib/api";
-import SingleToken from "@/components/singleToken";
+import NFTclaim from "@/components/NFTclaim";
 import KukaiEmbedComponent from "../../components/KukaiEmbedComponent";
 
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
@@ -153,7 +153,6 @@ export default function NFTPage({
       } else if (claimResult.isEnrolled && !claimResult.isSoldOut) {
         setClaimStatus(`Claim successful: ${JSON.stringify(claimResult)}`);
       }
-
     } catch (error) {
       console.error("Error claiming NFT:", error);
       setClaimStatus(`Error claiming NFT: ${error.message}`);
@@ -199,14 +198,16 @@ export default function NFTPage({
 
   return (
     <div>
-      <KukaiEmbedComponent ref={embedRef} onLoginSuccess={handleClaim} />
-      {claimStatus && <div>{claimStatus}</div>}
       {data &&
         data.map((d, index) => (
           <div key={index}>
-            <SingleToken data={d} ownersData={ownersData} />
+            <NFTclaim data={d} ownersData={ownersData} />
           </div>
         ))}
+      <KukaiEmbedComponent ref={embedRef} onLoginSuccess={handleClaim} />
+      <div style={{ display: "flex", justifyContent: "center", margin: "5px" }}>
+        {claimStatus && <div>{claimStatus}</div>}
+      </div>
     </div>
   );
 }

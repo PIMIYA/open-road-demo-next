@@ -98,14 +98,15 @@ export default function NFTPage({
       const lookup_address = lookupResult.address;
       // console.log(`lookupResult wallet address is : ${lookupResult.address}`);
 
-      // if (lookupResult.isInvalid) {
-      //   setClaimStatus("Invalid address or pool.");
-      //   return;
-      // }
+      if (lookupResult.isInvalid) {
+        setClaimStatus("Invalid address.");
+        return;
+      }
 
       //check if the wallet address from kukai is the same as the one from the lookup
+      //uncomment the following line to enable the check when switch to mainnet
       // if (lookupResult.address !== address) {
-      //   setClaimStatus("Invalid address or pool.");
+      //   setClaimStatus("addressess do not match.");
       //   return;
       // }
 

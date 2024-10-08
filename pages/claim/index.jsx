@@ -152,7 +152,32 @@ export default function NFTPage({
         setClaimStatus(`Claim failed: Already claimed`);
       } else if (claimResult.isEnrolled && !claimResult.isSoldOut) {
         setClaimStatus(`Claim successful: ${JSON.stringify(claimResult)}`);
+
+        // Add user wallet to the database
+        const addUserWalletResponse = await fetch(`/api/addUserWallet`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email,
+            address: address,
+            poolID: data_from_pool[0].key,
+          }),
+        });
+
+        if (!addUserWalletResponse.ok) {
+          throw new Error(
+            `HTTP error during checkWalletExist! status: ${addUserWalletResponse.status}`
+          );
+        }
+
+        const addUserWalletResult = await addUserWalletResponse.json();
+        console.log("addUserWalletResult:", addUserWalletResult);
+
       }
+
+      
     } catch (error) {
       console.error("Error claiming NFT:", error);
       setClaimStatus(`Error claiming NFT: ${error.message}`);

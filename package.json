@@ -13,6 +13,7 @@
     "@airgap/beacon-types": "^4.1.2",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@google/model-viewer": "^3.5.0",
     "@mui/icons-material": "^5.15.14",
     "@mui/lab": "^5.0.0-alpha.170",
     "@mui/material": "^5.15.14",
@@ -37,6 +38,7 @@
     "react-dom": "^18",
     "sass": "^1.77.2",
     "sharp": "^0.33.2",
+    "three": "^0.168.0",
     "use-places-autocomplete": "^4.0.1"
   },
   "devDependencies": {

@@ -178,7 +178,7 @@ export default function GeneralTokenCardGrid(props) {
                   </Stack>
                 </Box>
                 {/* add poolID for claim page and event time from akadrop  */}
-                <Box
+                {/* <Box
                   sx={{
                     position: "relative",
                     top: 16,
@@ -196,7 +196,7 @@ export default function GeneralTokenCardGrid(props) {
                   ) : (
                     "Expired or not able to claim"
                   )}
-                </Box>
+                </Box> */}
                 {/*  */}
               </Grid>
             )

@@ -35,7 +35,7 @@ const KukaiEmbedComponent = forwardRef(({ onLoginSuccess }, ref) => {
         return;
       }
       const embed = new KukaiEmbed({
-        net: Networks.ghostnet,
+        net: Networks.mainnet,
         element: document.getElementById("kukai-container"),
       });
 

@@ -182,17 +182,17 @@ export default function () {
             My Wallet
           </Link>
         </MenuItem>
-        {roleData.data && roleData.data.length === 0 ? null : <Divider />}
+        {roleData && roleData.data && roleData.data.length === 0 ? null : <Divider />}
 
         <MenuItem
           onClick={handleClose}
           sx={{
             display: `${
-              roleData.data && roleData.data.length === 0 ? "none" : "block"
+              roleData && roleData.data && roleData.data.length === 0 ? "none" : "block"
             }`,
           }}
         >
-          {roleData.data && roleData.data.length === 0 ? null : (
+          {roleData && roleData.data && roleData.data.length === 0 ? null : (
             <>
               <Link
                 href={{
@@ -210,11 +210,11 @@ export default function () {
           onClick={handleClose}
           sx={{
             display: `${
-              roleData.data && roleData.data.length === 0 ? "none" : "block"
+              roleData && roleData.data && roleData.data.length === 0 ? "none" : "block"
             }`,
           }}
         >
-          {roleData.data && roleData.data.length === 0 ? null : (
+          {roleData && roleData.data && roleData.data.length === 0 ? null : (
             <>
               <Link
                 href={{

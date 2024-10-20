@@ -187,7 +187,7 @@ export default function Mint() {
     setFile(event.target.files[0]);
   }
   function handleThumbChange(event) {
-    // console.log("thumb", thumb);
+    console.log("thumb", thumb);
     setThumb(event.target.files[0]);
   }
 
@@ -294,14 +294,23 @@ export default function Mint() {
       // if (fileRef) {
       //   data.append("image", fileRef.current.files[0]);
       // }
+      console.log("file", file);
       if (file) {
         data.append("image", file);
+      } else {
+        console.error("No file provided");
+        return;
       }
       if (thumb) {
         data.append("thumbnail", thumb);
       }
 
-      console.log(data);
+      // Log FormData content
+      for (let pair of data.entries()) {
+        console.log(pair[0] + ": " + pair[1]);
+      }
+
+      console.log(...data);
 
       // Make a POST request to the server
       const response = await fetch(`${serverUrl}/mint`, {
@@ -342,7 +351,7 @@ export default function Mint() {
             tokens: metadataHashes,
           };
 
-          // console.log(mintingTokenQty);
+          console.log(mintingTokenQty);
 
           try {
             setMiningInProgress(true);
@@ -736,9 +745,6 @@ export default function Mint() {
               ) : null}
             </Box>
             <Box>
-              {(file && file.type.startsWith("image/")) || !file ? (
-                <></>
-              ) : (
                 <Box>
                   <ThemeProvider theme={theme}>
                     <Button
@@ -763,7 +769,6 @@ export default function Mint() {
                     ) : null}
                   </Box>
                 </Box>
-              )}
             </Box>
           </Box>
           <Box pt={6}>

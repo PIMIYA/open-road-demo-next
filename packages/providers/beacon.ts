@@ -129,7 +129,8 @@ const getBeaconAppName = async (
 
 export const tezosToolkit = new TezosToolkit(
   // for payments: todo: add prod url
-  "https://mainnet.smartpy.io"
+  // "https://mainnet.smartpy.io"
+  "https://rpc.tzbeta.net/"
 );
 
 export const callContractBeaconFn =
@@ -164,11 +165,11 @@ export const callContractBeaconFn =
       const minterContractAddress: string =
         "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
       const minter = await tezosToolkit.wallet.at(minterContractAddress);
-      // console.log("Calling contract function");
-      // console.log("contractId:", contractId);
-      // console.log("tokenQty:", tokenQty);
-      // console.log("token:", stringToBytes(tokens[0]));
-      // console.log("creators:", creators[0]);
+      console.log("Calling contract function");
+      console.log("contractId:", contractId);
+      console.log("tokenQty:", tokenQty);
+      console.log("token:", stringToBytes(tokens[0]));
+      console.log("creators:", creators[0]);
 
       const op = await minter.methods
         .mint_artist(

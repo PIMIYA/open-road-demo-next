@@ -143,6 +143,7 @@ async function getNFTdropsByIDs(directusToken, nftDropIDs) {
     }
 }
 
+
 async function updateUserWallet(directusToken, email, address, poolID) {
     const userWalletUrl = `${directus_url}/items/userWallets?filter[email][_eq]=${email}`;
     const nftDropUrl = `${directus_url}/items/NFTdrops`;
@@ -172,16 +173,21 @@ async function updateUserWallet(directusToken, email, address, poolID) {
         // Extract NFTdrop IDs from the user wallet
         const existingNFTdropIDs = userWallet.NFTdrops || [];
         console.log('Existing NFTdrop IDs from userWallet:', existingNFTdropIDs);
-
+        // Fetch the NFTdrop entries by IDs
+        const existingNFTdrops = await getNFTdropsByIDs(directusToken, existingNFTdropIDs);
+        console.log('Existing NFTdrops from NFTdrop:', existingNFTdrops);
         // Check if the NFTdrop is already in the user wallet
-        if (existingNFTdropIDs.includes(nftDropID)) {
+        const existingNFTdrop = existingNFTdrops.find(nftDrops => nftDrops.id === nftDropID);
+        console.log('the NFTdrop is already in the user wallet:', existingNFTdrop);
+
+        if (existingNFTdrop) {
             console.log('NFTdrop already in user wallet');
             return userWallet;
         }
 
         // Update the NFTdrop to set the userWallets field
         const updatedNFTdropBody = {
-            userWallets: [...userWallet.userWallets, { userWallets_id: userWallet.id }]
+            userWallets: [{ userWallets_id: userWallet.id }]
         };
 
         const updatedNFTdropResponse = await axios.patch(`${nftDropUrl}/${nftDropID}`, updatedNFTdropBody, {
@@ -195,75 +201,12 @@ async function updateUserWallet(directusToken, email, address, poolID) {
 
         return updatedNFTdropResponse.data.data;
 
+
     } catch (error) {
         console.error('Error updating user wallet:', error.response ? error.response.data : error.message);
         throw error;
     }
 }
-
-// async function updateUserWallet(directusToken, email, address, poolID) {
-//     const userWalletUrl = `${directus_url}/items/userWallets?filter[email][_eq]=${email}`;
-//     const nftDropUrl = `${directus_url}/items/NFTdrops`;
-
-//     const nftDropID = await getNFTDropByPoolID(directusToken, poolID);
-//     console.log(`${poolID} is NFTDrop ID:`, nftDropID);
-
-//     if (!nftDropID) {
-//         return null;
-//     }
-
-//     try {
-//         // Fetch existing user wallet
-//         const userWalletResponse = await axios.get(userWalletUrl, {
-//             headers: {
-//                 'Authorization': `Bearer ${directusToken}`
-//             }
-//         });
-
-//         const userWallet = userWalletResponse.data.data[0];
-//         console.log('Existing user wallet:', userWallet);
-
-//         if (!userWallet) {
-//             throw new Error('User wallet not found');
-//         }
-
-//         // Extract NFTdrop IDs from the user wallet
-//         const existingNFTdropIDs = userWallet.NFTdrops || [];
-//         console.log('Existing NFTdrop IDs from userWallet:', existingNFTdropIDs);
-//         // Fetch the NFTdrop entries by IDs
-//         const existingNFTdrops = await getNFTdropsByIDs(directusToken, existingNFTdropIDs);
-//         console.log('Existing NFTdrops from NFTdrop:', existingNFTdrops);
-//         // Check if the NFTdrop is already in the user wallet
-//         const existingNFTdrop = existingNFTdrops.find(nftDrops => nftDrops.id === nftDropID);
-//         console.log('the NFTdrop is already in the user wallet:', existingNFTdrop);
-
-//         if (existingNFTdrop) {
-//             console.log('NFTdrop already in user wallet');
-//             return userWallet;
-//         }
-
-//         // Update the NFTdrop to set the userWallets field
-//         const updatedNFTdropBody = {
-//             userWallets: [{ userWallets_id: userWallet.id }]
-//         };
-
-//         const updatedNFTdropResponse = await axios.patch(`${nftDropUrl}/${nftDropID}`, updatedNFTdropBody, {
-//             headers: {
-//                 'Content-Type': 'application/json',
-//                 'Authorization': `Bearer ${directusToken}`
-//             }
-//         });
-
-//         console.log('Updated NFTdrop:', updatedNFTdropResponse.data.data);
-
-//         return updatedNFTdropResponse.data.data;
-
-
-//     } catch (error) {
-//         console.error('Error updating user wallet:', error.response ? error.response.data : error.message);
-//         throw error;
-//     }
-// }
 
 export default async function handler(req, res) {
     const { email, address, poolID } = req.body;

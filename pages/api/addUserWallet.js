@@ -1,7 +1,10 @@
 const axios = require('axios');
 
+//get env variables
+const directus_url = process.env.DirectusURL;
+
 async function getDirectusToken(email, password) {
-    const url = 'http://localhost:8055/auth/login';
+    const url = `${directus_url}/auth/login`;
     const body = {
         email: email,
         password: password
@@ -24,7 +27,7 @@ async function getDirectusToken(email, password) {
 }
 
 async function checkWalletExist(directusToken, address) {
-    const url = `http://localhost:8055/items/userWallets?filter[walletAddress]=${address}`;
+    const url = `${directus_url}/items/userWallets?filter[address]=${address}`;
     try {
         const response = await axios.get(url, {
             headers: {
@@ -33,7 +36,7 @@ async function checkWalletExist(directusToken, address) {
             }
         });
 
-        // console.log('Check wallet exist response:', response.data);
+        console.log('Check wallet exist response:', response.data);
 
         if (!response.data.data || response.data.data.length === 0) {
             return false;
@@ -47,7 +50,8 @@ async function checkWalletExist(directusToken, address) {
 }
 
 async function getNFTDropByPoolID(directusToken, poolID) {
-    const url = `http://localhost:8055/items/NFTdrops?filter[poolID]=${poolID}`;
+
+    const url = `${directus_url}/items/NFTdrops?filter[poolID]=${poolID}`;
     try {
         const response = await axios.get(url, {
             headers: {
@@ -56,7 +60,7 @@ async function getNFTDropByPoolID(directusToken, poolID) {
             }
         });
 
-        // console.log('Get NFTDrop ID response:', response.data.data);
+        console.log('Get NFTDrop ID response:', response.data.data);
 
         if (!response.data.data) {
             return null;
@@ -71,8 +75,8 @@ async function getNFTDropByPoolID(directusToken, poolID) {
 
 
 async function addUserWallet(directusToken, email, address, poolID) {
-    const userWalletUrl = 'http://localhost:8055/items/userWallets';
-    const nftDropUrl = 'http://localhost:8055/items/NFTdrops';
+    const userWalletUrl = `${directus_url}/items/userWallets`;
+    const nftDropUrl = '${directus_url}/items/NFTdrops';
 
     // Get ID of NFTdrop by poolID
     const nftDropID = await getNFTDropByPoolID(directusToken, poolID);
@@ -119,7 +123,7 @@ async function addUserWallet(directusToken, email, address, poolID) {
 }
 
 async function getNFTdropsByIDs(directusToken, nftDropIDs) {
-    const nftDropUrl = `http://localhost:8055/items/NFTdrops?filter[userWallets][_in]=${nftDropIDs.join(',')}`;
+    const nftDropUrl = `${directus_url}/items/NFTdrops?filter[userWallets][_in]=${nftDropIDs.join(',')}`;
 
     try {
         const response = await axios.get(nftDropUrl, {
@@ -136,8 +140,8 @@ async function getNFTdropsByIDs(directusToken, nftDropIDs) {
 }
 
 async function updateUserWallet(directusToken, email, address, poolID) {
-    const userWalletUrl = `http://localhost:8055/items/userWallets?filter[email][_eq]=${email}`;
-    const nftDropUrl = 'http://localhost:8055/items/NFTdrops';
+    const userWalletUrl = `${directus_url}/items/userWallets?filter[email][_eq]=${email}`;
+    const nftDropUrl = '${directus_url}/items/NFTdrops';
 
     const nftDropID = await getNFTDropByPoolID(directusToken, poolID);
     console.log(`${poolID} is NFTDrop ID:`, nftDropID);

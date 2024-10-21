@@ -42,6 +42,7 @@ const nextConfig = {
     NEXT_PUBLIC_PARTNER_ID: process.env.NEXT_PUBLIC_PARTNER_ID,
     NEXT_PUBLIC_BAUTH_USERNAME: process.env.NEXT_PUBLIC_BAUTH_USERNAME,
     NEXT_PUBLIC_BAUTH_PASSWORD: process.env.NEXT_PUBLIC_BAUTH_PASSWORD,
+    DirectusURL: process.env.DirectusURL,
   },
 
   async headers() {

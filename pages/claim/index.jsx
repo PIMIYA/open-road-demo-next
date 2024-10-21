@@ -147,8 +147,8 @@ export default function NFTPage({
 
       if (claimResult.isInvalid) {
         setClaimStatus(`Claim failed: Invalid address or pool`);
-      } 
-      // else if (!claimResult.isEnrolled && claimResult.isSoldOut) {
+      }else{
+      // } else if (!claimResult.isEnrolled && claimResult.isSoldOut) {
       //   setClaimStatus(`Claim failed: Sold out`);
       // } else if (!claimResult.isEnrolled && !claimResult.isSoldOut) {
       //   setClaimStatus(`Claim failed: Already claimed`);

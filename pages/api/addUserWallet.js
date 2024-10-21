@@ -143,7 +143,7 @@ async function getNFTdropsByIDs(directusToken, nftDropIDs) {
 
 async function updateUserWallet(directusToken, email, address, poolID) {
     const userWalletUrl = `${directus_url}/items/userWallets?filter[email][_eq]=${email}`;
-    const nftDropUrl = '${directus_url}/items/NFTdrops';
+    const nftDropUrl = `${directus_url}/items/NFTdrops`;
 
     const nftDropID = await getNFTDropByPoolID(directusToken, poolID);
     console.log(`${poolID} is NFTDrop ID:`, nftDropID);

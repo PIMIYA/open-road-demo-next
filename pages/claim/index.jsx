@@ -146,14 +146,13 @@ export default function NFTPage({
       console.log("Claim result:", claimResult);
 
       if (claimResult.isInvalid) {
-        setClaimStatus(`Claim failed: Invalid address or pool`);
-      }else{
-      // } else if (!claimResult.isEnrolled && claimResult.isSoldOut) {
-      //   setClaimStatus(`Claim failed: Sold out`);
-      // } else if (!claimResult.isEnrolled && !claimResult.isSoldOut) {
-      //   setClaimStatus(`Claim failed: Already claimed`);
-      // } else if (claimResult.isEnrolled && !claimResult.isSoldOut) {
-      //   setClaimStatus(`Claim successful: ${JSON.stringify(claimResult)}`);
+        setClaimStatus(`Claim Status: Invalid address or pool`);
+      } else if (!claimResult.isEnrolled && claimResult.isSoldOut) {
+        setClaimStatus(`Claim Status: Sold out`);
+      } else if (!claimResult.isEnrolled && !claimResult.isSoldOut) {
+        setClaimStatus(`Claim Status: Already claimed`);
+      } else if (claimResult.isEnrolled && !claimResult.isSoldOut) {
+        setClaimStatus(`Claim successful: ${JSON.stringify(claimResult)}`);
 
         // Add user wallet to the database
         const addUserWalletResponse = await fetch(`/api/addUserWallet`, {

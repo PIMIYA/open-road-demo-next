@@ -28,6 +28,8 @@ async function getDirectusToken(email, password) {
 
 async function checkWalletExist(directusToken, address) {
     const url = `${directus_url}/items/userWallets?filter[address]=${address}`;
+
+    console.log('Check wallet exist URL:', url);
     try {
         const response = await axios.get(url, {
             headers: {

@@ -152,7 +152,8 @@ export default function NFTPage({
       } else if (!claimResult.isEnrolled && !claimResult.isSoldOut) {
         setClaimStatus(`Claim Status: Already claimed`);
       } else if (claimResult.isEnrolled && !claimResult.isSoldOut) {
-        setClaimStatus(`Claim successful: ${JSON.stringify(claimResult)}`);
+        console.log(`Claim successful: ${JSON.stringify(claimResult)}`);
+        setClaimStatus(`Claim successful`);
 
         // Add user wallet to the database
         const addUserWalletResponse = await fetch(`/api/addUserWallet`, {

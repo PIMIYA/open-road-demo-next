@@ -90,7 +90,7 @@ async function addUserWallet(directusToken, email, address, poolID) {
     // Add user wallet to the database, include email and wallet address
     const userWalletBody = {
         email: email,
-        walletAddress: address
+        address: address
     };
 
     try {

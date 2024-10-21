@@ -104,6 +104,7 @@ async function addUserWallet(directusToken, email, address, poolID) {
         });
 
         const userWalletID = userWalletResponse.data.data.id;
+        console.log('User wallet ID:', userWalletID);
 
         // Update NFTdrop entry to link it to the newly created user wallet
         const nftDropBody = {

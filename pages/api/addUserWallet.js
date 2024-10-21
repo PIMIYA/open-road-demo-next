@@ -170,7 +170,7 @@ async function updateUserWallet(directusToken, email, address, poolID) {
         }
 
         // Extract NFTdrop IDs from the user wallet
-        const existingNFTdropIDs = userWallet.NFTdrops.map(nftDrop => nftDrop.id) || [];
+        const existingNFTdropIDs = userWallet.NFTdrops || [];
         console.log('Existing NFTdrop IDs from userWallet:', existingNFTdropIDs);
 
         // Check if the NFTdrop is already in the user wallet

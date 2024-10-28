@@ -8,7 +8,7 @@ import {
 import { MichelCodecPacker, TezosToolkit, OpKind } from "@taquito/taquito";
 import { stringToBytes } from "@taquito/utils";
 import { ConnectFn, ContractCallDetails } from "./types";
-// import { BeaconEvent } from "@airgap/beacon-sdk";
+import { BeaconEvent } from "@airgap/beacon-sdk";
 import { InMemorySigner } from "@taquito/signer";
 
 
@@ -31,13 +31,14 @@ export const connectBeacon: ConnectFn = async (isNew) => {
   if (!isNew) {
     const existingWallet = createBeaconWallet();
 
-    // // Subscribe to events to get notified when the active account changes
-    // existingWallet?.client.subscribeToEvent(
-    //   BeaconEvent.ACTIVE_ACCOUNT_SET as BeaconEvent, // Change the argument type to BeaconEvent
-    //   (data) => {
-    //     console.log("Active account has been set: ", data);
-    //   }
-    // );
+    // Subscribe to events to get notified when the active account changes
+    existingWallet?.client.subscribeToEvent(
+      BeaconEvent.ACTIVE_ACCOUNT_SET as BeaconEvent, // Change the argument type to BeaconEvent
+      (data) => {
+        console.log("Active account has been set: ", data);
+      }
+    );
+    
     const acc = await existingWallet?.client.getActiveAccount();
 
     if (!existingWallet || !acc) {
@@ -129,8 +130,7 @@ const getBeaconAppName = async (
 
 export const tezosToolkit = new TezosToolkit(
   // for payments: todo: add prod url
-  // "https://mainnet.smartpy.io"
-  "https://rpc.tzbeta.net/"
+  "https://mainnet.smartpy.io"
 );
 
 export const callContractBeaconFn =
@@ -171,13 +171,13 @@ export const callContractBeaconFn =
       console.log("token:", stringToBytes(tokens[0]));
       console.log("creators:", creators[0]);
 
-      const op = await minter.methods
-        .mint_artist(
+      const op = await minter.methodsObject
+        .mint_artist({
           contractId,
           tokenQty,
-          stringToBytes(tokens[0]),
-          creators[0]
-        )
+          token: stringToBytes(tokens[0]),
+          creator: creators[0]
+        })
         .send({ storageLimit: 350 });
 
       console.log("Op hash:", op.opHash);

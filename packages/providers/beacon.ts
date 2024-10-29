@@ -32,12 +32,12 @@ export const connectBeacon: ConnectFn = async (isNew) => {
     const existingWallet = createBeaconWallet();
 
     // Subscribe to events to get notified when the active account changes
-    existingWallet?.client.subscribeToEvent(
-      BeaconEvent.ACTIVE_ACCOUNT_SET as BeaconEvent, // Change the argument type to BeaconEvent
-      (data) => {
-        console.log("Active account has been set: ", data);
-      }
-    );
+    // existingWallet?.client.subscribeToEvent(
+    //   BeaconEvent.ACTIVE_ACCOUNT_SET as BeaconEvent, // Change the argument type to BeaconEvent
+    //   (data) => {
+    //     console.log("Active account has been set: ", data);
+    //   }
+    // );
     
     const acc = await existingWallet?.client.getActiveAccount();
 

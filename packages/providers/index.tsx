@@ -1,7 +1,7 @@
 // todo: this shouldnt know about nextjs
 // the email modal should live in @kanvas/client/ui
 // and we should simply handle it here
-import { Context, createContext, useContext, useEffect, useState } from "react";
+import { Context, createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useCookies } from "react-cookie";
 import { connectBeacon, tezosToolkit } from "./beacon";
 import { WalletApi, WalletConnection } from "./types";
@@ -17,17 +17,17 @@ export const ConnectionProvider = ({ children }: { children: any }) => {
 
   const [wallet, setWallet] = useState<WalletApi | undefined>();
 
-  const setWalletCookie = (address: string | undefined) => {
+  const setWalletCookie = useCallback((address: string | undefined) => {
     setCookies("viewer-address", address, {
       path: "/",
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365 * 10),
       sameSite: "lax",
     });
-  };
+  }, [setCookies]);
 
   useEffect(() => {
     setWalletCookie(wallet?.address);
-  }, [wallet?.address]);
+  }, [wallet?.address, setWalletCookie]);
 
   useEffect(() => {
     connectBeacon(false)

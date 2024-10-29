@@ -45,7 +45,7 @@ const nextConfig = {
     DirectusURL: process.env.DirectusURL,
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
 
   async headers() {

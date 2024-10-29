@@ -21,8 +21,7 @@ export interface WalletConnection {
     disconnect: () => Promise<void>;
   }
   
-  // eslint-disable-next-line no-debugger @typescript-eslint/no-empty-interface
-  interface BeaconOptions {}
+   interface BeaconOptions {}
   export interface KukaiOptions {
     showEmail?: boolean;
   }

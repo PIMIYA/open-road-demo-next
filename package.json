@@ -30,7 +30,7 @@
     "fastclick": "^1.0.6",
     "html-react-parser": "^5.1.10",
     "kukai-embed": "^0.9.2",
-    "next": "13.5.6",
+    "next": "14.2.14",
     "qrcode": "^1.5.3",
     "random-seed": "^0.3.0",
     "react": "^18",
@@ -50,6 +50,5 @@
     "eslint": "^8",
     "eslint-config-next": "14.0.3",
     "typescript": "^5",
-    "next": "14.2.14"
   }
 }

@@ -136,10 +136,10 @@ export const tezosToolkit = new TezosToolkit(
 export const callContractBeaconFn =
   (beaconWallet: BeaconWallet) =>
   async ({
-    contractId,
-    tokenQty,
-    creators,
-    tokens,
+    collection_id,
+    editions,
+    metadata_cid,
+    target,
   }: ContractCallDetails): Promise<string | undefined> => {
     try {
       await beaconWallet?.requestPermissions({
@@ -166,19 +166,19 @@ export const callContractBeaconFn =
         "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
       const minter = await tezosToolkit.wallet.at(minterContractAddress);
       console.log("Calling contract function");
-      console.log("contractId:", contractId);
-      console.log("tokenQty:", tokenQty);
-      console.log("token:", stringToBytes(tokens[0]));
-      console.log("creators:", creators[0]);
+      // console.log("collection_id:", collection_id);
+      // console.log("editions:", editions);
+      // console.log("metadata_cid:", stringToBytes(metadata_cid[0]));
+      // console.log("target:", target[0]);
 
       const op = await minter.methodsObject
         .mint_artist({
-          contractId,
-          tokenQty,
-          token: stringToBytes(tokens[0]),
-          creator: creators[0]
+          collection_id: Number(collection_id),
+          editions: Number(editions),
+          metadata_cid: stringToBytes(metadata_cid[0]),
+          target: target[0]
         })
-        .send({ storageLimit: 350 });
+        .send();
 
       console.log("Op hash:", op.opHash);
       const confirmation = await op.confirmation();

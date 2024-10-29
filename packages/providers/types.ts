@@ -8,10 +8,10 @@ export interface WalletConnection {
     connection: WalletConnection;
   }
   export interface ContractCallDetails {
-    contractId: number;
-    tokenQty: number;
-    tokens: string[];
-    creators: string[];
+    collection_id: number;
+    editions: number;
+    metadata_cid: string[];
+    target: string[];
   }
   
   export interface WalletApi {

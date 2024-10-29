@@ -8,7 +8,7 @@ import {
 import { MichelCodecPacker, TezosToolkit, OpKind } from "@taquito/taquito";
 import { stringToBytes } from "@taquito/utils";
 import { ConnectFn, ContractCallDetails } from "./types";
-import { BeaconEvent } from "@airgap/beacon-sdk";
+// import { BeaconEvent } from "@airgap/beacon-sdk";
 import { InMemorySigner } from "@taquito/signer";
 
 

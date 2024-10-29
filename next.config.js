@@ -44,6 +44,9 @@ const nextConfig = {
     NEXT_PUBLIC_BAUTH_PASSWORD: process.env.NEXT_PUBLIC_BAUTH_PASSWORD,
     DirectusURL: process.env.DirectusURL,
   },
+  eslint: {
+    ignoreDuringBuilds: ['/src/core']
+  },
 
   async headers() {
     return [

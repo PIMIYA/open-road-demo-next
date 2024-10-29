@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@airgap/beacon-dapp": "^4.3.0",
     "@airgap/beacon-sdk": "^4.2.2",
-    "@airgap/beacon-dapp": "^2.3.0",
     "@airgap/beacon-types": "^4.1.2",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",

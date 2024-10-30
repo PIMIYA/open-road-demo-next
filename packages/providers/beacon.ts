@@ -179,9 +179,7 @@ export const callContractBeaconFn =
           metadata_cid: stringToBytes(metadata_cid[0]),
           target: target[0]
         })
-        .send({
-          gasLimit: 500000
-        });
+        .send();
 
       console.log("Op hash:", op.opHash);
       const confirmation = await op.confirmation();

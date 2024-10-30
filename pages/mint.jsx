@@ -317,7 +317,7 @@ export default function Mint() {
         method: "POST",
         headers: {
           "Accept": "application/json",
-          "Access-Control-Allow-Origin": "https://f6b72c8298a8.ngrok.app"
+          "Access-Control-Allow-Origin": "*"
         },
         body: data,
       });

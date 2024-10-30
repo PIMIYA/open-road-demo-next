@@ -316,7 +316,8 @@ export default function Mint() {
       const response = await fetch(`${serverUrl}/mint`, {
         method: "POST",
         headers: {
-          "Accept": "application/json"
+          "Accept": "application/json",
+          "Access-Control-Allow-Origin": "*"
         },
         body: data,
       });

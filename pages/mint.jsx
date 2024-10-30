@@ -317,7 +317,7 @@ export default function Mint() {
         method: "POST",
         headers: {
           "Accept": "application/json",
-          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Origin": "https://mint.kairos-mint.art"
         },
         body: data,
       });

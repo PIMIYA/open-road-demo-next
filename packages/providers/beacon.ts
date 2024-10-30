@@ -167,10 +167,10 @@ export const callContractBeaconFn =
         "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
       const minter = await tezosToolkit.wallet.at(minterContractAddress);
       console.log("Calling contract function");
-      // console.log("collection_id:", collection_id);
-      // console.log("editions:", editions);
-      // console.log("metadata_cid:", stringToBytes(metadata_cid[0]));
-      // console.log("target:", target[0]);
+      console.log("collection_id:", collection_id);
+      console.log("editions:", editions);
+      console.log("metadata_cid:", stringToBytes(metadata_cid[0]));
+      console.log("target:", target[0]);
 
       const op = await minter.methodsObject
         .mint_artist({
@@ -179,7 +179,9 @@ export const callContractBeaconFn =
           metadata_cid: stringToBytes(metadata_cid[0]),
           target: target[0]
         })
-        .send();
+        .send({
+          gasLimit: 500000
+        });
 
       console.log("Op hash:", op.opHash);
       const confirmation = await op.confirmation();

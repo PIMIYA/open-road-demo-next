@@ -48,26 +48,26 @@ const nextConfig = {
     ignoreDuringBuilds: false,
   },
 
-  async headers() {
-    return [
-      {
-        source: "/:path*",
-        headers: [
-          {
-            key: "Access-Control-Allow-Origin",
-            value: "*", // Adjust this to your specific origin if needed
-          },
-          {
-            key: "Access-Control-Allow-Methods",
-            value: "GET, POST, PUT, DELETE, OPTIONS",
-          },
-          {
-            key: "Access-Control-Allow-Headers",
-            value: "X-Requested-With, Content-Type, Authorization",
-          },
-        ],
-      },
-    ];
-  },
+  // async headers() {
+  //   return [
+  //     {
+  //       source: "/:path*",
+  //       headers: [
+  //         {
+  //           key: "Access-Control-Allow-Origin",
+  //           value: "*", // Adjust this to your specific origin if needed
+  //         },
+  //         {
+  //           key: "Access-Control-Allow-Methods",
+  //           value: "GET, POST, PUT, DELETE, OPTIONS",
+  //         },
+  //         {
+  //           key: "Access-Control-Allow-Headers",
+  //           value: "X-Requested-With, Content-Type, Authorization",
+  //         },
+  //       ],
+  //     },
+  //   ];
+  // },
 };
 module.exports = nextConfig

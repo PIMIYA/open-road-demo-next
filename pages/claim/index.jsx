@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { useRouter } from 'next/navigation'
 import {
   TZKT_API,
   MainnetAPI,
@@ -50,7 +51,7 @@ export async function getServerSideProps(context) {
   ]);
 
   return {
-    props: { ownersData, data, data_from_pool, nftData },
+    props: { ownersData, data, data_from_pool, nftData, tokenId },
   };
 }
 
@@ -59,11 +60,15 @@ export default function NFTPage({
   data,
   data_from_pool,
   nftData,
+  tokenId,
   error,
 }) {
   const [claimStatus, setClaimStatus] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const embedRef = useRef(null);
+
+  const router = useRouter()
+
 
   const handleClaim = async (userInfo) => {
     const {
@@ -189,6 +194,12 @@ export default function NFTPage({
         await embedRef.current.logout();
         setIsLoggedIn(false);
         console.log("Logged out successfully");
+        console.log("Redirect to user Wallet page");
+        setClaimStatus(`Redirect to user Wallet page`);
+        // redirect to NFtoken page
+        // router.push(`/claimsToken/KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW/${tokenId}`);
+        //redirect to the endUser wallet page
+        router.push(`/wallet/${address}`);
       }
     }
   };

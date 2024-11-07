@@ -159,7 +159,7 @@ export default function sketch(s) {
       if (maxY == null || point.y > maxY) maxY = point.y;
     });
 
-    return 1 / s.dist(minX, minY, maxX, maxY) * 400;
+    return s.constrain(1 / s.dist(minX, minY, maxX, maxY) * 400, 1, 20);
   }
 
   s.resize = () => {

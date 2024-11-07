@@ -253,7 +253,7 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
           <>No Token</>
         ) : (
           <Box>
-            {/* <WalletCanvas canvasData={cardData} address={addressFromURL} /> */}
+            <WalletCanvas canvasData={cardData} address={addressFromURL} />
             <Stack direction="row">
               <Box width={"100%"}>
                 {/* timeline */}

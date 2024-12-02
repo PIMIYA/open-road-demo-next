@@ -1,109 +1,46 @@
-// MUI + Google Maps Places Autocomplete
-import TextField from "@mui/material/TextField";
-import Box from "@mui/material/Box";
-import Autocomplete from "@mui/material/Autocomplete";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import Grid from "@mui/material/Grid";
-import Typography from "@mui/material/Typography";
-import parse from "autosuggest-highlight/parse";
-import { debounce } from "@mui/material/utils";
+// React
 import { useState, useEffect, useRef, useMemo } from "react";
+// Next
+import { useRouter } from "next/router";
 // MUI
-import { Button, Checkbox, FormControlLabel } from "@mui/material";
-import { styled } from "@mui/material/styles";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import Container from "@mui/material/Container";
-import Slider from "@mui/material/Slider";
+import {
+  Box,
+  TextField,
+  Autocomplete,
+  Grid,
+  Typography,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  Container,
+} from "@mui/material";
+import { debounce } from "@mui/material/utils";
+import { ThemeProvider } from "@mui/material/styles";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+// MUI Icons
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
+// MUI + Google Maps Places Autocomplete
+import parse from "autosuggest-highlight/parse";
 // Get the lat and lng from the address
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 // Kairos
 import { useConnection } from "@/packages/providers";
-// Componenta
+// Component
 import { Sharer } from "@/components/sharer";
-// Next
-import { useRouter } from "next/router";
-
-//List value of categories, tags, and licenses
-const categories = [
-  { label: "展覽" },
-  { label: "表演" },
-  { label: "課程" },
-  { label: "導覽" },
-  { label: "工作坊" },
-  { label: "黑客松" },
-  { label: "座談" },
-  { label: "親子" },
-  { label: "節祭／展會／市集" },
-  { label: "分享會／同好會／見面會" },
-];
-const tags = [
-  { main: "視覺", sub: "繪畫" },
-  { main: "視覺", sub: "裝置" },
-  { main: "視覺", sub: "工藝" },
-  { main: "視覺", sub: "雕塑" },
-  { main: "視覺", sub: "攝影" },
-  { main: "視覺", sub: "影像" },
-  { main: "表演", sub: "馬戲" },
-  { main: "表演", sub: "音樂劇（親子、百老匯）" },
-  { main: "表演", sub: "戲曲（歌仔戲、南管、京劇）" },
-  { main: "表演", sub: "現代戲劇" },
-  { main: "表演", sub: "讀劇" },
-  { main: "表演", sub: "音樂（搖滾、古典、電子、音像）" },
-  { main: "表演", sub: "說唱（漫才、相聲、站立喜劇）" },
-  { main: "表演", sub: "舞蹈（現代舞、舞踏、民俗）" },
-  { main: "設計", sub: "平面" },
-  { main: "設計", sub: "互動 ／媒體" },
-  { main: "設計", sub: "時尚" },
-  { main: "設計", sub: "建築" },
-  { main: "設計", sub: "工業／商品" },
-  { main: "電影", sub: "紀錄片" },
-  { main: "電影", sub: "劇情片" },
-  { main: "科技", sub: "區塊鏈" },
-  { main: "科技", sub: "AI" },
-  { main: "科技", sub: "VR／AR／MR" },
-  { main: "書籍", sub: "小說" },
-  { main: "書籍", sub: "詩歌" },
-  { main: "書籍", sub: "散文" },
-  { main: "書籍", sub: "漫畫" },
-  { main: "文化", sub: "公益（社會運動、地方創生、慈善捐贈）" },
-  { main: "文化", sub: "性別" },
-  { main: "文化", sub: "語言" },
-  { main: "文化", sub: "歷史" },
-  { main: "文化", sub: "環境" },
-  { main: "文化", sub: "動物" },
-  { main: "科學", sub: "社會科學（經濟、政治、國際關係）" },
-  { main: "科學", sub: "自然科學（天文、地理）" },
-];
-const licenses = [
-  { label: "All rights reserved" },
-  { label: "CC0 public (Public Domain)" },
-  { label: "CC BY (Attribution)" },
-  { label: "CC BY-SA (Attribution-ShareAlike)" },
-];
-
-// Custom styles for the file upload button and hide the input
-const VisuallyHiddenInput = styled("input")({
-  clip: "rect(0 0 0 0)",
-  clipPath: "inset(50%)",
-  height: 1,
-  overflow: "hidden",
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  whiteSpace: "nowrap",
-  width: 1,
-});
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: "rgba(0,0,0,0.87)",
-    },
-  },
-});
+import { prepareFilesFromZIP } from "@/components/render-media/html/utils/html";
+import { prepareDirectory } from "@/components/mint/prepareDirectory";
+// List value of categories, tags, and licenses
+import {
+  categories,
+  tags,
+  licenses,
+  VisuallyHiddenInput,
+  theme,
+  MIMETYPE,
+} from "@/components/mint/const";
 
 // MUI + Google Maps Places Autocomplete
 const GOOGLE_MAPS_API_KEY = `${process.env.GoogleMapsAPIKey}`;
@@ -121,6 +58,7 @@ const autocompleteService = { current: null };
 
 export default function Mint() {
   const router = useRouter();
+
   // State variables for places autocomplete
   const [value, setValue] = useState(null);
   const [inputValue, setInputValue] = useState("");
@@ -129,7 +67,6 @@ export default function Mint() {
   // State variables for lat and lng
   const [lat, setLat] = useState(null);
   const [lng, setLng] = useState(null);
-
   // Google autocomplete service
   if (typeof window !== "undefined" && !loaded.current) {
     if (!document.querySelector("#google-maps")) {
@@ -181,11 +118,94 @@ export default function Mint() {
       share: 100,
     },
   ]);
+  // API ROUTE : Fetch wallet role
+  const [roleData, setRoleData] = useState(null);
+  const [isLoadingRole, setLoadingRole] = useState(true);
 
-  function handleFileChange(event) {
-    console.log("file", file);
-    setFile(event.target.files[0]);
+  useEffect(() => {
+    if (!address) {
+      return;
+    }
+    // Auto import wallet address to input field
+    setWalletAddress(address);
+
+    // Fetch wallet role
+    fetch("/api/walletRoles", {
+      method: "POST",
+      body: address,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setRoleData(data);
+        setLoadingRole(false);
+      });
+
+    // Google autocomplete service
+    let active = true;
+    if (!autocompleteService.current && window.google) {
+      autocompleteService.current =
+        new window.google.maps.places.AutocompleteService();
+    }
+    if (!autocompleteService.current) {
+      return undefined;
+    }
+    if (inputValue === "") {
+      setOptions(value ? [value] : []);
+      return undefined;
+    }
+    fetchPlacePredictions({ input: inputValue }, (results) => {
+      if (active) {
+        let newOptions = [];
+        if (value) {
+          newOptions = [value];
+        }
+        if (results) {
+          newOptions = [...newOptions, ...results];
+        }
+        setOptions(newOptions);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [value, inputValue, fetchPlacePredictions, address]);
+
+  // Fetch wallet role
+  if (isLoadingRole) return <p>Loading...</p>;
+  if (!roleData) return <p>No role data</p>;
+  // console.log(roleData.data.length);
+  // Redirect to cannotMint page if the wallet role is not allowed to mint or not connected to wallet
+  if (roleData.data.length == 0 || !address) {
+    router.push("/cannotMint");
   }
+
+  // function handleFileChange(event) {
+  //   console.log("file", file);
+  //   setFile(event.target.files[0]);
+  // }
+
+  const Buffer = require("buffer").Buffer;
+  const handleFileUpload = async (props) => {
+    const mimeType = props.target.files[0].type;
+    const myFile = props.target.files[0];
+    let nftCid;
+    if ([MIMETYPE.ZIP, MIMETYPE.ZIP1, MIMETYPE.ZIP2].includes(mimeType)) {
+      // console.log("zip file");
+      const buffer = Buffer.from(await myFile.arrayBuffer());
+      const files = await prepareFilesFromZIP(buffer);
+      files.type = "application/x-directory";
+      files.name = myFile.name;
+      // console.log("files", files);
+      // nftCid = await prepareDirectory({ files });
+      // console.log("nftCid", nftCid);
+      setFile(files);
+    } else {
+      // console.log("not zip file");
+      // console.log("file", myFile);
+      setFile(myFile);
+    }
+  };
+
   function handleThumbChange(event) {
     // console.log("thumb", thumb);
     setThumb(event.target.files[0]);
@@ -279,24 +299,17 @@ export default function Mint() {
         shares: { [address]: royaltyPercentage * 100 },
       };
 
-      // const testRoyalty = {};
-      // testRoyalty[address] = royaltyPercentage * 100;
-
       if (useRoyaltiesShare) {
         data.append("royalties", JSON.stringify(royalties));
       } else {
         data.append("royalties", JSON.stringify(royalty));
       }
 
-      // data.append("royalties", JSON.stringify(royalties));
-
-      // Append the file to the FormData instance
-      // if (fileRef) {
-      //   data.append("image", fileRef.current.files[0]);
-      // }
+      // file
       if (file) {
         data.append("image", file);
       }
+
       if (thumb) {
         data.append("thumbnail", thumb);
       }
@@ -312,10 +325,10 @@ export default function Mint() {
         body: data,
       });
 
-      // // Parse the JSON response
+      // Parse the JSON response
       if (response) {
         const data = await response.json();
-        console.log(data);
+        // console.log(data);
         if (
           data.status === true &&
           data.msg.metadataHash &&
@@ -365,68 +378,6 @@ export default function Mint() {
       mintingToken = false;
     }
   };
-
-  // API ROUTE : Fetch wallet role
-  const [roleData, setRoleData] = useState(null);
-  const [isLoadingRole, setLoadingRole] = useState(true);
-
-  useEffect(() => {
-    if (!address) {
-      return;
-    }
-
-    // Auto import wallet address to input field
-    setWalletAddress(address);
-
-    // Fetch wallet role
-    fetch("/api/walletRoles", {
-      method: "POST",
-      body: address,
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setRoleData(data);
-        setLoadingRole(false);
-      });
-
-    // Google autocomplete service
-    let active = true;
-    if (!autocompleteService.current && window.google) {
-      autocompleteService.current =
-        new window.google.maps.places.AutocompleteService();
-    }
-    if (!autocompleteService.current) {
-      return undefined;
-    }
-    if (inputValue === "") {
-      setOptions(value ? [value] : []);
-      return undefined;
-    }
-    fetchPlacePredictions({ input: inputValue }, (results) => {
-      if (active) {
-        let newOptions = [];
-        if (value) {
-          newOptions = [value];
-        }
-        if (results) {
-          newOptions = [...newOptions, ...results];
-        }
-        setOptions(newOptions);
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, [value, inputValue, fetchPlacePredictions, address]);
-
-  // Fetch wallet role
-  if (isLoadingRole) return <p>Loading...</p>;
-  if (!roleData) return <p>No role data</p>;
-  // console.log(roleData.data.length);
-  // Redirect to cannotMint page if the wallet role is not allowed to mint or not connected to wallet
-  if (roleData.data.length == 0 || !address) {
-    router.push("/cannotMint");
-  }
 
   return (
     <>
@@ -607,7 +558,7 @@ export default function Mint() {
               <DatePicker
                 label="start time"
                 sx={{ width: 300 }}
-                value={startTime}
+                value={startTime ?? null}
                 onChange={(newValue) => setStartTime(newValue)}
               />
             </LocalizationProvider>
@@ -617,7 +568,7 @@ export default function Mint() {
               <DatePicker
                 label="end time"
                 sx={{ width: 300 }}
-                value={endTime}
+                value={endTime ?? null}
                 onChange={(newValue) => setEndTime(newValue)}
               />
             </LocalizationProvider>
@@ -720,12 +671,11 @@ export default function Mint() {
               <Button
                 id="myfile"
                 component="label"
-                role={undefined}
                 variant="outlined"
                 tabIndex={-1}
               >
                 Upload file
-                <VisuallyHiddenInput type="file" onChange={handleFileChange} />
+                <VisuallyHiddenInput type="file" onChange={handleFileUpload} />
               </Button>
             </ThemeProvider>
             <Box>

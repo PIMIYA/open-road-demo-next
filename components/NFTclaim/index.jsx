@@ -139,7 +139,7 @@ export default function NFTclaim({ ownersData, data }) {
                       {poolId !== null ? (
                         <>
                           <Typography variant="h6">
-                            Pool ID: {poolId}
+                            {/* Pool ID: {poolId} */}
                           </Typography>
                           <Box
                             sx={{

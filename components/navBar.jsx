@@ -53,7 +53,7 @@ export default function () {
       });
   }, [address]);
 
-    console.log("roleData", roleData);
+  // console.log("roleData", roleData);
 
   // if (isLoadingRole) return <p>Loading...</p>;
   // if (!roleData) return <p>No role data</p>;
@@ -182,13 +182,17 @@ export default function () {
             My Wallet
           </Link>
         </MenuItem>
-        {roleData && roleData.data && roleData.data.length === 0 ? null : <Divider />}
+        {roleData && roleData.data && roleData.data.length === 0 ? null : (
+          <Divider />
+        )}
 
         <MenuItem
           onClick={handleClose}
           sx={{
             display: `${
-              roleData && roleData.data && roleData.data.length === 0 ? "none" : "block"
+              roleData && roleData.data && roleData.data.length === 0
+                ? "none"
+                : "block"
             }`,
           }}
         >
@@ -210,7 +214,9 @@ export default function () {
           onClick={handleClose}
           sx={{
             display: `${
-              roleData && roleData.data && roleData.data.length === 0 ? "none" : "block"
+              roleData && roleData.data && roleData.data.length === 0
+                ? "none"
+                : "block"
             }`,
           }}
         >
@@ -290,8 +296,11 @@ export default function () {
             {/* <NavLink label="所有活動" href="/events" /> */}
             {/* <NavLink label="所有創作者" href="/creators" /> */}
             {/* {address ? connectedMenu : connectBtn} */}
-            {router.pathname!== '/claim' && <NavLink label="所有活動" href="/events" />}
-            {router.pathname !== '/claim' && (address ? connectedMenu : connectBtn)}
+            {router.pathname !== "/claim" && (
+              <NavLink label="所有活動" href="/events" />
+            )}
+            {router.pathname !== "/claim" &&
+              (address ? connectedMenu : connectBtn)}
           </Stack>
         </Box>
       </Stack>

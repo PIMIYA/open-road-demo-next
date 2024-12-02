@@ -3,6 +3,7 @@ import { Box } from "@mui/material";
 import { useEffect } from "react";
 
 import { getAkaswapAssetUrl } from "@/lib/stringUtils";
+import { HTMLComponent } from "./html/index";
 
 export default function RenderMedia({ mimeType, src }) {
   const tokenImageUrl = getAkaswapAssetUrl(src.displayUri);
@@ -88,11 +89,15 @@ export default function RenderMedia({ mimeType, src }) {
     // case "audio/ogg":
     //   return <Box {...boxProps}>AUDIO</Box>;
     /* HTML ZIP */
-    // case "application/x-directory":
-    // case "application/zip":
-    // case "application/x-zip-compressed":
-    // case "application/multipart/x-zip":
-    //   return <Box {...boxProps}>HTML ZIP</Box>;
+    case "application/x-directory":
+    case "application/zip":
+    case "application/x-zip-compressed":
+    case "application/multipart/x-zip":
+      return (
+        <Box>
+          <HTMLComponent />
+        </Box>
+      );
     /* PDF */
     // case "application/pdf":
     //   return <Box {...boxProps}>PDF</Box>;

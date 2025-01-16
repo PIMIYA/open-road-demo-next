@@ -28,7 +28,7 @@ import parse from "autosuggest-highlight/parse";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
 // Kairos
 import { useConnection } from "@/packages/providers";
-// Component
+// Components
 import { Sharer } from "@/components/sharer";
 import { prepareFilesFromZIP } from "@/components/render-media/html/utils/html";
 import { prepareDirectory } from "@/components/mint/prepareDirectory";
@@ -41,6 +41,8 @@ import {
   theme,
   MIMETYPE,
 } from "@/components/mint/const";
+
+import { fetchDirectusData } from "@/lib/api";
 
 // MUI + Google Maps Places Autocomplete
 const GOOGLE_MAPS_API_KEY = `${process.env.GoogleMapsAPIKey}`;
@@ -56,7 +58,7 @@ function loadScript(src, position, id) {
 }
 const autocompleteService = { current: null };
 
-export default function Mint() {
+export default function Mint({ organizers, artists }) {
   const router = useRouter();
 
   // State variables for places autocomplete
@@ -95,8 +97,9 @@ export default function Mint() {
   const { address, callcontract } = useConnection();
   const createrAddress = "tz1XBEMJfYoMoMMZafjYv3Q5V9u3QKv1xuBR"; // address, address will be used in the future, now it is a fixed value
   const titleRef = useRef();
-  const organizerRef = useRef();
   const descriptionRef = useRef();
+  const [selectedOrganizer, setSelectedOrganizer] = useState(null);
+  const [selectedArtists, setSelectedArtists] = useState([]);
   const walletRef = useRef();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedTags, setSelectedTags] = useState([]);
@@ -195,7 +198,7 @@ export default function Mint() {
       const files = await prepareFilesFromZIP(buffer);
       files.type = "application/x-directory";
       files.name = myFile.name;
-      // console.log("files", files);
+      console.log("files", files); // !!!!!! Alreday unzip file and get files's path and blob, how to upload to IPFS?
       // nftCid = await prepareDirectory({ files });
       // console.log("nftCid", nftCid);
       setFile(files);
@@ -212,6 +215,7 @@ export default function Mint() {
   }
 
   const upload = async (event) => {
+    // console.log(selectedOrganizer.name);
     event.preventDefault();
     // Check if the Google Maps Places library is loaded
     if (!autocompleteService.current) {
@@ -224,42 +228,26 @@ export default function Mint() {
       const data = new FormData();
 
       // Append each form field to the FormData instance
-      data.append("organizer", organizerRef.current.value);
       data.append("title", titleRef.current.value);
       data.append("description", descriptionRef.current.value);
+      data.append("organizer", selectedOrganizer.name);
+      // array aryists
+      let resultArtists = [];
+      selectedArtists.forEach((artist) => {
+        resultArtists.push(artist.name);
+      });
+      data.append("artists", JSON.stringify(resultArtists));
       data.append("category", selectedCategory.label);
 
-      //solve ugly data tags
-      const transformedData = selectedTags.reduce((acc, { main, sub }) => {
-        const mainFormatted =
-          main.charAt(0).toUpperCase() + main.slice(1).toLowerCase();
-        const subFormatted =
-          sub.charAt(0).toUpperCase() + sub.slice(1).toLowerCase();
-        acc[mainFormatted] = acc[mainFormatted]
-          ? [...acc[mainFormatted], subFormatted]
-          : [subFormatted];
-        return acc;
-      }, {});
-      const beautyResult = Object.keys(transformedData).map((key) => ({
-        [key]: transformedData[key],
-      }));
-
-      //tags to list of strings
-      let result = [];
-
-      beautyResult.forEach((obj) => {
-        for (let key in obj) {
-          obj[key].forEach((value) => {
-            result.push(`${key}:${value}`);
-          });
-        }
+      //array tags
+      let resultTags = [];
+      selectedTags.forEach((tag) => {
+        resultTags.push(tag.label);
       });
-
-      data.append("tags", JSON.stringify(result));
+      data.append("tags", JSON.stringify(resultTags));
 
       // Append the location name to the FormData instance
       data.append("eventPlace", inputValue);
-
       // Append the lat and lng to the FormData instance
       const geolocation = [lat, lng];
       data.append("geoLocation", JSON.stringify(geolocation));
@@ -270,16 +258,12 @@ export default function Mint() {
 
       // Append the creator address to the FormData instance
       data.append("creator", createrAddress);
-
       // Append the minter address to the FormData instance
       data.append("minter", contractAddress);
-
       // Append the minting tool to the FormData instance
       data.append("mintingTool", serverUrl);
-
       // Append the copyright to the FormData instance,
       data.append("rights", selectedLicense.label);
-
       // Append the royalties to the FormData instance
       const beautyShares = Object.fromEntries(
         royaltiesSharers.map((sharer) => [
@@ -287,7 +271,6 @@ export default function Mint() {
           royaltyPercentage * sharer.share,
         ])
       );
-      // console.log(beautyShares);
       // royalties share
       const royalties = {
         decimals: 4,
@@ -298,7 +281,6 @@ export default function Mint() {
         decimals: 4,
         shares: { [address]: royaltyPercentage * 100 },
       };
-
       if (useRoyaltiesShare) {
         data.append("royalties", JSON.stringify(royalties));
       } else {
@@ -390,15 +372,6 @@ export default function Mint() {
         >
           <Box>
             <TextField
-              inputRef={organizerRef}
-              id="organizer"
-              label="Organizer"
-              variant="standard"
-              sx={{ width: 300 }}
-            />
-          </Box>
-          <Box>
-            <TextField
               inputRef={titleRef}
               id="title"
               label="Event name"
@@ -415,6 +388,42 @@ export default function Mint() {
               maxRows={4}
               variant="standard"
               sx={{ width: 300 }}
+            />
+          </Box>
+          <Box>
+            <Autocomplete
+              id="organizer"
+              options={organizers.data.filter(
+                (option) => option.status === "published"
+              )}
+              getOptionLabel={(option) => option.name}
+              isOptionEqualToValue={(option, value) =>
+                option.name === value.name
+              }
+              sx={{ width: 300 }}
+              onChange={(event, newValue) => {
+                setSelectedOrganizer(newValue);
+              }}
+              renderInput={(params) => (
+                <TextField {...params} label="Organizer" variant="standard" />
+              )}
+            />
+          </Box>
+          <Box>
+            <Autocomplete
+              multiple
+              id="artist"
+              options={artists.data.filter(
+                (option) => option.status === "published"
+              )}
+              getOptionLabel={(option) => option.name}
+              sx={{ width: 300 }}
+              onChange={(event, newValue) => {
+                setSelectedArtists(newValue);
+              }}
+              renderInput={(params) => (
+                <TextField {...params} label="Artists" variant="standard" />
+              )}
             />
           </Box>
           <Box>
@@ -440,8 +449,7 @@ export default function Mint() {
               multiple
               id="tag"
               options={tags}
-              groupBy={(option) => option.main}
-              getOptionLabel={(option) => option.sub}
+              getOptionLabel={(option) => option.label}
               sx={{ width: 300 }}
               onChange={(event, newValue) => {
                 setSelectedTags(newValue);
@@ -730,4 +738,12 @@ export default function Mint() {
       </Container>
     </>
   );
+}
+
+export async function getServerSideProps() {
+  const [organizers, artists] = await Promise.all([
+    await fetchDirectusData(`/organizers`),
+    await fetchDirectusData(`/artists`),
+  ]);
+  return { props: { organizers, artists } };
 }

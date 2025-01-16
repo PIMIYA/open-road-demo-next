@@ -186,7 +186,7 @@ export default function () {
           <Divider />
         )}
 
-        <MenuItem
+        {/* <MenuItem
           onClick={handleClose}
           sx={{
             display: `${
@@ -208,7 +208,7 @@ export default function () {
               </Link>
             </>
           )}
-        </MenuItem>
+        </MenuItem> */}
 
         <MenuItem
           onClick={handleClose}

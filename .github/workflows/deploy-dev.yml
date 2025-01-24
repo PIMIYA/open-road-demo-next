@@ -19,8 +19,8 @@ jobs:
 
       - name: Install dependencies and build
         run: |
+          npm audit fix --force
           npm install --legacy-peer-deps
-          npm i sharp
           npm run build
 
       - name: Deploy dev to DigitalOcean

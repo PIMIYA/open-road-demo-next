@@ -50,7 +50,7 @@ jobs:
             sudo chown -R ${{ secrets.SSH_USER }} /var/www/dev.kairos-mint.art
             git config --global --add safe.directory /var/www/dev.kairos-mint.art
             cd /var/www/dev.kairos-mint.art &&
-            git pull origin dev &&
+            git pull origin dev --rebase &&
             npm install &&
             npm run build &&
             pm2 restart open-road-demo-next-dev

@@ -47,6 +47,7 @@ jobs:
               rm -rf /var/www/dev.kairos-mint.art
               git clone https://github.com/PIMIYA/open-road-demo-next.git /var/www/dev.kairos-mint.art
             fi
+            sudo chown -R ${{ secrets.SSH_USER }} /var/www/dev.kairos-mint.art
             git config --global --add safe.directory /var/www/dev.kairos-mint.art
             cd /var/www/dev.kairos-mint.art &&
             git pull origin dev &&

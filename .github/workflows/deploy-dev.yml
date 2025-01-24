@@ -19,7 +19,6 @@ jobs:
 
       - name: Install dependencies and build
         run: |
-          npm audit fix --force
           npm install --legacy-peer-deps
           npm run build
 

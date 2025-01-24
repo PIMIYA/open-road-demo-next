@@ -42,6 +42,11 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > id_rsa
           chmod 600 id_rsa
           ssh -o StrictHostKeyChecking=no -i id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            if [ ! -d /var/www/dev.kairos-mint.art/.git ]; then
+              echo 'Directory is not a Git repository. Cloning repository...'
+              rm -rf /var/www/dev.kairos-mint.art
+              git clone https://github.com/PIMIYA/open-road-demo-next.git /var/www/dev.kairos-mint.art
+            fi
             cd /var/www/dev.kairos-mint.art &&
             git pull origin dev &&
             npm install &&

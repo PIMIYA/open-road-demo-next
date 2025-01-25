@@ -289,6 +289,7 @@ export default function () {
               width: "100%",
               height: "auto",
             }}
+            fetchpriority="high"
           />
         </Box>
         <Box>

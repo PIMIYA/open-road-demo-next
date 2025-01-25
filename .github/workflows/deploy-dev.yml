@@ -54,8 +54,11 @@ jobs:
             [ -s \$NVM_DIR/nvm.sh ] && \. \$NVM_DIR/nvm.sh
             nvm use 20.8.0
 
-            # Stop PM2 process if it exists
-            pm2 stop open-road-demo-next-dev || true
+            # Install PM2 globally if not exists
+            npm install -g pm2
+
+            # Properly clean up existing PM2 process
+            pm2 delete open-road-demo-next-dev || true
             
             # Clean up and prepare directory with sudo
             sudo rm -rf /var/www/dev.kairos-mint.art
@@ -67,14 +70,41 @@ jobs:
             cd /var/www
             git clone https://github.com/PIMIYA/open-road-demo-next.git dev.kairos-mint.art
             cd dev.kairos-mint.art
-            
-            # Verify Node.js version
-            node --version
+
+            # Create .env and .env.local files
+            cat > .env << 'EOL'
+            MainnetURL=${MainnetURL}
+            TestnetURL=${TestnetURL}
+            WalletRoleURL=${WalletRoleURL}
+            AkaDropURL=${AkaDropURL}
+            TZKT_URL=${TZKT_URL}
+            NEXT_PUBLIC_PARTNER_ID=${NEXT_PUBLIC_PARTNER_ID}
+            NEXT_PUBLIC_BAUTH_USERNAME=${NEXT_PUBLIC_BAUTH_USERNAME}
+            NEXT_PUBLIC_BAUTH_PASSWORD=${NEXT_PUBLIC_BAUTH_PASSWORD}
+            NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL=${NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL}
+            NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD=${NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD}
+            GoogleMapsAPIKey=${GoogleMapsAPIKey}
+            WALLET_PRIVATE_KEY=${WALLET_PRIVATE_KEY}
+            WALLET_PASSPHRASE=${WALLET_PASSPHRASE}
+            SERVER_URL=${SERVER_URL}
+            PORT=3002
+            EOL
+
+            # Copy .env to .env.local
+            cp .env .env.local
             
             # Install dependencies and build
             npm install --legacy-peer-deps
             npm run build
             
-            # Start PM2 (using absolute path to ensure correct version)
-            \$HOME/.nvm/versions/node/v20.8.0/bin/pm2 start npm --name 'open-road-demo-next-dev' -- start
+            # Start PM2 with the correct environment and port
+            PORT=3002 pm2 start npm --name 'open-road-demo-next-dev' -- start
+            
+            # Save PM2 configuration to persist across reboots
+            pm2 save
           "
+
+
+
+
+          

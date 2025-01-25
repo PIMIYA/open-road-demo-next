@@ -49,28 +49,25 @@ jobs:
       - name: Deploy dev to DigitalOcean
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            # Create deployment directory with proper permissions if it doesn't exist
-            sudo mkdir -p /var/www/dev.kairos-mint.art
-            sudo chown -R ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} /var/www/dev.kairos-mint.art
-
-            # If not a git repository, clone it
-            if [ ! -d /var/www/dev.kairos-mint.art/.git ]; then
-              echo 'Directory is not a Git repository. Cloning repository...'
-              sudo rm -rf /var/www/dev.kairos-mint.art
-              git clone https://github.com/PIMIYA/open-road-demo-next.git /var/www/dev.kairos-mint.art
-            fi
-
-            # Set proper ownership and permissions
-            sudo chown -R ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} /var/www/dev.kairos-mint.art
-            sudo chmod -R 755 /var/www/dev.kairos-mint.art
-
-            # Configure git
-            git config --global --add safe.directory /var/www/dev.kairos-mint.art
+            # Stop PM2 process if it exists
+            pm2 stop open-road-demo-next-dev || true
             
-            # Deploy
-            cd /var/www/dev.kairos-mint.art
-            sudo -u ${{ secrets.SSH_USER }} git pull origin dev
-            sudo -u ${{ secrets.SSH_USER }} npm install --legacy-peer-deps
-            sudo -u ${{ secrets.SSH_USER }} npm run build
-            sudo -u ${{ secrets.SSH_USER }} pm2 restart open-road-demo-next-dev
+            # Clean up and prepare directory with sudo
+            sudo rm -rf /var/www/dev.kairos-mint.art
+            sudo mkdir -p /var/www/dev.kairos-mint.art
+            sudo chown -R ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} /var/www
+            sudo chmod -R 755 /var/www
+            
+            # Clone the repository
+            cd /var/www
+            git clone https://github.com/PIMIYA/open-road-demo-next.git dev.kairos-mint.art
+            cd dev.kairos-mint.art
+            
+            # Install dependencies and build
+            npm install --legacy-peer-deps
+            npm run build
+            
+            # Start PM2
+            pm2 start npm --name 'open-road-demo-next-dev' -- start
           "
+

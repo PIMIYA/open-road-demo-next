@@ -9,20 +9,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      MainnetURL: ${{ secrets.MainnetURL }}
-      TestnetURL: ${{ secrets.TestnetURL }}
-      WalletRoleURL: ${{ secrets.WalletRoleURL }}
-      AkaDropURL: ${{ secrets.AkaDropURL }}
-      TZKT_URL: ${{ secrets.TZKT_URL }}
-      NEXT_PUBLIC_PARTNER_ID: ${{ secrets.NEXT_PUBLIC_PARTNER_ID }}
-      NEXT_PUBLIC_BAUTH_USERNAME: ${{ secrets.NEXT_PUBLIC_BAUTH_USERNAME }}
-      NEXT_PUBLIC_BAUTH_PASSWORD: ${{ secrets.NEXT_PUBLIC_BAUTH_PASSWORD }}
-      NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL: ${{ secrets.NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL }}
-      NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD: ${{ secrets.NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD }}
-      GoogleMapsAPIKey: ${{ secrets.GoogleMapsAPIKey }}
-      WALLET_PRIVATE_KEY: ${{ secrets.WALLET_PRIVATE_KEY }}
-      WALLET_PASSPHRASE: ${{ secrets.WALLET_PASSPHRASE }}
-      SERVER_URL: ${{ secrets.SERVER_URL }}
+      # ... (keep your existing env variables)
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -37,22 +25,39 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
 
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519
+          chmod 644 ~/.ssh/known_hosts
+
       - name: Deploy dev to DigitalOcean
         run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > id_rsa
-          chmod 600 id_rsa
-          ssh -o StrictHostKeyChecking=no -i id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            # Create deployment directory with proper permissions if it doesn't exist
+            sudo mkdir -p /var/www/dev.kairos-mint.art
+            sudo chown -R ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} /var/www/dev.kairos-mint.art
+
+            # If not a git repository, clone it
             if [ ! -d /var/www/dev.kairos-mint.art/.git ]; then
               echo 'Directory is not a Git repository. Cloning repository...'
-              rm -rf /var/www/dev.kairos-mint.art
+              sudo rm -rf /var/www/dev.kairos-mint.art
               git clone https://github.com/PIMIYA/open-road-demo-next.git /var/www/dev.kairos-mint.art
             fi
-            sudo chown -R ${{ secrets.SSH_USER }} /var/www/dev.kairos-mint.art
+
+            # Set proper ownership and permissions
+            sudo chown -R ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} /var/www/dev.kairos-mint.art
+            sudo chmod -R 755 /var/www/dev.kairos-mint.art
+
+            # Configure git
             git config --global --add safe.directory /var/www/dev.kairos-mint.art
-            cd /var/www/dev.kairos-mint.art &&
-            git pull origin dev --rebase &&
-            npm install &&
-            npm run build &&
-            pm2 restart open-road-demo-next-dev
+            
+            # Deploy
+            cd /var/www/dev.kairos-mint.art
+            sudo -u ${{ secrets.SSH_USER }} git pull origin dev
+            sudo -u ${{ secrets.SSH_USER }} npm install --legacy-peer-deps
+            sudo -u ${{ secrets.SSH_USER }} npm run build
+            sudo -u ${{ secrets.SSH_USER }} pm2 restart open-road-demo-next-dev
           "
-          rm id_rsa # Remove the private key after use

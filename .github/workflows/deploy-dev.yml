@@ -49,13 +49,18 @@ jobs:
       - name: Deploy dev to DigitalOcean
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            # Source NVM and use Node.js 20.8.0
+            export NVM_DIR=\$HOME/.nvm
+            [ -s \$NVM_DIR/nvm.sh ] && \. \$NVM_DIR/nvm.sh
+            nvm use 20.8.0
+
             # Stop PM2 process if it exists
             pm2 stop open-road-demo-next-dev || true
             
             # Clean up and prepare directory with sudo
             sudo rm -rf /var/www/dev.kairos-mint.art
             sudo mkdir -p /var/www/dev.kairos-mint.art
-            sudo chown -R ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} /var/www
+            sudo chown -R \$USER:\$USER /var/www
             sudo chmod -R 755 /var/www
             
             # Clone the repository
@@ -63,11 +68,13 @@ jobs:
             git clone https://github.com/PIMIYA/open-road-demo-next.git dev.kairos-mint.art
             cd dev.kairos-mint.art
             
+            # Verify Node.js version
+            node --version
+            
             # Install dependencies and build
             npm install --legacy-peer-deps
             npm run build
             
-            # Start PM2
-            pm2 start npm --name 'open-road-demo-next-dev' -- start
+            # Start PM2 (using absolute path to ensure correct version)
+            \$HOME/.nvm/versions/node/v20.8.0/bin/pm2 start npm --name 'open-road-demo-next-dev' -- start
           "
-

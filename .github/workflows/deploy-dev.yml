@@ -48,22 +48,19 @@ jobs:
 
       - name: Deploy dev to DigitalOcean
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
             # Source NVM and use Node.js 20.8.0
-            export NVM_DIR=\$HOME/.nvm
-            [ -s \$NVM_DIR/nvm.sh ] && \. \$NVM_DIR/nvm.sh
+            export NVM_DIR=$HOME/.nvm
+            [ -s $NVM_DIR/nvm.sh ] && \. $NVM_DIR/nvm.sh
             nvm use 20.8.0
 
             # Install PM2 globally if not exists
             npm install -g pm2
 
-            # Properly clean up existing PM2 process
-            pm2 delete open-road-demo-next-dev || true
-            
             # Clean up and prepare directory with sudo
             sudo rm -rf /var/www/dev.kairos-mint.art
             sudo mkdir -p /var/www/dev.kairos-mint.art
-            sudo chown -R \$USER:\$USER /var/www
+            sudo chown -R $USER:$USER /var/www
             sudo chmod -R 755 /var/www
             
             # Clone the repository
@@ -72,21 +69,21 @@ jobs:
             cd dev.kairos-mint.art
 
             # Create .env and .env.local files
-            cat > .env << 'EOL'
-            MainnetURL=${MainnetURL}
-            TestnetURL=${TestnetURL}
-            WalletRoleURL=${WalletRoleURL}
-            AkaDropURL=${AkaDropURL}
-            TZKT_URL=${TZKT_URL}
-            NEXT_PUBLIC_PARTNER_ID=${NEXT_PUBLIC_PARTNER_ID}
-            NEXT_PUBLIC_BAUTH_USERNAME=${NEXT_PUBLIC_BAUTH_USERNAME}
-            NEXT_PUBLIC_BAUTH_PASSWORD=${NEXT_PUBLIC_BAUTH_PASSWORD}
-            NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL=${NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL}
-            NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD=${NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD}
-            GoogleMapsAPIKey=${GoogleMapsAPIKey}
-            WALLET_PRIVATE_KEY=${WALLET_PRIVATE_KEY}
-            WALLET_PASSPHRASE=${WALLET_PASSPHRASE}
-            SERVER_URL=${SERVER_URL}
+            cat << '\''EOL'\'' > .env
+            MainnetURL='"${MainnetURL}"'
+            TestnetURL='"${TestnetURL}"'
+            WalletRoleURL='"${WalletRoleURL}"'
+            AkaDropURL='"${AkaDropURL}"'
+            TZKT_URL='"${TZKT_URL}"'
+            NEXT_PUBLIC_PARTNER_ID='"${NEXT_PUBLIC_PARTNER_ID}"'
+            NEXT_PUBLIC_BAUTH_USERNAME='"${NEXT_PUBLIC_BAUTH_USERNAME}"'
+            NEXT_PUBLIC_BAUTH_PASSWORD='"${NEXT_PUBLIC_BAUTH_PASSWORD}"'
+            NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL='"${NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL}"'
+            NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD='"${NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD}"'
+            GoogleMapsAPIKey='"${GoogleMapsAPIKey}"'
+            WALLET_PRIVATE_KEY='"${WALLET_PRIVATE_KEY}"'
+            WALLET_PASSPHRASE='"${WALLET_PASSPHRASE}"'
+            SERVER_URL='"${SERVER_URL}"'
             PORT=3002
             EOL
 
@@ -97,13 +94,18 @@ jobs:
             npm install --legacy-peer-deps
             npm run build
             
-            # Start PM2 with the correct environment and port
-            PORT=3002 pm2 start npm --name 'open-road-demo-next-dev' -- start
+            # Check if PM2 process exists and handle accordingly
+            if pm2 show open-road-demo-next-dev > /dev/null 2>&1; then
+              # Process exists, restart it
+              PORT=3002 pm2 restart open-road-demo-next-dev --update-env
+            else
+              # Process doesnt exist, start it
+              PORT=3002 pm2 start npm --name "open-road-demo-next-dev" -- start
+            fi
             
             # Save PM2 configuration to persist across reboots
             pm2 save
-          "
-
+          '
 
 
 

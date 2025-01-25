@@ -1,3 +1,4 @@
+import dynamic from 'next/dynamic';
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import {
   ExtendedPeerInfo,
@@ -12,22 +13,38 @@ import { ConnectFn, ContractCallDetails } from "./types";
 import { InMemorySigner } from "@taquito/signer";
 
 
-const createBeaconWallet = () =>
-  typeof window === "undefined"
-    ? undefined
-    : new BeaconWallet({
-        name: "Kairos",
-        // appUrl: 'localhost:3000',
-        preferredNetwork: "mainnet",
-        // walletConnectOptions: {
-        //   projectId: '97f804b46f0db632c52af0556586a5f3',
-        //   relayUrl: 'wss://relay.walletconnect.com'
-        // },
-        featuredWallets: ["kukai", "trust", "temple", "umami"],
-        // disableDefaultEvents: false, // Disable all events when true/ UI. This also disables the pairing alert.
-      } as any);
+const createBeaconWallet = () => {
+  if (typeof window === "undefined") return undefined;
+  
+  // Lazy load BeaconWallet only on client side
+  const { BeaconWallet } = require("@taquito/beacon-wallet");
+  
+  return new BeaconWallet({
+    name: "Kairos",
+    preferredNetwork: "mainnet",
+    featuredWallets: ["kukai", "trust", "temple", "umami"],
+  } as any);
+};
+
+// const createBeaconWallet = () =>
+//   typeof window === "undefined"
+//     ? undefined
+//     : new BeaconWallet({
+//         name: "Kairos",
+//         // appUrl: 'localhost:3000',
+//         preferredNetwork: "mainnet",
+//         // walletConnectOptions: {
+//         //   projectId: '97f804b46f0db632c52af0556586a5f3',
+//         //   relayUrl: 'wss://relay.walletconnect.com'
+//         // },
+//         featuredWallets: ["kukai", "trust", "temple", "umami"],
+//         // disableDefaultEvents: false, // Disable all events when true/ UI. This also disables the pairing alert.
+//       } as any);
 
 export const connectBeacon: ConnectFn = async (isNew) => {
+  if (typeof window === "undefined") {
+    throw new Error("Beacon wallet cannot be used on server side");
+  }
   if (!isNew) {
     const existingWallet = createBeaconWallet();
 
@@ -131,6 +148,14 @@ export const tezosToolkit = new TezosToolkit(
   // for payments: todo: add prod url
   "https://mainnet.smartpy.io"
 );
+
+// Only set up wallet provider on client side
+if (typeof window !== "undefined") {
+  const wallet = createBeaconWallet();
+  if (wallet) {
+    tezosToolkit.setWalletProvider(wallet);
+  }
+}
 
 export const callContractBeaconFn =
   (beaconWallet: BeaconWallet) =>

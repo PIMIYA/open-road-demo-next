@@ -9,7 +9,20 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      # ... (keep your existing env variables)
+      MainnetURL: ${{ secrets.MainnetURL }}
+      TestnetURL: ${{ secrets.TestnetURL }}
+      WalletRoleURL: ${{ secrets.WalletRoleURL }}
+      AkaDropURL: ${{ secrets.AkaDropURL }}
+      TZKT_URL: ${{ secrets.TZKT_URL }}
+      NEXT_PUBLIC_PARTNER_ID: ${{ secrets.NEXT_PUBLIC_PARTNER_ID }}
+      NEXT_PUBLIC_BAUTH_USERNAME: ${{ secrets.NEXT_PUBLIC_BAUTH_USERNAME }}
+      NEXT_PUBLIC_BAUTH_PASSWORD: ${{ secrets.NEXT_PUBLIC_BAUTH_PASSWORD }}
+      NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL: ${{ secrets.NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL }}
+      NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD: ${{ secrets.NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD }}
+      GoogleMapsAPIKey: ${{ secrets.GoogleMapsAPIKey }}
+      WALLET_PRIVATE_KEY: ${{ secrets.WALLET_PRIVATE_KEY }}
+      WALLET_PASSPHRASE: ${{ secrets.WALLET_PASSPHRASE }}
+      SERVER_URL: ${{ secrets.SERVER_URL }}
 
     steps:
       - name: Checkout code

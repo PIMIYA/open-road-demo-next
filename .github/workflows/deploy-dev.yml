@@ -75,20 +75,20 @@ jobs:
             fi
 
             # Create .env file line by line
-            echo "MainnetURL=\"${MainnetURL}\"" > .env
-            echo "TestnetURL=\"${TestnetURL}\"" >> .env
-            echo "WalletRoleURL=\"${WalletRoleURL}\"" >> .env
-            echo "AkaDropURL=\"${AkaDropURL}\"" >> .env
-            echo "TZKT_URL=\"${TZKT_URL}\"" >> .env
-            echo "NEXT_PUBLIC_PARTNER_ID=\"${NEXT_PUBLIC_PARTNER_ID}\"" >> .env
-            echo "NEXT_PUBLIC_BAUTH_USERNAME=\"${NEXT_PUBLIC_BAUTH_USERNAME}\"" >> .env
-            echo "NEXT_PUBLIC_BAUTH_PASSWORD=\"${NEXT_PUBLIC_BAUTH_PASSWORD}\"" >> .env
-            echo "NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL=\"${NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL}\"" >> .env
-            echo "NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD=\"${NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD}\"" >> .env
-            echo "GoogleMapsAPIKey=\"${GoogleMapsAPIKey}\"" >> .env
-            echo "WALLET_PRIVATE_KEY=\"${WALLET_PRIVATE_KEY}\"" >> .env
-            echo "WALLET_PASSPHRASE=\"${WALLET_PASSPHRASE}\"" >> .env
-            echo "SERVER_URL=\"${SERVER_URL}\"" >> .env
+            echo "MainnetURL=\"${{ secrets.MainnetURL }}\"" > .env
+            echo "TestnetURL=\"${{ secrets.TestnetURL }}\"" >> .env
+            echo "WalletRoleURL=\"${{ secrets.WalletRoleURL }}\"" >> .env
+            echo "AkaDropURL=\"${{ secrets.AkaDropURL }}\"" >> .env
+            echo "TZKT_URL=\"${{ secrets.TZKT_URL }}\"" >> .env
+            echo "NEXT_PUBLIC_PARTNER_ID=\"${{ secrets.NEXT_PUBLIC_PARTNER_ID }}\"" >> .env
+            echo "NEXT_PUBLIC_BAUTH_USERNAME=\"${{ secrets.NEXT_PUBLIC_BAUTH_USERNAME }}\"" >> .env
+            echo "NEXT_PUBLIC_BAUTH_PASSWORD=\"${{ secrets.NEXT_PUBLIC_BAUTH_PASSWORD }}\"" >> .env
+            echo "NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL=\"${{ secrets.NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL }}\"" >> .env
+            echo "NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD=\"${{ secrets.NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD }}\"" >> .env
+            echo "GoogleMapsAPIKey=\"${{ secrets.GoogleMapsAPIKey }}\"" >> .env
+            echo "WALLET_PRIVATE_KEY=\"${{ secrets.WALLET_PRIVATE_KEY }}\"" >> .env
+            echo "WALLET_PASSPHRASE=\"${{ secrets.WALLET_PASSPHRASE }}\"" >> .env
+            echo "SERVER_URL=\"${{ secrets.SERVER_URL }}\"" >> .env
             echo "PORT=3002" >> .env
 
             # Copy .env to .env.local

@@ -4,7 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 /* Providers */
 import { useConnection } from "@/packages/providers";
 /* MUI */
-import { Box, Stack, Autocomplete, TextField, Button } from "@mui/material";
+import {
+  Box,
+  Stack,
+  Autocomplete,
+  TextField,
+  Button,
+  Tabs,
+  Tab,
+} from "@mui/material";
 /* Fetch data */
 import { WalletRoleAPI } from "@/lib/api";
 import { AkaDropAPI } from "@/lib/api";
@@ -42,27 +50,17 @@ const categories = [
 export default function Wallet({ role, pools, claims, addressFromURL }) {
   /* Connected wallet */
   const { address, connect, disconnect } = useConnection();
-  // TODO: get introduction from real data
-  const introduction = getRandomText();
-  /* Client fetch tokens' data */
-  const [cardData, setCardData] = useState(null);
+
+  /* Client fetch claimed tokens' data */
+  const [claimData, setClaimData] = useState(null);
   const [isLoading, setLoading] = useState(true);
+  /* Client fetch created tokens' poolURL */
+  const [createdPoolURL, setCreatedPoolURL] = useState(null);
+  /* Client fetch created tokens' data */
+  const [createdData, setCreatedData] = useState(null);
+
   /* Filter tokens' data */
   const [filteredData, setFilteredData] = useState(null);
-  /* Locations */
-  const locations = useMemo(() => {
-    if (cardData) {
-      let locations = [];
-      // console.log("cardData", cardData);
-      cardData.forEach((c) => {
-        if (!locations.includes(c.token.metadata.event_location)) {
-          locations.push(c.token.metadata.event_location);
-        }
-      });
-      return locations;
-    }
-  }, [cardData]);
-  // console.log("locations", locations);
 
   const myclaims = claims.claims.map((claim) => {
     let result = {
@@ -75,12 +73,26 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
     return result;
   });
 
-  /*** array poolURL to do api route ***/
+  const mypools = pools.pools.map((pool) => {
+    let result = {
+      poolUid: pool.poolUid,
+      poolid: getIdFromUid(pool.poolUid),
+      contact: getContractFromUid(pool.poolUid),
+      poolURL: getUrlFromUid(pool.poolUid),
+    };
+    return result;
+  });
+
+  /* Array tokenURL to do API route */
   const claimTokenURLs = useMemo(
     () => myclaims.map((c) => c.tokenURL),
     [claims]
   );
+  /* Array poolURL to do API route */
+  const poolTokenURLs = useMemo(() => mypools.map((m) => m.poolURL), [pools]);
+  // console.log("poolTokenURLs", poolTokenURLs);
 
+  /* API route: Client fetch CLAIMED TOKENS by using tokenId at TZKT API */
   useEffect(() => {
     fetch("/api/walletRecords", {
       method: "POST",
@@ -90,73 +102,124 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
       .then((res) => {
         let data = res.data;
         // console.log("claim's tokens", data);
-
         if (data) {
           data = data.map((d) => {
             d.cliamDate = new Date(d.timestamp).toLocaleDateString();
             d.claimTime = new Date(d.timestamp).toLocaleTimeString();
             return d;
           });
-
-          // sort cartData by cliamDate
+          // sort cartData by timestamp
           data.sort((a, b) => {
             return new Date(b.timestamp) - new Date(a.timestamp);
           });
         }
-
-        setCardData(data);
-        setLoading(false);
-        setFilteredData(data);
+        setClaimData(data);
+        // setLoading(false);
       });
   }, [claimTokenURLs]);
 
-  // Location Search Filter
-  // const handleFilter = (event) => {
-  //   if (event === null) return;
-  //   const value_loc = event.main || event.target.value || event.input;
-  //   // console.log("value_loc", value_loc);
-  //   if (!event || value_loc === undefined) {
-  //     setFilteredData(cardData);
-  //     return;
-  //   } else {
-  //     const filterdByCat = cardData.filter((c) =>
-  //       c.token.metadata.event_location.includes(value_loc)
-  //     );
-  //     setFilteredData(filterdByCat);
-  //   }
-  // };
+  // if (isLoading) return <p>Loading claim data ...</p>;
+  // if (!claimData) return <p>No claim data</p>;
+  // console.log("claimData", claimData);
 
-  // Category Selection Filter
-  // const handleFilterC = (event) => {
-  //   if (event === null) return;
-  //   const value_cat = event.label || event;
-  //   // console.log("value_cat", value_cat);
-  //   if (!event) {
-  //     setFilteredData(cardData);
-  //     return;
-  //   } else {
-  //     const filterdByCat = cardData.filter((c) =>
-  //       c.token.metadata.category.includes(value_cat)
-  //     );
-  //     setFilteredData(filterdByCat);
-  //   }
-  // };
+  /* API route: Client fetch CREATED TOKENS step 1 by using poolURL at AkaDrop API */
+  useEffect(() => {
+    fetch("/api/walletCreations", {
+      method: "POST",
+      body: poolTokenURLs,
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        let data = res.data;
+        // console.log("creator's tokens", data);
+        if (data) {
+          const data2 = data.map((d) => {
+            let result = {
+              tokens_uid: d.tokens.map((t) => {
+                return t.uid;
+              }),
+            };
+            return result;
+          });
 
-  // Selection Filter
+          const pools = data2.map((pool) => {
+            let result = {
+              poolURL: getUrlFromUid(pool.tokens_uid[0]),
+            };
+            return result;
+          });
+          const poolURLs = pools.map((m) => m.poolURL);
+          setCreatedPoolURL(poolURLs);
+          // setLoading(false);
+        }
+      });
+  }, [poolTokenURLs]);
+
+  // console.log("createdPoolURL", createdPoolURL);
+
+  /* API route: Client fetch CREATED TOKENS step 2 by using tokenId at TZKT API */
+  useEffect(() => {
+    fetch("/api/walletRecordsCreations", {
+      method: "POST",
+      body: [createdPoolURL, `.${addressFromURL}`],
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setCreatedData(data.data);
+        // setLoading(false);
+      });
+  }, [createdPoolURL]);
+
+  // console.log("createdData", createdData);
+
+  /* Tab: Claimed and Ctreated */
+  const [value, setValue] = useState(0);
+  const handleChange = useMemo(
+    () => (event, newValue) => {
+      setValue(newValue);
+      setFilteredData(newValue === 0 ? claimData : createdData);
+    },
+    [claimData, createdData]
+  );
+  // console.log("value", value);
+
+  /* Locations */
+  const locations = useMemo(() => {
+    const data = value === 0 ? claimData : createdData;
+    if (data) {
+      const locations = [];
+      data.forEach((c) => {
+        if (!locations.includes(c.token.metadata.event_location)) {
+          locations.push(c.token.metadata.event_location);
+        }
+      });
+      return locations;
+    }
+  }, [value, claimData, createdData]);
+
+  console.log("locations", locations);
+
+  /* Selection Filter */
   const [catValue, setCatValue] = useState("");
   const [locValue, setLocValue] = useState("");
   const handleFilter = (event) => {
     if (event === null) return;
     if (!event) {
-      setFilteredData(cardData);
+      setFilteredData(value === 0 ? claimData : createdData);
       return;
     } else {
-      const filterdByCat = cardData.filter(
-        (c) =>
-          c.token.metadata.event_location.includes(locValue) &&
+      const dataToFilter = value === 0 ? claimData : createdData;
+      {
+        /* 因為一開始metadata沒有event_location */
+      }
+      const filteredByCat = dataToFilter.filter((c) => {
+        const eventLocation = c.token.metadata.event_location || "";
+        return (
+          eventLocation.includes(locValue) &&
           c.token.metadata.category.includes(catValue)
-      );
-      setFilteredData(filterdByCat);
+        );
+      });
+      setFilteredData(filteredByCat);
     }
   };
   // console.log("filteredData", filteredData);
@@ -169,16 +232,21 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
             <WalletProfile address={addressFromURL} />
           </SidePaper>
         }
-        {cardData && cardData.length > 0 && (
+        {/* {createdData && createdData.length > 0 && ( */}
+        <>
           <SidePaper>
-            {/* <Box>
-              <TextField
-                id="Location"
-                label="Location"
-                variant="standard"
-                onChange={handleFilter}
-              />
-            </Box> */}
+            <Tabs
+              value={value}
+              onChange={handleChange}
+              aria-label="disabled tabs example"
+            >
+              {/* <Tab label="Claimed" />
+              <Tab label="Created" /> */}
+              <Tab label="Claimed" disabled={!claimData} />
+              <Tab label="Created" disabled={!createdData} />
+            </Tabs>
+          </SidePaper>
+          <SidePaper>
             <Box component="form">
               <Box>
                 <Autocomplete
@@ -187,7 +255,6 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
                   getOptionLabel={(option) => option}
                   isOptionEqualToValue={(option, value) => option === value}
                   onChange={(event, newValue) => {
-                    // handleFilter(newValue);
                     if (newValue) {
                       setLocValue(newValue);
                     }
@@ -202,6 +269,7 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
                       variant="standard"
                     />
                   )}
+                  // disabled={!locations}
                 />
               </Box>
               <Box>
@@ -213,11 +281,6 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
                     option.label === value.label
                   }
                   onChange={(event, newValue) => {
-                    // console.log("newValue", newValue);
-                    // handleFilterC(newValue);
-                    // if (newValue === null) {
-                    //   setFilteredData(cardData);
-                    // }
                     if (newValue) {
                       setCatValue(newValue.label);
                     }
@@ -246,26 +309,32 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
               </Button>
             </Box>
           </SidePaper>
-        )}
+        </>
+        {/* )} */}
       </Side>
       <Main>
-        {cardData && cardData.length === 0 ? (
-          <>No Token</>
-        ) : (
+        <>
           <Box>
-            <WalletCanvas canvasData={cardData} address={addressFromURL} />
+            {value === 0 && claimData !== null ? (
+              <WalletCanvas canvasData={claimData} address={addressFromURL} />
+            ) : (
+              value === 0 && claimData === null && <>No Token</>
+            )}
+            {value === 1 && createdData !== null ? (
+              <WalletCanvas canvasData={createdData} address={addressFromURL} />
+            ) : (
+              value === 1 && createdData === null && <>No Token</>
+            )}
             <Stack direction="row">
               <Box width={"100%"}>
-                {/* timeline */}
-                <WalletTimeline cardData={filteredData} />
-                <Box>
-                  {filteredData && filteredData.length == 0 ? "No Token" : ""}
-                </Box>
+                <WalletTimeline
+                  // cardData={value === 0 ? claimData : createdData}
+                  cardData={filteredData}
+                />
               </Box>
-              {/* TODO: analytics */}
             </Stack>
           </Box>
-        )}
+        </>
       </Main>
     </TwoColumnLayout>
   );

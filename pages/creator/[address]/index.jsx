@@ -62,7 +62,7 @@ export default function ({ address, pools }) {
 
   if (isLoading) return <p>Loading...</p>;
   if (!dropInfo) return <p>No drop data</p>;
-  // console.log(data.data[0].id);
+  console.log("dropInfo", dropInfo);
 
   /*** orginze tokens_uid for the fetch in api route ***/
 
@@ -91,7 +91,7 @@ export default function ({ address, pools }) {
           <Typography variant="body1">{description}</Typography>
         </Box>
 
-        <CreatorCardGrid rawPools={dropInfo} />
+        <CreatorCardGrid rawPools={dropInfo} address={address} />
       </Main>
     </TwoColumnLayout>
   );

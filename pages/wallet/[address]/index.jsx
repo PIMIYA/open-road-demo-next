@@ -16,8 +16,6 @@ import {
 /* Fetch data */
 import { WalletRoleAPI } from "@/lib/api";
 import { AkaDropAPI } from "@/lib/api";
-/* Dummy for mockup */
-import { getRandomText } from "@/lib/dummy";
 /* Sub Components */
 import TwoColumnLayout, {
   Side,
@@ -34,26 +32,13 @@ import WalletCanvas from "@/components/wallet/WalletCanvas";
 import SidePaper from "@/components/SidePaper";
 import Filter from "@/components/Filter";
 
-const categories = [
-  { label: "展覽" },
-  { label: "表演" },
-  { label: "課程" },
-  { label: "導覽" },
-  { label: "工作坊" },
-  { label: "黑客松" },
-  { label: "座談" },
-  { label: "親子" },
-  { label: "節祭／展會／市集" },
-  { label: "分享會／同好會／見面會" },
-];
-
 export default function Wallet({ role, pools, claims, addressFromURL }) {
   /* Connected wallet */
   const { address, connect, disconnect } = useConnection();
 
+  const [isLoading, setLoading] = useState(true);
   /* Client fetch claimed tokens' data */
   const [claimData, setClaimData] = useState(null);
-  const [isLoading, setLoading] = useState(true);
   /* Client fetch created tokens' poolURL */
   const [createdPoolURL, setCreatedPoolURL] = useState(null);
   /* Client fetch created tokens' data */
@@ -117,9 +102,6 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
         // setLoading(false);
       });
   }, [claimTokenURLs]);
-
-  // if (isLoading) return <p>Loading claim data ...</p>;
-  // if (!claimData) return <p>No claim data</p>;
   // console.log("claimData", claimData);
 
   /* API route: Client fetch CREATED TOKENS step 1 by using poolURL at AkaDrop API */
@@ -154,7 +136,6 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
         }
       });
   }, [poolTokenURLs]);
-
   // console.log("createdPoolURL", createdPoolURL);
 
   /* API route: Client fetch CREATED TOKENS step 2 by using tokenId at TZKT API */
@@ -169,11 +150,10 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
         // setLoading(false);
       });
   }, [createdPoolURL]);
-
   // console.log("createdData", createdData);
 
   /* Tab: Claimed and Ctreated */
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState(claimData ? 0 : 1);
   const handleChange = useMemo(
     () => (event, newValue) => {
       setValue(newValue);
@@ -196,8 +176,19 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
       return locations;
     }
   }, [value, claimData, createdData]);
+  // console.log("locations", locations);
 
-  console.log("locations", locations);
+  // get all categories from data
+  const categories = useMemo(() => {
+    const data = value === 0 ? claimData : createdData;
+    if (data) {
+      const categories = [
+        ...new Set(data.map((item) => item.token.metadata.category)),
+      ];
+      return categories;
+    }
+  }, [value, claimData, createdData]);
+  // console.log("categories", categories);
 
   /* Selection Filter */
   const [catValue, setCatValue] = useState("");
@@ -208,6 +199,10 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
       setFilteredData(value === 0 ? claimData : createdData);
       return;
     } else {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
       const dataToFilter = value === 0 ? claimData : createdData;
       {
         /* 因為一開始metadata沒有event_location */
@@ -232,16 +227,10 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
             <WalletProfile address={addressFromURL} />
           </SidePaper>
         }
-        {/* {createdData && createdData.length > 0 && ( */}
+
         <>
           <SidePaper>
-            <Tabs
-              value={value}
-              onChange={handleChange}
-              aria-label="disabled tabs example"
-            >
-              {/* <Tab label="Claimed" />
-              <Tab label="Created" /> */}
+            <Tabs value={value} onChange={handleChange}>
               <Tab label="Claimed" disabled={!claimData} />
               <Tab label="Created" disabled={!createdData} />
             </Tabs>
@@ -255,12 +244,7 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
                   getOptionLabel={(option) => option}
                   isOptionEqualToValue={(option, value) => option === value}
                   onChange={(event, newValue) => {
-                    if (newValue) {
-                      setLocValue(newValue);
-                    }
-                    if (!newValue) {
-                      setLocValue("");
-                    }
+                    setLocValue(newValue ? newValue : "");
                   }}
                   renderInput={(params) => (
                     <TextField
@@ -269,24 +253,16 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
                       variant="standard"
                     />
                   )}
-                  // disabled={!locations}
                 />
               </Box>
               <Box>
                 <Autocomplete
                   id="category"
                   options={categories}
-                  getOptionLabel={(option) => option.label}
-                  isOptionEqualToValue={(option, value) =>
-                    option.label === value.label
-                  }
+                  getOptionLabel={(option) => option}
+                  isOptionEqualToValue={(option, value) => option === value}
                   onChange={(event, newValue) => {
-                    if (newValue) {
-                      setCatValue(newValue.label);
-                    }
-                    if (!newValue) {
-                      setCatValue("");
-                    }
+                    setCatValue(newValue ? newValue : "");
                   }}
                   renderInput={(params) => (
                     <TextField
@@ -310,7 +286,6 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
             </Box>
           </SidePaper>
         </>
-        {/* )} */}
       </Side>
       <Main>
         <>

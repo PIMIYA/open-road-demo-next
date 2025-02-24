@@ -3,8 +3,6 @@
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { paginateAppend } from "@/lib/paginate";
 
-/* NEXT */
-import Link from "next/link";
 /* Routing */
 import { useRouter } from "next/router";
 /* MUI */
@@ -17,82 +15,43 @@ import TwoColumnLayout, {
   Side,
 } from "@/components/layouts/TwoColumnLayout";
 import GeneralTokenCardGrid from "@/components/GeneralTokenCardGrid";
-import MyPagination from "@/components/myPagination";
 import SidePaper from "@/components/SidePaper";
-import Filter from "@/components/Filter";
-
-const categories = [
-  { label: "展覽" },
-  { label: "表演" },
-  { label: "課程" },
-  { label: "導覽" },
-  { label: "工作坊" },
-  { label: "黑客松" },
-  { label: "座談" },
-  { label: "親子" },
-  { label: "節祭／展會／市集" },
-  { label: "分享會／同好會／見面會" },
-];
-
-const tags = [
-  { main: "視覺", sub: "繪畫" },
-  { main: "視覺", sub: "裝置" },
-  { main: "視覺", sub: "工藝" },
-  { main: "視覺", sub: "雕塑" },
-  { main: "視覺", sub: "攝影" },
-  { main: "視覺", sub: "影像" },
-  { main: "表演", sub: "馬戲" },
-  { main: "表演", sub: "音樂劇（親子、百老匯）" },
-  { main: "表演", sub: "戲曲（歌仔戲、南管、京劇）" },
-  { main: "表演", sub: "現代戲劇" },
-  { main: "表演", sub: "讀劇" },
-  { main: "表演", sub: "音樂（搖滾、古典、電子、音像）" },
-  { main: "表演", sub: "說唱（漫才、相聲、站立喜劇）" },
-  { main: "表演", sub: "舞蹈（現代舞、舞踏、民俗）" },
-  { main: "設計", sub: "平面" },
-  { main: "設計", sub: "互動 ／媒體" },
-  { main: "設計", sub: "時尚" },
-  { main: "設計", sub: "建築" },
-  { main: "設計", sub: "工業／商品" },
-  { main: "電影", sub: "紀錄片" },
-  { main: "電影", sub: "劇情片" },
-  { main: "科技", sub: "區塊鏈" },
-  { main: "科技", sub: "AI" },
-  { main: "科技", sub: "VR／AR／MR" },
-  { main: "書籍", sub: "小說" },
-  { main: "書籍", sub: "詩歌" },
-  { main: "書籍", sub: "散文" },
-  { main: "書籍", sub: "漫畫" },
-  { main: "文化", sub: "公益（社會運動、地方創生、慈善捐贈）" },
-  { main: "文化", sub: "性別" },
-  { main: "文化", sub: "語言" },
-  { main: "文化", sub: "歷史" },
-  { main: "文化", sub: "環境" },
-  { main: "文化", sub: "動物" },
-  { main: "科學", sub: "社會科學（經濟、政治、國際關係）" },
-  { main: "科學", sub: "自然科學（天文、地理）" },
-];
 
 export default function Events({ data }) {
   // console.log("data", data);
-  // Search Filter(works but not used)
-  // const handleFilter = (event) => {
-  //   if (event === null) return;
-  //   // const value = event.main || event.sub || event.label || event;
-  //   const value = event.target.value;
-  //   console.log("event", value);
-  //   if (!event) {
-  //     setFilteredData(data);
-  //     return;
-  //   } else {
-  //     const filterdByCat = data.filter(
-  //       (c) =>
-  //         c.metadata.tags.find((tag) => tag.includes(value)) ||
-  //         c.metadata.category.includes(value)
-  //     );
-  //     setFilteredData(filterdByCat);
-  //   }
-  // };
+
+  // if data's category is "座談", change it to "座談會"
+  data.forEach((item) => {
+    if (item.metadata.category === "座談") {
+      item.metadata.category = "研討會 / 論壇 / 座談";
+    }
+  });
+  // if data's tags, each include "視覺", then combine and change it to one "視覺藝術"
+  data.forEach((item) => {
+    if (item.metadata.tags.some((tag) => tag.includes("視覺"))) {
+      item.metadata.tags = ["視覺藝術"];
+    } else if (item.metadata.tags.some((tag) => tag.includes("舞蹈"))) {
+      item.metadata.tags = ["舞蹈"];
+    } else if (item.metadata.tags.some((tag) => tag.includes("音樂"))) {
+      item.metadata.tags = ["音樂"];
+    } else if (item.metadata.tags.some((tag) => tag.includes("設計"))) {
+      item.metadata.tags = ["設計"];
+    } else if (item.metadata.tags.some((tag) => tag.includes("科技"))) {
+      item.metadata.tags = ["元宇宙"];
+    } else if (item.metadata.tags.some((tag) => tag.includes("書籍"))) {
+      item.metadata.tags = ["出版"];
+    } else if (item.metadata.tags.some((tag) => tag.includes("科學"))) {
+      item.metadata.tags = ["科學"];
+    }
+  });
+
+  // get all categories from data
+  const categories = [...new Set(data.map((item) => item.metadata.category))];
+  // get all tags from data without duplicates
+  const tags = data
+    .map((item) => item.metadata.tags)
+    .flat()
+    .filter((item, index, self) => self.indexOf(item) === index);
 
   const [catValue, setCatValue] = useState("");
   const [tagValue, setTagValue] = useState("");
@@ -184,20 +143,16 @@ export default function Events({ data }) {
     <TwoColumnLayout>
       <Side sticky>
         <SidePaper>
-          {/* <input type="text" onChange={handleFilter} /> */}
           <Box component="form">
             <Box>
               <Autocomplete
                 id="category"
                 options={categories}
-                getOptionLabel={(option) => option.label}
-                isOptionEqualToValue={(option, value) =>
-                  option.label === value.label
-                }
-                value={categories.find((cat) => cat.label === catValue) || null}
+                getOptionLabel={(option) => option}
+                isOptionEqualToValue={(option, value) => option === value}
+                value={categories.find((cat) => cat === catValue) || null}
                 onChange={(event, newValue) => {
-                  // handleFilter(newValue);
-                  setCatValue(newValue ? newValue.label : "");
+                  setCatValue(newValue ? newValue : "");
                 }}
                 renderInput={(params) => (
                   <TextField {...params} label="Category" variant="standard" />
@@ -208,21 +163,11 @@ export default function Events({ data }) {
               <Autocomplete
                 id="tag"
                 options={tags}
-                groupBy={(option) => option.main}
-                getOptionLabel={(option) => option.sub}
-                value={
-                  tags.find(
-                    (tag) =>
-                      tag.main === tagValue.split(":")[0] &&
-                      tag.sub === tagValue.split(":")[1]
-                  ) || null
-                }
-                // isOptionEqualToValue={(option, value) =>
-                //   option.label === value.label
-                // }
+                getOptionLabel={(option) => option}
+                value={tags.find((tag) => tag === tagValue) || null}
+                isOptionEqualToValue={(option, value) => option === value}
                 onChange={(event, newValue) => {
-                  // handleFilter(newValue);
-                  setTagValue(newValue ? newValue.sub : "");
+                  setTagValue(newValue ? newValue : "");
                 }}
                 renderInput={(params) => (
                   <TextField {...params} label="Tag" variant="standard" />
@@ -257,7 +202,7 @@ export default function Events({ data }) {
               color: "text.secondary",
             }}
           >
-            {hasMore ? "Loading..." : "No more data"}
+            {hasMore ? "Loading..." : ""}
           </Box>
         )}
       </Main>
@@ -275,7 +220,9 @@ export async function getStaticProps() {
   );
 
   // Extract burned tokenIds and join them into a comma-separated string
-  const burned_tokenIds = burnedData.map((item) => item.token.tokenId).join(",");
+  const burned_tokenIds = burnedData
+    .map((item) => item.token.tokenId)
+    .join(",");
 
   // Fetch tokens data excluding burned tokens
   const data = await TZKT_API(
@@ -285,7 +232,11 @@ export async function getStaticProps() {
   // Check if tokens are claimable and add claimable status and poolID
   const claimableData = await Promise.all(
     data.map(async (item) => {
-      const data_from_pool = await GetClaimablePoolID(contractAddress, targetContractAddress, item.tokenId);
+      const data_from_pool = await GetClaimablePoolID(
+        contractAddress,
+        targetContractAddress,
+        item.tokenId
+      );
       return {
         ...item,
         claimable: !!data_from_pool,

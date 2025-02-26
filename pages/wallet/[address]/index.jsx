@@ -36,14 +36,12 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
   /* Connected wallet */
   const { address, connect, disconnect } = useConnection();
 
-  const [isLoading, setLoading] = useState(true);
   /* Client fetch claimed tokens' data */
   const [claimData, setClaimData] = useState(null);
   /* Client fetch created tokens' poolURL */
   const [createdPoolURL, setCreatedPoolURL] = useState(null);
   /* Client fetch created tokens' data */
   const [createdData, setCreatedData] = useState(null);
-
   /* Filter tokens' data */
   const [filteredData, setFilteredData] = useState(null);
 
@@ -99,10 +97,9 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
           });
         }
         setClaimData(data);
-        // setLoading(false);
       });
   }, [claimTokenURLs]);
-  // console.log("claimData", claimData);
+  console.log("claimData", claimData);
 
   /* API route: Client fetch CREATED TOKENS step 1 by using poolURL at AkaDrop API */
   useEffect(() => {
@@ -132,7 +129,6 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
           });
           const poolURLs = pools.map((m) => m.poolURL);
           setCreatedPoolURL(poolURLs);
-          // setLoading(false);
         }
       });
   }, [poolTokenURLs]);
@@ -147,23 +143,41 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
       .then((res) => res.json())
       .then((data) => {
         setCreatedData(data.data);
-        // setLoading(false);
       });
   }, [createdPoolURL]);
-  // console.log("createdData", createdData);
+  console.log("createdData", createdData);
 
   /* Tab: Claimed and Ctreated */
-  const [value, setValue] = useState(claimData ? 0 : 1);
-  const handleChange = useMemo(
-    () => (event, newValue) => {
-      setValue(newValue);
-      setFilteredData(newValue === 0 ? claimData : createdData);
-    },
-    [claimData, createdData]
-  );
-  // console.log("value", value);
+  const [value, setValue] = useState(0);
+  // const handleChange = useMemo(
+  //   () => (event, newValue) => {
+  //     setValue(newValue);
+  //     setFilteredData(newValue === 0 ? claimData : createdData);
+  //   },
+  //   [claimData, createdData]
+  // );
+  const handleClaimed = async () => {
+    setValue(0);
+    setFilteredData(await claimData);
+  };
+  const handleCreated = async () => {
+    setValue(1);
+    setFilteredData(await createdData);
+  };
 
-  /* Locations */
+  useEffect(() => {
+    setTimeout(() => {
+      if (claimData === null) {
+        handleCreated();
+      } else {
+        handleClaimed();
+      }
+    }, 3000); //miliseconds
+  }, [createdData, claimData]);
+
+  console.log("filteredData", filteredData);
+
+  /* Locations : get all locations from data */
   const locations = useMemo(() => {
     const data = value === 0 ? claimData : createdData;
     if (data) {
@@ -178,7 +192,7 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
   }, [value, claimData, createdData]);
   // console.log("locations", locations);
 
-  // get all categories from data
+  /* Categories : get all categories from data */
   const categories = useMemo(() => {
     const data = value === 0 ? claimData : createdData;
     if (data) {
@@ -230,10 +244,31 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
 
         <>
           <SidePaper>
-            <Tabs value={value} onChange={handleChange}>
-              <Tab label="Claimed" disabled={!claimData} />
-              <Tab label="Created" disabled={!createdData} />
-            </Tabs>
+            {/* <Tabs value={value} onChange={handleChange}>
+              <Tab label="Claimed" disabled={claimData === null} />
+              <Tab label="Created" disabled={createdData === null} />
+            </Tabs> */}
+            <Box sx={{ textAlign: "center" }}>
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                onClick={handleClaimed}
+                sx={{ mr: 1 }}
+              >
+                Claimed
+              </Button>
+
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                onClick={handleCreated}
+                sx={{ ml: 1 }}
+              >
+                Created
+              </Button>
+            </Box>
           </SidePaper>
           <SidePaper>
             <Box component="form">
@@ -290,22 +325,19 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
       <Main>
         <>
           <Box>
-            {value === 0 && claimData !== null ? (
-              <WalletCanvas canvasData={claimData} address={addressFromURL} />
-            ) : (
-              value === 0 && claimData === null && <>No Token</>
-            )}
-            {value === 1 && createdData !== null ? (
-              <WalletCanvas canvasData={createdData} address={addressFromURL} />
-            ) : (
-              value === 1 && createdData === null && <>No Token</>
-            )}
+            <Box sx={{ display: filteredData ? "none" : "block" }}>
+              No Token
+            </Box>
+            <Box sx={{ display: filteredData ? "block" : "none" }}>
+              <WalletCanvas
+                canvasData={filteredData}
+                address={addressFromURL}
+              />
+            </Box>
+
             <Stack direction="row">
               <Box width={"100%"}>
-                <WalletTimeline
-                  // cardData={value === 0 ? claimData : createdData}
-                  cardData={filteredData}
-                />
+                <WalletTimeline cardData={filteredData} />
               </Box>
             </Stack>
           </Box>

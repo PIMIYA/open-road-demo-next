@@ -59,6 +59,31 @@ export default function Home({ data, organizers, artists }) {
     data.sort((a, b) => b.tokenId - a.tokenId);
   }
 
+  // if data's category is "座談", change it to "座談會"
+  data.forEach((item) => {
+    if (item.metadata.category === "座談") {
+      item.metadata.category = "研討會 / 論壇 / 座談";
+    }
+  });
+  // if data's tags, each include "視覺", then combine and change it to one "視覺藝術"
+  data.forEach((item) => {
+    if (item.metadata.tags.some((tag) => tag.includes("視覺"))) {
+      item.metadata.tags = ["視覺藝術"];
+    } else if (item.metadata.tags.some((tag) => tag.includes("舞蹈"))) {
+      item.metadata.tags = ["舞蹈"];
+    } else if (item.metadata.tags.some((tag) => tag.includes("音樂"))) {
+      item.metadata.tags = ["音樂"];
+    } else if (item.metadata.tags.some((tag) => tag.includes("設計"))) {
+      item.metadata.tags = ["設計"];
+    } else if (item.metadata.tags.some((tag) => tag.includes("科技"))) {
+      item.metadata.tags = ["元宇宙"];
+    } else if (item.metadata.tags.some((tag) => tag.includes("書籍"))) {
+      item.metadata.tags = ["出版"];
+    } else if (item.metadata.tags.some((tag) => tag.includes("科學"))) {
+      item.metadata.tags = ["科學"];
+    }
+  });
+
   return (
     <>
       <Container

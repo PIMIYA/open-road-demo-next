@@ -244,10 +244,6 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
 
         <>
           <SidePaper>
-            {/* <Tabs value={value} onChange={handleChange}>
-              <Tab label="Claimed" disabled={claimData === null} />
-              <Tab label="Created" disabled={createdData === null} />
-            </Tabs> */}
             <Box sx={{ textAlign: "center" }}>
               <Button
                 variant="contained"

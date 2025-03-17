@@ -33,7 +33,7 @@ const nextConfig = {
 
   env: {
     WalletRoleURL: process.env.WalletRoleURL,
-    AkaDropURL: process.env.AkaDropURL,
+    AKADROP_URL: process.env.AKADROP_URL,
     GoogleMapsAPIKey: process.env.GoogleMapsAPIKey,
     WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
     WALLET_PASSPHRASE: process.env.WALLET_PASSPHRASE,
@@ -46,19 +46,19 @@ const nextConfig = {
     NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD: process.env.NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD,
   },
 
-  // async headers() {
-  //   return [
-  //     {
-  //       source: "/_next/:path*",
-  //       headers: [
-  //         {
-  //           key: "Access-Control-Allow-Origin",
-  //           value: "http://localhost:3000",
-  //         },
-  //       ],
-  //     },
-  //   ];
-  // },
+  async headers() {
+    return [
+      {
+        source: "/_next/:path*",
+        headers: [
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "http://localhost:3000",
+          },
+        ],
+      },
+    ];
+  },
 
 }
 module.exports = nextConfig

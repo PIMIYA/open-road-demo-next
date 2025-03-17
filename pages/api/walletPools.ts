@@ -12,7 +12,7 @@ export default async function handler(
     const address = await req.body;
     // console.log(address);
     /***  fetch single string, and then send result to where use api route ***/
-    const result = await fetch( `${process.env.AkaDropURL}/${address}/pools?offset=0&limit=0`)
+    const result = await fetch( `${process.env.AKADROP_URL}/${address}/pools?offset=0&limit=0`)
     const data = await result.json();
     res.status(200).send({ data })
   } catch (err) {

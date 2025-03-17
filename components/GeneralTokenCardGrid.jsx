@@ -164,10 +164,6 @@ export default function GeneralTokenCardGrid(props) {
                         }}
                       />
                     </Stack>
-                    {/* <Typography variant="body1">
-                      {metadata.organizer}
-                    </Typography> */}
-                    {/* <div>{orgArray[0]}</div> */}
                     <Organizer
                       organizer={metadata.organizer}
                       artists={artists}

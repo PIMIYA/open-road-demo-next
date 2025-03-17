@@ -1,5 +1,10 @@
 /* Fetch data */
-import { TZKT_API, MainnetAPI, GetClaimablePoolID } from "@/lib/api";
+import {
+  TZKT_API,
+  MainnetAPI,
+  GetClaimablePoolID,
+  fetchDirectusData,
+} from "@/lib/api";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { useTheme } from "@emotion/react";
 
@@ -45,7 +50,7 @@ const features = [
   },
 ];
 
-export default function Home({ data }) {
+export default function Home({ data, organizers, artists }) {
   const { isLanded } = useGlobalContext();
   const theme = useTheme();
 
@@ -97,7 +102,11 @@ export default function Home({ data }) {
       )}
       {isLanded && (
         <Container maxWidth="lg">
-          <GeneralTokenCardGrid data={data} />
+          <GeneralTokenCardGrid
+            data={data}
+            organizers={organizers}
+            artists={artists}
+          />
           <Box textAlign="center" mt={10}>
             <FadeOnScroll onceonly>
               <Link href="/events">
@@ -123,7 +132,9 @@ export async function getStaticProps() {
   );
 
   // Extract burned tokenIds and join them into a comma-separated string
-  const burned_tokenIds = burnedData.map((item) => item.token.tokenId).join(",");
+  const burned_tokenIds = burnedData
+    .map((item) => item.token.tokenId)
+    .join(",");
 
   // Fetch tokens data excluding burned tokens
   const data = await TZKT_API(
@@ -133,7 +144,11 @@ export async function getStaticProps() {
   // Check if tokens are claimable and add claimable status and poolID
   const claimableData = await Promise.all(
     data.map(async (item) => {
-      const data_from_pool = await GetClaimablePoolID(contractAddress, targetContractAddress, item.tokenId);
+      const data_from_pool = await GetClaimablePoolID(
+        contractAddress,
+        targetContractAddress,
+        item.tokenId
+      );
       return {
         ...item,
         claimable: !!data_from_pool,
@@ -142,8 +157,13 @@ export async function getStaticProps() {
     })
   );
 
+  const [organizers, artists] = await Promise.all([
+    await fetchDirectusData(`/organizers`),
+    await fetchDirectusData(`/artists`),
+  ]);
+
   return {
-    props: { data: claimableData },
+    props: { data: claimableData, organizers, artists },
     revalidate: 10, // In seconds
   };
 }

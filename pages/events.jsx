@@ -8,7 +8,12 @@ import { useRouter } from "next/router";
 /* MUI */
 import { Box, Autocomplete, TextField, Button } from "@mui/material";
 /* Fetch data */
-import { TZKT_API, MainnetAPI, GetClaimablePoolID } from "@/lib/api";
+import {
+  TZKT_API,
+  MainnetAPI,
+  GetClaimablePoolID,
+  fetchDirectusData,
+} from "@/lib/api";
 /* Components */
 import TwoColumnLayout, {
   Main,
@@ -17,8 +22,8 @@ import TwoColumnLayout, {
 import GeneralTokenCardGrid from "@/components/GeneralTokenCardGrid";
 import SidePaper from "@/components/SidePaper";
 
-export default function Events({ data }) {
-  // console.log("data", data);
+export default function Events({ data, organizers, artists }) {
+  // console.log("artists", artists);
 
   // if data's category is "座談", change it to "座談會"
   data.forEach((item) => {
@@ -191,6 +196,8 @@ export default function Events({ data }) {
         <Box>{filteredData.length == 0 ? "no data" : ""}</Box>
         <GeneralTokenCardGrid
           data={paginateAppend(filteredData, currentPage, pageSize)}
+          organizers={organizers}
+          artists={artists}
         />
         {filteredData.length > 0 && (
           <Box
@@ -245,8 +252,13 @@ export async function getStaticProps() {
     })
   );
 
+  const [organizers, artists] = await Promise.all([
+    await fetchDirectusData(`/organizers`),
+    await fetchDirectusData(`/artists`),
+  ]);
+
   return {
-    props: { data: claimableData },
+    props: { data: claimableData, organizers, artists },
     revalidate: 10, // In seconds
   };
 }

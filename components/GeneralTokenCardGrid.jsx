@@ -16,6 +16,8 @@ import { getAkaswapAssetUrl } from "@/lib/stringUtils";
 import { getRandomObjectType, getRandomPeriod } from "@/lib/dummy";
 import FadeOnScroll from "./fadeOnScroll";
 
+import Organizer from "@/components/Organizer";
+
 export default function GeneralTokenCardGrid(props) {
   const router = useRouter();
 
@@ -65,6 +67,11 @@ export default function GeneralTokenCardGrid(props) {
       // item.start_time = item.start_time ? new Date(item.start_time) : "";
     });
   }
+
+  const organizers = props.organizers;
+  const artists = props.artists;
+  // console.log("organizers", organizers.data[1].address);
+  // console.log("organizers", organizers.data);
 
   return (
     <>
@@ -157,9 +164,15 @@ export default function GeneralTokenCardGrid(props) {
                         }}
                       />
                     </Stack>
-                    <Typography variant="body1">
+                    {/* <Typography variant="body1">
                       {metadata.organizer}
-                    </Typography>
+                    </Typography> */}
+                    {/* <div>{orgArray[0]}</div> */}
+                    <Organizer
+                      organizer={metadata.organizer}
+                      artists={artists}
+                      organizers={organizers}
+                    />
                   </Box>
                   <Box id="secondary-info" mb={2}>
                     <Typography variant="body2">

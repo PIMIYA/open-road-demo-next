@@ -22,13 +22,15 @@ import RenderMedia from "@/components/render-media";
 import { getAkaswapAssetUrl } from "@/lib/stringUtils";
 import { encrypt } from "@/lib/dummy";
 
+import Organizer from "@/components/Organizer";
+
 /* stack Item setting */
 const Item = styled(Paper)(({ theme }) => ({
   textAlign: "left",
   boxShadow: "none",
 }));
 
-export default function SingleToken({ ownersData, data }) {
+export default function SingleToken({ ownersData, data, organizers, artists }) {
   const router = useRouter();
   const theme = useTheme();
   const tokenImageUrl = getAkaswapAssetUrl(data.metadata.displayUri);
@@ -122,8 +124,13 @@ export default function SingleToken({ ownersData, data }) {
                     <Typography variant="h4" component="h1">
                       {data.metadata.name}
                     </Typography>
+
                     <Typography variant="h6" component="div" mb={2}>
-                      {data.creator}
+                      <Organizer
+                        organizer={data.creator}
+                        artists={artists}
+                        organizers={organizers}
+                      />
                     </Typography>
 
                     <Typography variant="body2">

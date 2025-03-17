@@ -4,7 +4,12 @@ import dynamic from "next/dynamic";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 /* Fetch data */
-import { TZKT_API, MainnetAPI, GetClaimablePoolID } from "@/lib/api";
+import {
+  TZKT_API,
+  MainnetAPI,
+  GetClaimablePoolID,
+  fetchDirectusData,
+} from "@/lib/api";
 /* Components */
 import SingleToken from "@/components/singleToken";
 /* Routing */
@@ -17,10 +22,15 @@ import {
   getRandomPlace,
 } from "@/lib/dummy";
 
-
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 
-export default function Id({ ownersData, data, data_from_pool }) {
+export default function Id({
+  ownersData,
+  data,
+  data_from_pool,
+  organizers,
+  artists,
+}) {
   // console.log("current active claimable token data", data_from_pool[0].key);
 
   // TODO: remove dummy data after api ready
@@ -36,10 +46,10 @@ export default function Id({ ownersData, data, data_from_pool }) {
       d.eventDate = getRandomPeriod();
       d.start_time = d.metadata.start_time;
       d.end_time = d.metadata.end_time;
-      if(data_from_pool){
+      if (data_from_pool) {
         d.poolId = data_from_pool[0].key;
         d.duration = data_from_pool[0].value.duration;
-      }else{
+      } else {
         d.poolId = null;
         d.duration = null;
       }
@@ -54,7 +64,12 @@ export default function Id({ ownersData, data, data_from_pool }) {
       {data.map((d, index) => {
         return (
           <div key={index}>
-            <SingleToken data={d} ownersData={ownersData} />
+            <SingleToken
+              data={d}
+              ownersData={ownersData}
+              organizers={organizers}
+              artists={artists}
+            />
           </div>
         );
       })}
@@ -64,19 +79,24 @@ export default function Id({ ownersData, data, data_from_pool }) {
 
 export async function getServerSideProps(params) {
   //   console.log(params.params.id);
-  const [ownersData, data, data_from_pool] = await Promise.all([
-    await MainnetAPI(
-      `/fa2tokens/${params.params.contract}/${params.params.tokenId}`
-    ),
-    await TZKT_API(
-      `/v1/tokens?contract=${params.params.contract}&tokenId=${params.params.tokenId}`
-    ),
-    await GetClaimablePoolID(
-      contractAddress, params.params.contract, params.params.tokenId
-    ),
-  ]);
+  const [ownersData, data, data_from_pool, organizers, artists] =
+    await Promise.all([
+      await MainnetAPI(
+        `/fa2tokens/${params.params.contract}/${params.params.tokenId}`
+      ),
+      await TZKT_API(
+        `/v1/tokens?contract=${params.params.contract}&tokenId=${params.params.tokenId}`
+      ),
+      await GetClaimablePoolID(
+        contractAddress,
+        params.params.contract,
+        params.params.tokenId
+      ),
+      await fetchDirectusData(`/organizers`),
+      await fetchDirectusData(`/artists`),
+    ]);
 
   return {
-    props: { ownersData, data, data_from_pool },
+    props: { ownersData, data, data_from_pool, organizers, artists },
   };
 }

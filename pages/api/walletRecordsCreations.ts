@@ -21,7 +21,7 @@ export default async function handler(
     return { contract, tokenId };
   });
   // Filter out only contract 測試：KT1PBwbt2aEWunSse2E3tCc5hbYJ3gbqsNBN 正式：KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW
-  let filterd = contractAndTokenId.filter((e: { contract: string }) => e.contract == "KT1PBwbt2aEWunSse2E3tCc5hbYJ3gbqsNBN");
+  let filterd = contractAndTokenId.filter((e: { contract: string }) => e.contract == "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW");
     // Create a array of tokenId
     let tokenIdArray: number[] = [];
     filterd.map((cAndT: { contract: string; tokenId: number }) => {
@@ -31,7 +31,7 @@ export default async function handler(
     // console.log("tokenIdArray", tokenIdArray);
 
     async function getData() {
-      const data =  (await fetch(`${process.env.TZKT_URL}/v1/tokens/transfers?token.contract=KT1PBwbt2aEWunSse2E3tCc5hbYJ3gbqsNBN&token.tokenId.in=${tokenIdArray}&from=${body2[1]}`)).json();      
+      const data =  (await fetch(`${process.env.TZKT_URL}/v1/tokens/transfers?token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&token.tokenId.in=${tokenIdArray}&from=${body2[1]}`)).json();      
       return data;
     }
     // if filterd is empty, then not to fetch data

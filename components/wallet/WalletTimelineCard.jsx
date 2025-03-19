@@ -1,6 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Box, Stack, Skeleton, Typography, Chip } from "@mui/material";
+import {
+  Box,
+  Stack,
+  Skeleton,
+  Typography,
+  Chip,
+  CardMedia,
+} from "@mui/material";
 import Tags from "@/components/Tags";
 
 export default function WalletTimelineCard({ data, index }) {
@@ -34,13 +41,13 @@ export default function WalletTimelineCard({ data, index }) {
       </Box>
     );
   }
-  const tokenImageUrl = `https://assets.akaswap.com/ipfs/${data.token.metadata.thumbnailUri.replace(
+  const tokenImageUrl = `https://assets.akaswap.com/ipfs/${data.metadata.thumbnailUri.replace(
     "ipfs://",
     ""
   )}`;
   // const { contract, tokenId } = data;
-  const contract = data.token.contract.address;
-  const tokenId = data.token.tokenId;
+  const contract = data.contract.address;
+  const tokenId = data.tokenId;
 
   return (
     <Box mb={10}>
@@ -55,7 +62,7 @@ export default function WalletTimelineCard({ data, index }) {
           <Typography variant="body1">{data.cliamDate}</Typography>
           <Typography variant="body1">{data.claimTime}</Typography>
           <Typography variant="body2">
-            {data.token.metadata.event_location}
+            {data.metadata.event_location}
           </Typography>
         </Box>
         <Box width={"100%"}>
@@ -74,17 +81,26 @@ export default function WalletTimelineCard({ data, index }) {
                 query: { contract, tokenId },
               }}
             >
-              <Image
-                priority={index == 0}
-                src={tokenImageUrl}
-                width={400}
-                height={400}
-                style={{
-                  width: "100%",
-                  height: "auto",
+              <Box
+                sx={{
+                  bgcolor: "white",
+                  height: 400,
+                  padding: 3,
+                  mb: 1.5,
                 }}
-                alt="Token Image"
-              />
+              >
+                <CardMedia
+                  component="img"
+                  alt="thumbnail"
+                  sx={{
+                    objectFit: "contain",
+                    height: "100%",
+                    width: "100%",
+                    margin: "auto",
+                  }}
+                  image={tokenImageUrl}
+                />
+              </Box>
             </Link>
           </Box>
           <Box mt={1} mb={2}>
@@ -95,15 +111,13 @@ export default function WalletTimelineCard({ data, index }) {
                   query: { contract, tokenId },
                 }}
               >
-                {data.token.metadata.name}
+                {data.metadata.name}
               </Link>
             </Typography>
-            <Typography variant="body1">
-              {data.token.metadata.organizer}
-            </Typography>
+            <Typography variant="body1">{data.metadata.organizer}</Typography>
           </Box>
           {/* <Tags tags={data.token.metadata.tags} /> */}
-          <Chip label={data.token.metadata.category} size="small" />
+          <Chip label={data.metadata.category} size="small" />
         </Box>
       </Stack>
     </Box>

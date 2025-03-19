@@ -32,7 +32,7 @@ import WalletCanvas from "@/components/wallet/WalletCanvas";
 import SidePaper from "@/components/SidePaper";
 import Filter from "@/components/Filter";
 
-export default function Wallet({ role, pools, claims, addressFromURL }) {
+export default function Wallet({ role, claims, addressFromURL }) {
   /* Connected wallet */
   const { address, connect, disconnect } = useConnection();
 
@@ -56,24 +56,11 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
     return result;
   });
 
-  const mypools = pools.pools.map((pool) => {
-    let result = {
-      poolUid: pool.poolUid,
-      poolid: getIdFromUid(pool.poolUid),
-      contact: getContractFromUid(pool.poolUid),
-      poolURL: getUrlFromUid(pool.poolUid),
-    };
-    return result;
-  });
-
   /* Array tokenURL to do API route */
   const claimTokenURLs = useMemo(
     () => myclaims.map((c) => c.tokenURL),
     [claims]
   );
-  /* Array poolURL to do API route */
-  const poolTokenURLs = useMemo(() => mypools.map((m) => m.poolURL), [pools]);
-  // console.log("poolTokenURLs", poolTokenURLs);
 
   /* API route: Client fetch CLAIMED TOKENS by using tokenId at TZKT API */
   useEffect(() => {
@@ -87,65 +74,45 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
         // console.log("claim's tokens", data);
         if (data) {
           data = data.map((d) => {
-            d.cliamDate = new Date(d.timestamp).toLocaleDateString();
-            d.claimTime = new Date(d.timestamp).toLocaleTimeString();
+            d.cliamDate = new Date(d.metadata.date).toLocaleDateString();
+            d.claimTime = new Date(d.metadata.date).toLocaleTimeString();
             return d;
           });
           // sort cartData by timestamp
           data.sort((a, b) => {
-            return new Date(b.timestamp) - new Date(a.timestamp);
+            return new Date(b.metadata.date) - new Date(a.metadata.date);
           });
         }
         setClaimData(data);
       });
   }, [claimTokenURLs]);
-  console.log("claimData", claimData);
+  // console.log("claimData", claimData);
 
-  /* API route: Client fetch CREATED TOKENS step 1 by using poolURL at AkaDrop API */
+  /* API route: Client fetch CREATED TOKENS by using metadata at TZKT API */
   useEffect(() => {
-    fetch("/api/walletCreations", {
+    fetch("/api/walletRecordsCreations", {
       method: "POST",
-      body: poolTokenURLs,
+      body: addressFromURL,
     })
       .then((res) => res.json())
       .then((res) => {
         let data = res.data;
-        // console.log("creator's tokens", data);
+        // console.log("claim's tokens", data);
         if (data) {
-          const data2 = data.map((d) => {
-            let result = {
-              tokens_uid: d.tokens.map((t) => {
-                return t.uid;
-              }),
-            };
-            return result;
+          data = data.map((d) => {
+            d.cliamDate = new Date(d.metadata.date).toLocaleDateString();
+            d.claimTime = new Date(d.metadata.date).toLocaleTimeString();
+            return d;
           });
-
-          const pools = data2.map((pool) => {
-            let result = {
-              poolURL: getUrlFromUid(pool.tokens_uid[0]),
-            };
-            return result;
+          // sort cartData by timestamp
+          data.sort((a, b) => {
+            return new Date(b.metadata.date) - new Date(a.metadata.date);
           });
-          const poolURLs = pools.map((m) => m.poolURL);
-          setCreatedPoolURL(poolURLs);
         }
-      });
-  }, [poolTokenURLs]);
-  // console.log("createdPoolURL", createdPoolURL);
-
-  /* API route: Client fetch CREATED TOKENS step 2 by using tokenId at TZKT API */
-  useEffect(() => {
-    fetch("/api/walletRecordsCreations", {
-      method: "POST",
-      body: [createdPoolURL, `.${addressFromURL}`],
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setCreatedData(data.data);
+        setCreatedData(data);
       });
   }, [createdPoolURL]);
-  console.log("createdData", createdData);
+  // console.log("createdData", createdData);
 
   /* Tab: Claimed and Ctreated */
   const [value, setValue] = useState(0);
@@ -175,16 +142,17 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
     }, 3000); //miliseconds
   }, [createdData, claimData]);
 
-  console.log("filteredData", filteredData);
+  // console.log("filteredData", filteredData);
 
   /* Locations : get all locations from data */
   const locations = useMemo(() => {
     const data = value === 0 ? claimData : createdData;
+    // if data && createdData is not null
     if (data) {
       const locations = [];
       data.forEach((c) => {
-        if (!locations.includes(c.token.metadata.event_location)) {
-          locations.push(c.token.metadata.event_location);
+        if (!locations.includes(c.metadata.event_location)) {
+          locations.push(c.metadata.event_location);
         }
       });
       return locations;
@@ -197,7 +165,7 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
     const data = value === 0 ? claimData : createdData;
     if (data) {
       const categories = [
-        ...new Set(data.map((item) => item.token.metadata.category)),
+        ...new Set(data.map((item) => item.metadata.category)),
       ];
       return categories;
     }
@@ -222,16 +190,16 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
         /* 因為一開始metadata沒有event_location */
       }
       const filteredByCat = dataToFilter.filter((c) => {
-        const eventLocation = c.token.metadata.event_location || "";
+        const eventLocation = c.metadata.event_location || "";
         return (
           eventLocation.includes(locValue) &&
-          c.token.metadata.category.includes(catValue)
+          c.metadata.category.includes(catValue)
         );
       });
       setFilteredData(filteredByCat);
     }
   };
-  // console.log("filteredData", filteredData);
+  console.log("filteredData", filteredData);
 
   return (
     <TwoColumnLayout>
@@ -246,20 +214,20 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
           <SidePaper>
             <Box sx={{ textAlign: "center" }}>
               <Button
-                variant="contained"
-                color="primary"
+                variant={value === 0 ? "contained" : "outlined"}
                 size="small"
                 onClick={handleClaimed}
+                disabled={claimData === null || claimData.length === 0}
                 sx={{ mr: 1 }}
               >
                 Claimed
               </Button>
 
               <Button
-                variant="contained"
-                color="primary"
+                variant={value === 1 ? "contained" : "outlined"}
                 size="small"
                 onClick={handleCreated}
+                disabled={createdData === null || createdData.length === 0}
                 sx={{ ml: 1 }}
               >
                 Created
@@ -321,10 +289,20 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
       <Main>
         <>
           <Box>
-            <Box sx={{ display: filteredData ? "none" : "block" }}>
+            <Box
+              sx={{
+                display:
+                  filteredData && filteredData.length > 0 ? "none" : "block",
+              }}
+            >
               No Token
             </Box>
-            <Box sx={{ display: filteredData ? "block" : "none" }}>
+            <Box
+              sx={{
+                display:
+                  filteredData && filteredData.length > 0 ? "block" : "none",
+              }}
+            >
               <WalletCanvas
                 canvasData={filteredData}
                 address={addressFromURL}
@@ -371,14 +349,13 @@ export async function getStaticProps({ params }) {
   }
 
   /* Fetch data */
-  const [role, pools, claims] = await Promise.all([
+  const [role, claims] = await Promise.all([
     await WalletRoleAPI(`/${addressFromURL}`),
-    await AkaDropAPI(`/${addressFromURL}/pools?offset=0&limit=0`),
     await AkaDropAPI(`/${addressFromURL}/claims?offset=0&limit=0`),
   ]);
 
   return {
-    props: { role, pools, claims, addressFromURL },
+    props: { role, claims, addressFromURL },
     revalidate: 10,
   };
 }

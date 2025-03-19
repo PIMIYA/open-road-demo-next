@@ -34,18 +34,22 @@ function getWalletCanvasData(canvasData) {
     // const totalAmount = ~~random(50, 150);
     // const claimedAmount = ~~random(1, totalAmount);
 
-    let tags = data.token.metadata.tags;
-    tags = tags.map(tag => tag.split(':')[0]);
+    let tags = data.metadata.tags;
+    tags = tags.map((tag) => tag.split(":")[0]);
     tags = tags.filter((tag, index) => tags.indexOf(tag) === index);
-    tags = tags.map(tag => getEnglishTagName(tag));
+    tags = tags.map((tag) => getEnglishTagName(tag));
 
     result.claimedTokens.push({
-      title: data.token.metadata.name,
-      claimedDate: data.token.metadata.date,
-      categoryId: Object.values(categoryNames).indexOf(data.token.metadata.category) + 1,
+      title: data.metadata.name,
+      claimedDate: data.metadata.date,
+      // !!!there is a problem with new category name, so use random value for now!!!
+      categoryId:
+        // Object.values(categoryNames).indexOf(data.metadata.category) + 1,
+        ~~random(1, 7),
       tags,
-      lat: +data.token.metadata.geoLocation[0],
-      lan: +data.token.metadata.geoLocation[1],
+      // if there is no geoLocation, set it to 0, 0
+      lat: data.metadata.geoLocation?.[0] ? +data.metadata.geoLocation[0] : 0,
+      lan: data.metadata.geoLocation?.[1] ? +data.metadata.geoLocation[1] : 0,
       // totalAmount,
       // claimedAmount,
       // cliamedPercentage: claimedAmount / totalAmount,

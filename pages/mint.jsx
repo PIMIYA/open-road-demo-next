@@ -43,7 +43,7 @@ import {
   MIMETYPE,
 } from "@/components/mint/const";
 
-import { fetchDirectusData } from "@/lib/api";
+import { FetchDirectusData } from "@/lib/api";
 
 // MUI + Google Maps Places Autocomplete
 const GOOGLE_MAPS_API_KEY = `${process.env.GoogleMapsAPIKey}`;
@@ -743,8 +743,8 @@ export default function Mint({ organizers, artists }) {
 
 export async function getServerSideProps() {
   const [organizers, artists] = await Promise.all([
-    await fetchDirectusData(`/organizers`),
-    await fetchDirectusData(`/artists`),
+    await FetchDirectusData(`/organizers`),
+    await FetchDirectusData(`/artists`),
   ]);
   return { props: { organizers, artists } };
 }

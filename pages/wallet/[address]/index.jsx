@@ -353,6 +353,11 @@ export async function getStaticProps({ params }) {
     await WalletRoleAPI(`/${addressFromURL}`),
     await AkaDropAPI(`/${addressFromURL}/claims?offset=0&limit=0`),
   ]);
+  if (!role || !claims) {
+    return {
+      notFound: true,
+    };
+  }
 
   return {
     props: { role, claims, addressFromURL },

@@ -8,7 +8,7 @@ import {
   TZKT_API,
   MainnetAPI,
   GetClaimablePoolID,
-  fetchDirectusData,
+  FetchDirectusData,
 } from "@/lib/api";
 /* Components */
 import SingleToken from "@/components/singleToken";
@@ -92,8 +92,8 @@ export async function getServerSideProps(params) {
         params.params.contract,
         params.params.tokenId
       ),
-      await fetchDirectusData(`/organizers`),
-      await fetchDirectusData(`/artists`),
+      await FetchDirectusData(`/organizers`),
+      await FetchDirectusData(`/artists`),
     ]);
 
   return {

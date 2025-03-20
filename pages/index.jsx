@@ -3,7 +3,7 @@ import {
   TZKT_API,
   MainnetAPI,
   GetClaimablePoolID,
-  fetchDirectusData,
+  FetchDirectusData,
 } from "@/lib/api";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { useTheme } from "@emotion/react";
@@ -183,8 +183,8 @@ export async function getStaticProps() {
   );
 
   const [organizers, artists] = await Promise.all([
-    await fetchDirectusData(`/organizers`),
-    await fetchDirectusData(`/artists`),
+    await FetchDirectusData(`/organizers`),
+    await FetchDirectusData(`/artists`),
   ]);
 
   if (!organizers || !artists) {

@@ -257,6 +257,12 @@ export async function getStaticProps() {
     await fetchDirectusData(`/artists`),
   ]);
 
+  if (!organizers || !artists) {
+    return {
+      notFound: true,
+    };
+  }
+
   return {
     props: { data: claimableData, organizers, artists },
     revalidate: 10, // In seconds

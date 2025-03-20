@@ -32,7 +32,10 @@ import WalletCanvas from "@/components/wallet/WalletCanvas";
 import SidePaper from "@/components/SidePaper";
 import Filter from "@/components/Filter";
 
+import { useRouter } from "next/router";
+
 export default function Wallet({ role, claims, addressFromURL }) {
+  const router = useRouter();
   /* Connected wallet */
   const { address, connect, disconnect } = useConnection();
 
@@ -200,6 +203,9 @@ export default function Wallet({ role, claims, addressFromURL }) {
     }
   };
   // console.log("filteredData", filteredData);
+  if (router.isFallback) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <TwoColumnLayout>
@@ -334,8 +340,9 @@ export async function getStaticPaths() {
   };
 }
 
-export async function getServerSideProps({ params }) {
-  const addressFromURL = await params.address;
+export async function getStaticProps({ params }) {
+  const addressFromURL = params.address;
+  console.log("addressFromURL", addressFromURL);
 
   /* Check if the address is valid */
   const res = await fetch(

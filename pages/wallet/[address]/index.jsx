@@ -199,7 +199,7 @@ export default function Wallet({ role, claims, addressFromURL }) {
       setFilteredData(filteredByCat);
     }
   };
-  // console.log("filteredData", filteredData);
+  console.log("filteredData", filteredData);
 
   return (
     <TwoColumnLayout>

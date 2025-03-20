@@ -182,6 +182,12 @@ export async function getStaticProps() {
     })
   );
 
+  if (!claimableData) {
+    return {
+      notFound: true,
+    };
+  }
+
   const [organizers, artists] = await Promise.all([
     await FetchDirectusData(`/organizers`),
     await FetchDirectusData(`/artists`),

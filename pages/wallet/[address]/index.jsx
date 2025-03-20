@@ -334,7 +334,7 @@ export async function getStaticPaths() {
   };
 }
 
-export async function getStaticProps({ params }) {
+export async function getServerSideProps({ params }) {
   const addressFromURL = await params.address;
 
   /* Check if the address is valid */

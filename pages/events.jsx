@@ -220,7 +220,7 @@ export default function Events({ data, organizers, artists }) {
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 const targetContractAddress = "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW";
 
-export async function getStaticProps() {
+export async function getServerSideProps() {
   // Fetch burned tokens data
   const burnedData = await TZKT_API(
     `/v1/tokens/transfers?to.eq=tz1burnburnburnburnburnburnburjAYjjX&token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`

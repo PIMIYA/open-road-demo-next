@@ -22,17 +22,17 @@ import TwoColumnLayout, {
 import GeneralTokenCardGrid from "@/components/GeneralTokenCardGrid";
 import SidePaper from "@/components/SidePaper";
 
-export default function Events({ data, organizers, artists }) {
+export default function Events({ claimableData, organizers, artists }) {
   // console.log("artists", artists);
 
   // if data's category is "座談", change it to "座談會"
-  data.forEach((item) => {
+  claimableData.forEach((item) => {
     if (item.metadata.category === "座談") {
       item.metadata.category = "研討會 / 論壇 / 座談";
     }
   });
   // if data's tags, each include "視覺", then combine and change it to one "視覺藝術"
-  data.forEach((item) => {
+  claimableData.forEach((item) => {
     if (item.metadata.tags.some((tag) => tag.includes("視覺"))) {
       item.metadata.tags = ["視覺藝術"];
     } else if (item.metadata.tags.some((tag) => tag.includes("舞蹈"))) {
@@ -51,16 +51,18 @@ export default function Events({ data, organizers, artists }) {
   });
 
   // get all categories from data
-  const categories = [...new Set(data.map((item) => item.metadata.category))];
+  const categories = [
+    ...new Set(claimableData.map((item) => item.metadata.category)),
+  ];
   // get all tags from data without duplicates
-  const tags = data
+  const tags = claimableData
     .map((item) => item.metadata.tags)
     .flat()
     .filter((item, index, self) => self.indexOf(item) === index);
 
   const [catValue, setCatValue] = useState("");
   const [tagValue, setTagValue] = useState("");
-  const [filteredData, setFilteredData] = useState(data);
+  const [filteredData, setFilteredData] = useState(claimableData);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
 
@@ -73,7 +75,7 @@ export default function Events({ data, organizers, artists }) {
       behavior: "smooth",
     });
 
-    const filterdByCat = data.filter(
+    const filterdByCat = claimableData.filter(
       (c) =>
         (!catValue || c.metadata.category.includes(catValue)) &&
         (!tagValue || c.metadata.tags.some((tag) => tag.includes(tagValue)))
@@ -102,7 +104,7 @@ export default function Events({ data, organizers, artists }) {
     if (catState || tagState) {
       setCatValue(catState);
       setTagValue(tagState);
-      const filterdByCat = data.filter(
+      const filterdByCat = claimableData.filter(
         (c) =>
           (!catState || c.metadata.category.includes(catState)) &&
           (!tagState || c.metadata.tags.some((tag) => tag.includes(tagState)))
@@ -111,9 +113,9 @@ export default function Events({ data, organizers, artists }) {
     } else {
       setCatValue("");
       setTagValue("");
-      setFilteredData(data);
+      setFilteredData(claimableData);
     }
-  }, [catState, tagState, data]);
+  }, [catState, tagState, claimableData]);
 
   useIsomorphicLayoutEffect(() => {
     if (observerRef.current) {
@@ -220,7 +222,7 @@ export default function Events({ data, organizers, artists }) {
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 const targetContractAddress = "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW";
 
-export async function getServerSideProps() {
+export async function getStaticProps() {
   // Fetch burned tokens data
   const burnedData = await TZKT_API(
     `/v1/tokens/transfers?to.eq=tz1burnburnburnburnburnburnburjAYjjX&token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
@@ -270,7 +272,7 @@ export async function getServerSideProps() {
   }
 
   return {
-    props: { data: claimableData, organizers: organizers, artists: artists },
-    // revalidate: 10, // In seconds
+    props: { claimableData, organizers, artists },
+    revalidate: 10, // In seconds
   };
 }

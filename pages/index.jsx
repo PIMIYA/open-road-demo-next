@@ -50,23 +50,23 @@ const features = [
   },
 ];
 
-export default function Home({ data, organizers, artists }) {
+export default function Home({ claimableData, organizers, artists }) {
   const { isLanded } = useGlobalContext();
   const theme = useTheme();
 
   // sort data by tokenId
-  if (data) {
-    data.sort((a, b) => b.tokenId - a.tokenId);
+  if (claimableData) {
+    claimableData.sort((a, b) => b.tokenId - a.tokenId);
   }
 
   // if data's category is "座談", change it to "座談會"
-  data.forEach((item) => {
+  claimableData.forEach((item) => {
     if (item.metadata.category === "座談") {
       item.metadata.category = "研討會 / 論壇 / 座談";
     }
   });
   // if data's tags, each include "視覺", then combine and change it to one "視覺藝術"
-  data.forEach((item) => {
+  claimableData.forEach((item) => {
     if (item.metadata.tags.some((tag) => tag.includes("視覺"))) {
       item.metadata.tags = ["視覺藝術"];
     } else if (item.metadata.tags.some((tag) => tag.includes("舞蹈"))) {
@@ -128,7 +128,7 @@ export default function Home({ data, organizers, artists }) {
       {isLanded && (
         <Container maxWidth="lg">
           <GeneralTokenCardGrid
-            data={data}
+            data={claimableData}
             organizers={organizers}
             artists={artists}
           />
@@ -150,7 +150,7 @@ export default function Home({ data, organizers, artists }) {
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 const targetContractAddress = "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW";
 
-export async function getServerSideProps() {
+export async function getStaticProps() {
   // Fetch burned tokens data
   const burnedData = await TZKT_API(
     `/v1/tokens/transfers?to.eq=tz1burnburnburnburnburnburnburjAYjjX&token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
@@ -200,7 +200,7 @@ export async function getServerSideProps() {
   }
 
   return {
-    props: { data: claimableData, organizers: organizers, artists: artists },
-    // revalidate: 10, // In seconds
+    props: { claimableData, organizers, artists },
+    revalidate: 10, // In seconds
   };
 }

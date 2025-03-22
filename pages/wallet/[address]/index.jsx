@@ -379,7 +379,12 @@ export async function getStaticProps({ params }) {
   // }
 
   return {
-    props: { role, pools, claims, addressFromURL },
+    props: {
+      role: role,
+      pools: pools,
+      claims: claims,
+      addressFromURL: addressFromURL,
+    },
     revalidate: 10,
   };
 }

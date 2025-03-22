@@ -17,7 +17,7 @@ export default async function handler(
     /*** async/await with fetch and map, and then send result to where use api route ***/
     async function getData() {
       const data = Promise.all(
-        array2object.map(async (i: { url: any; }) => await (await fetch(`${process.env.AKADROP_URL}/pools/${i.url}`)).json())
+        array2object.map(async (i: { url: any; }) => await (await fetch(`${process.env.AkaDropURL}/pools/${i.url}`)).json())
       )
       return data
     }

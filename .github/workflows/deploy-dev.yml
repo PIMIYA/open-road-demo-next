@@ -12,7 +12,7 @@ jobs:
       MainnetURL: ${{ secrets.MainnetURL }}
       TestnetURL: ${{ secrets.TestnetURL }}
       WalletRoleURL: ${{ secrets.WalletRoleURL }}
-      AKADROP_URL: ${{ secrets.AKADROP_URL }}
+      AkaDropURL: ${{ secrets.AkaDropURL }}
       TZKT_URL: ${{ secrets.TZKT_URL }}
       NEXT_PUBLIC_PARTNER_ID: ${{ secrets.NEXT_PUBLIC_PARTNER_ID }}
       NEXT_PUBLIC_BAUTH_USERNAME: ${{ secrets.NEXT_PUBLIC_BAUTH_USERNAME }}
@@ -78,7 +78,7 @@ jobs:
             echo "MainnetURL=\"${{ secrets.MainnetURL }}\"" > .env
             echo "TestnetURL=\"${{ secrets.TestnetURL }}\"" >> .env
             echo "WalletRoleURL=\"${{ secrets.WalletRoleURL }}\"" >> .env
-            echo "AKADROP_URL=\"${{ secrets.AKADROP_URL }}\"" >> .env
+            echo "AkaDropURL=\"${{ secrets.AkaDropURL }}\"" >> .env
             echo "TZKT_URL=\"${{ secrets.TZKT_URL }}\"" >> .env
             echo "NEXT_PUBLIC_PARTNER_ID=\"${{ secrets.NEXT_PUBLIC_PARTNER_ID }}\"" >> .env
             echo "NEXT_PUBLIC_BAUTH_USERNAME=\"${{ secrets.NEXT_PUBLIC_BAUTH_USERNAME }}\"" >> .env

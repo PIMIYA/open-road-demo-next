@@ -34,7 +34,7 @@ import Filter from "@/components/Filter";
 
 import { useRouter } from "next/router";
 
-export default function Wallet({ role, claims, addressFromURL }) {
+export default function Wallet({ role, pools, claims, addressFromURL }) {
   const router = useRouter();
   /* Connected wallet */
   const { address, connect, disconnect } = useConnection();
@@ -59,11 +59,23 @@ export default function Wallet({ role, claims, addressFromURL }) {
     return result;
   });
 
+  const mypools = pools.pools.map((pool) => {
+    let result = {
+      poolUid: pool.poolUid,
+      poolid: getIdFromUid(pool.poolUid),
+      contact: getContractFromUid(pool.poolUid),
+      poolURL: getUrlFromUid(pool.poolUid),
+    };
+    return result;
+  });
+
   /* Array tokenURL to do API route */
   const claimTokenURLs = useMemo(
     () => myclaims.map((c) => c.tokenURL),
     [claims]
   );
+
+  const poolTokenURLs = useMemo(() => mypools.map((m) => m.poolURL), [pools]);
 
   /* API route: Client fetch CLAIMED TOKENS by using tokenId at TZKT API */
   useEffect(() => {
@@ -341,8 +353,7 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }) {
-  const addressFromURL = params.address;
-  console.log("addressFromURL", addressFromURL);
+  const addressFromURL = await params.address;
 
   /* Check if the address is valid */
   const res = await fetch(
@@ -356,18 +367,19 @@ export async function getStaticProps({ params }) {
   }
 
   /* Fetch data */
-  const [role, claims] = await Promise.all([
+  const [role, pools, claims] = await Promise.all([
     await WalletRoleAPI(`/${addressFromURL}`),
+    await AkaDropAPI(`/${addressFromURL}/pools?offset=0&limit=0`),
     await AkaDropAPI(`/${addressFromURL}/claims?offset=0&limit=0`),
   ]);
-  if (!role || !claims) {
-    return {
-      notFound: true,
-    };
-  }
+  // if (!role || !claims) {
+  //   return {
+  //     notFound: true,
+  //   };
+  // }
 
   return {
-    props: { role, claims, addressFromURL },
+    props: { role, pools, claims, addressFromURL },
     revalidate: 10,
   };
 }

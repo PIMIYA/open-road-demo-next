@@ -270,7 +270,7 @@ export async function getServerSideProps() {
   }
 
   return {
-    props: { data: claimableData, organizers, artists },
-    revalidate: 10, // In seconds
+    props: { data: claimableData, organizers: organizers, artists: artists },
+    // revalidate: 10, // In seconds
   };
 }

@@ -163,7 +163,7 @@ export default function Home({ claimableData }) {
           />
         </Box>
       )}
-      {isLanded && organizers && (
+      {isLanded && (
         <Container maxWidth="lg">
           <GeneralTokenCardGrid
             data={claimableData}

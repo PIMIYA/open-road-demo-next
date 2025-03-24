@@ -54,7 +54,9 @@ export default function Events({ claimableData }) {
   /* API route: Client fetch Organizers at Directus */
   useEffect(() => {
     const fetchOrganizers = async () => {
-      const response = await fetch(`${process.env.DIRECTUS}/organizers`);
+      const response = await fetch(
+        `https://data.kairos-mint.art/items/organizers`
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -70,7 +72,9 @@ export default function Events({ claimableData }) {
   /* API route: Client fetch Artists at Directus */
   useEffect(() => {
     const fetchArtists = async () => {
-      const response = await fetch(`${process.env.DIRECTUS}/artists`);
+      const response = await fetch(
+        `https://data.kairos-mint.art/items/artists`
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -233,13 +237,11 @@ export default function Events({ claimableData }) {
       </Side>
       <Main>
         <Box>{filteredData.length == 0 ? "no data" : ""}</Box>
-        {organizers && artists && (
-          <GeneralTokenCardGrid
-            data={paginateAppend(filteredData, currentPage, pageSize)}
-            organizers={organizers}
-            artists={artists}
-          />
-        )}
+        <GeneralTokenCardGrid
+          data={paginateAppend(filteredData, currentPage, pageSize)}
+          organizers={organizers ? organizers : null}
+          artists={artists ? artists : null}
+        />
         {filteredData.length > 0 && (
           <Box
             ref={loaderRef}

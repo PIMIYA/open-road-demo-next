@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 /* Fetch data */
 import {
   TZKT_API,
@@ -7,10 +8,9 @@ import {
 } from "@/lib/api";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { useTheme } from "@emotion/react";
-
-/* Components */
+/* MUI */
 import { Box, Button, Container } from "@mui/material";
-
+/* Components */
 import KeyVisual from "@/components/homepage/keyVisual";
 import FeatureBox from "@/components/homepage/featureBox";
 import FadeOnScroll from "@/components/fadeOnScroll";
@@ -50,7 +50,7 @@ const features = [
   },
 ];
 
-export default function Home({ claimableData, organizers, artists }) {
+export default function Home({ claimableData }) {
   const { isLanded } = useGlobalContext();
   const theme = useTheme();
 
@@ -82,6 +82,45 @@ export default function Home({ claimableData, organizers, artists }) {
       }
     });
   }
+
+  const [organizers, setOrganizers] = useState(null);
+  const [artists, setArtists] = useState(null);
+
+  /* API route: Client fetch Organizers at Directus */
+  useEffect(() => {
+    const fetchOrganizers = async () => {
+      const response = await fetch(`${process.env.DIRECTUS}/organizers`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+      setOrganizers(result);
+    };
+
+    fetchOrganizers().catch((e) => {
+      // handle the error as needed
+      console.error("An error occurred while fetching the organizers: ", e);
+    });
+  }, []);
+  /* API route: Client fetch Artists at Directus */
+  useEffect(() => {
+    const fetchArtists = async () => {
+      const response = await fetch(`${process.env.DIRECTUS}/artists`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+      setArtists(result);
+    };
+
+    fetchArtists().catch((e) => {
+      // handle the error as needed
+      console.error("An error occurred while fetching the artists: ", e);
+    });
+  }, []);
+
+  // console.log("organizers", organizers);
+  // console.log("artists", artists);
 
   return (
     <>
@@ -124,7 +163,7 @@ export default function Home({ claimableData, organizers, artists }) {
           />
         </Box>
       )}
-      {isLanded && (
+      {isLanded && organizers && (
         <Container maxWidth="lg">
           <GeneralTokenCardGrid
             data={claimableData}
@@ -181,16 +220,16 @@ export async function getStaticProps() {
     })
   );
 
-  const [organizers, artists] = await Promise.all([
-    await FetchDirectusData(`/organizers`),
-    await FetchDirectusData(`/artists`),
-  ]);
+  // const [organizers, artists] = await Promise.all([
+  //   await FetchDirectusData(`/organizers`),
+  //   await FetchDirectusData(`/artists`),
+  // ]);
 
   return {
     props: {
       claimableData: claimableData,
-      organizers: organizers,
-      artists: artists,
+      // organizers: organizers,
+      // artists: artists,
     },
     revalidate: 10, // In seconds
   };

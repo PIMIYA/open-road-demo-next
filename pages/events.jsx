@@ -48,48 +48,6 @@ export default function Events({ claimableData, organizers, artists }) {
       }
     });
   }
-  // const [organizers, setOrganizers] = useState([]);
-  // const [artists, setArtists] = useState([]);
-
-  /* API route: Client fetch Organizers at Directus */
-  // useEffect(() => {
-  //   const fetchOrganizers = async () => {
-  //     const response = await fetch(
-  //       `https://data.kairos-mint.art/items/organizers`
-  //     );
-  //     if (!response.ok) {
-  //       throw new Error(`HTTP error! status: ${response.status}`);
-  //     }
-  //     const result = await response.json();
-  //     setOrganizers(result);
-  //   };
-
-  //   fetchOrganizers().catch((e) => {
-  //     // handle the error as needed
-  //     console.error("An error occurred while fetching the organizers: ", e);
-  //   });
-  // }, []);
-  // /* API route: Client fetch Artists at Directus */
-  // useEffect(() => {
-  //   const fetchArtists = async () => {
-  //     const response = await fetch(
-  //       `https://data.kairos-mint.art/items/artists`
-  //     );
-  //     if (!response.ok) {
-  //       throw new Error(`HTTP error! status: ${response.status}`);
-  //     }
-  //     const result = await response.json();
-  //     setArtists(result);
-  //   };
-
-  //   fetchArtists().catch((e) => {
-  //     // handle the error as needed
-  //     console.error("An error occurred while fetching the artists: ", e);
-  //   });
-  // }, []);
-
-  console.log("organizers", organizers);
-  console.log("artists", artists);
 
   // get all categories from data
   const categories = [

@@ -50,7 +50,7 @@ const features = [
   },
 ];
 
-export default function Home({ claimableData }) {
+export default function Home({ claimableData, organizers, artists }) {
   const { isLanded } = useGlobalContext();
   const theme = useTheme();
 
@@ -82,49 +82,6 @@ export default function Home({ claimableData }) {
       }
     });
   }
-
-  const [organizers, setOrganizers] = useState();
-  const [artists, setArtists] = useState();
-
-  /* API route: Client fetch Organizers at Directus */
-  useEffect(() => {
-    const fetchOrganizers = async () => {
-      const response = await fetch(
-        `https://data.kairos-mint.art/items/organizers`
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const result = await response.json();
-      setOrganizers(result);
-    };
-
-    fetchOrganizers().catch((e) => {
-      // handle the error as needed
-      console.error("An error occurred while fetching the organizers: ", e);
-    });
-  }, []);
-  /* API route: Client fetch Artists at Directus */
-  useEffect(() => {
-    const fetchArtists = async () => {
-      const response = await fetch(
-        `https://data.kairos-mint.art/items/artists`
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const result = await response.json();
-      setArtists(result);
-    };
-
-    fetchArtists().catch((e) => {
-      // handle the error as needed
-      console.error("An error occurred while fetching the artists: ", e);
-    });
-  }, []);
-
-  // console.log("organizers", organizers);
-  // console.log("artists", artists);
 
   return (
     <>
@@ -171,8 +128,8 @@ export default function Home({ claimableData }) {
         <Container maxWidth="lg">
           <GeneralTokenCardGrid
             data={claimableData}
-            organizers={organizers ? organizers : null}
-            artists={artists ? artists : null}
+            organizers={organizers}
+            artists={artists}
           />
 
           <Box textAlign="center" mt={10}>
@@ -225,16 +182,16 @@ export async function getStaticProps() {
     })
   );
 
-  // const [organizers, artists] = await Promise.all([
-  //   await FetchDirectusData(`/organizers`),
-  //   await FetchDirectusData(`/artists`),
-  // ]);
+  const [organizers, artists] = await Promise.all([
+    await FetchDirectusData(`/organizers`),
+    await FetchDirectusData(`/artists`),
+  ]);
 
   return {
     props: {
       claimableData: claimableData,
-      // organizers: organizers,
-      // artists: artists,
+      organizers: organizers,
+      artists: artists,
     },
     revalidate: 10, // In seconds
   };

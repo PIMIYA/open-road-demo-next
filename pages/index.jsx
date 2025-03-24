@@ -83,8 +83,8 @@ export default function Home({ claimableData }) {
     });
   }
 
-  const [organizers, setOrganizers] = useState(null);
-  const [artists, setArtists] = useState(null);
+  const [organizers, setOrganizers] = useState();
+  const [artists, setArtists] = useState();
 
   /* API route: Client fetch Organizers at Directus */
   useEffect(() => {
@@ -165,11 +165,13 @@ export default function Home({ claimableData }) {
       )}
       {isLanded && (
         <Container maxWidth="lg">
-          <GeneralTokenCardGrid
-            data={claimableData}
-            organizers={organizers}
-            artists={artists}
-          />
+          {organizers && artists && (
+            <GeneralTokenCardGrid
+              data={claimableData}
+              organizers={organizers}
+              artists={artists}
+            />
+          )}
           <Box textAlign="center" mt={10}>
             <FadeOnScroll onceonly>
               <Link href="/events">

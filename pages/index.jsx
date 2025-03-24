@@ -89,7 +89,9 @@ export default function Home({ claimableData }) {
   /* API route: Client fetch Organizers at Directus */
   useEffect(() => {
     const fetchOrganizers = async () => {
-      const response = await fetch(`${process.env.DIRECTUS}/organizers`);
+      const response = await fetch(
+        `https://data.kairos-mint.art/items/organizers`
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -105,7 +107,9 @@ export default function Home({ claimableData }) {
   /* API route: Client fetch Artists at Directus */
   useEffect(() => {
     const fetchArtists = async () => {
-      const response = await fetch(`${process.env.DIRECTUS}/artists`);
+      const response = await fetch(
+        `https://data.kairos-mint.art/items/artists`
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -165,13 +169,12 @@ export default function Home({ claimableData }) {
       )}
       {isLanded && (
         <Container maxWidth="lg">
-          {organizers && artists && (
-            <GeneralTokenCardGrid
-              data={claimableData}
-              organizers={organizers}
-              artists={artists}
-            />
-          )}
+          <GeneralTokenCardGrid
+            data={claimableData}
+            organizers={organizers ? organizers : null}
+            artists={artists ? artists : null}
+          />
+
           <Box textAlign="center" mt={10}>
             <FadeOnScroll onceonly>
               <Link href="/events">

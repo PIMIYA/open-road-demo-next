@@ -166,8 +166,8 @@ export default function GeneralTokenCardGrid(props) {
                     </Stack>
                     <Organizer
                       organizer={metadata.organizer}
-                      artists={artists}
-                      organizers={organizers}
+                      artists={artists ? artists : null}
+                      organizers={organizers ? organizers : null}
                     />
                   </Box>
                   <Box id="secondary-info" mb={2}>

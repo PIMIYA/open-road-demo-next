@@ -48,8 +48,8 @@ export default function Events({ claimableData }) {
       }
     });
   }
-  const [organizers, setOrganizers] = useState(null);
-  const [artists, setArtists] = useState(null);
+  const [organizers, setOrganizers] = useState();
+  const [artists, setArtists] = useState();
 
   /* API route: Client fetch Organizers at Directus */
   useEffect(() => {

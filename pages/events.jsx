@@ -21,7 +21,7 @@ import TwoColumnLayout, {
 import GeneralTokenCardGrid from "@/components/GeneralTokenCardGrid";
 import SidePaper from "@/components/SidePaper";
 
-export default function Events({ claimableData }) {
+export default function Events({ claimableData, organizers, artists }) {
   if (claimableData) {
     // if data's category is "座談", change it to "座談會"
     claimableData.forEach((item) => {
@@ -48,48 +48,48 @@ export default function Events({ claimableData }) {
       }
     });
   }
-  const [organizers, setOrganizers] = useState([]);
-  const [artists, setArtists] = useState([]);
+  // const [organizers, setOrganizers] = useState([]);
+  // const [artists, setArtists] = useState([]);
 
   /* API route: Client fetch Organizers at Directus */
-  useEffect(() => {
-    const fetchOrganizers = async () => {
-      const response = await fetch(
-        `https://data.kairos-mint.art/items/organizers`
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const result = await response.json();
-      setOrganizers(result);
-    };
+  // useEffect(() => {
+  //   const fetchOrganizers = async () => {
+  //     const response = await fetch(
+  //       `https://data.kairos-mint.art/items/organizers`
+  //     );
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
+  //     const result = await response.json();
+  //     setOrganizers(result);
+  //   };
 
-    fetchOrganizers().catch((e) => {
-      // handle the error as needed
-      console.error("An error occurred while fetching the organizers: ", e);
-    });
-  }, []);
-  /* API route: Client fetch Artists at Directus */
-  useEffect(() => {
-    const fetchArtists = async () => {
-      const response = await fetch(
-        `https://data.kairos-mint.art/items/artists`
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const result = await response.json();
-      setArtists(result);
-    };
+  //   fetchOrganizers().catch((e) => {
+  //     // handle the error as needed
+  //     console.error("An error occurred while fetching the organizers: ", e);
+  //   });
+  // }, []);
+  // /* API route: Client fetch Artists at Directus */
+  // useEffect(() => {
+  //   const fetchArtists = async () => {
+  //     const response = await fetch(
+  //       `https://data.kairos-mint.art/items/artists`
+  //     );
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
+  //     const result = await response.json();
+  //     setArtists(result);
+  //   };
 
-    fetchArtists().catch((e) => {
-      // handle the error as needed
-      console.error("An error occurred while fetching the artists: ", e);
-    });
-  }, []);
+  //   fetchArtists().catch((e) => {
+  //     // handle the error as needed
+  //     console.error("An error occurred while fetching the artists: ", e);
+  //   });
+  // }, []);
 
-  // console.log("organizers", organizers);
-  // console.log("artists", artists);
+  console.log("organizers", organizers);
+  console.log("artists", artists);
 
   // get all categories from data
   const categories = [
@@ -239,8 +239,8 @@ export default function Events({ claimableData }) {
         <Box>{filteredData.length == 0 ? "no data" : ""}</Box>
         <GeneralTokenCardGrid
           data={paginateAppend(filteredData, currentPage, pageSize)}
-          organizers={organizers ? organizers : null}
-          artists={artists ? artists : null}
+          organizers={organizers}
+          artists={artists}
         />
         {filteredData.length > 0 && (
           <Box
@@ -295,8 +295,17 @@ export async function getStaticProps() {
     })
   );
 
+  const [organizers, artists] = await Promise.all([
+    await FetchDirectusData(`/organizers`),
+    await FetchDirectusData(`/artists`),
+  ]);
+
   return {
-    props: { claimableData },
+    props: {
+      claimableData: claimableData,
+      organizers: organizers,
+      artists: artists,
+    },
     revalidate: 10, // In seconds
   };
 }

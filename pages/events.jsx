@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { paginateAppend } from "@/lib/paginate";
-
 /* Routing */
 import { useRouter } from "next/router";
 /* MUI */
@@ -22,9 +21,7 @@ import TwoColumnLayout, {
 import GeneralTokenCardGrid from "@/components/GeneralTokenCardGrid";
 import SidePaper from "@/components/SidePaper";
 
-export default function Events({ claimableData, organizers, artists }) {
-  // console.log("artists", artists);
-
+export default function Events({ claimableData }) {
   if (claimableData) {
     // if data's category is "座談", change it to "座談會"
     claimableData.forEach((item) => {
@@ -51,6 +48,44 @@ export default function Events({ claimableData, organizers, artists }) {
       }
     });
   }
+  const [organizers, setOrganizers] = useState(null);
+  const [artists, setArtists] = useState(null);
+
+  /* API route: Client fetch Organizers at Directus */
+  useEffect(() => {
+    const fetchOrganizers = async () => {
+      const response = await fetch(`${process.env.DIRECTUS}/organizers`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+      setOrganizers(result);
+    };
+
+    fetchOrganizers().catch((e) => {
+      // handle the error as needed
+      console.error("An error occurred while fetching the organizers: ", e);
+    });
+  }, []);
+  /* API route: Client fetch Artists at Directus */
+  useEffect(() => {
+    const fetchArtists = async () => {
+      const response = await fetch(`${process.env.DIRECTUS}/artists`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+      setArtists(result);
+    };
+
+    fetchArtists().catch((e) => {
+      // handle the error as needed
+      console.error("An error occurred while fetching the artists: ", e);
+    });
+  }, []);
+
+  // console.log("organizers", organizers);
+  // console.log("artists", artists);
 
   // get all categories from data
   const categories = [
@@ -198,11 +233,13 @@ export default function Events({ claimableData, organizers, artists }) {
       </Side>
       <Main>
         <Box>{filteredData.length == 0 ? "no data" : ""}</Box>
-        <GeneralTokenCardGrid
-          data={paginateAppend(filteredData, currentPage, pageSize)}
-          organizers={organizers}
-          artists={artists}
-        />
+        {organizers && artists && (
+          <GeneralTokenCardGrid
+            data={paginateAppend(filteredData, currentPage, pageSize)}
+            organizers={organizers}
+            artists={artists}
+          />
+        )}
         {filteredData.length > 0 && (
           <Box
             ref={loaderRef}
@@ -256,13 +293,8 @@ export async function getStaticProps() {
     })
   );
 
-  const [organizers, artists] = await Promise.all([
-    await FetchDirectusData(`/organizers`),
-    await FetchDirectusData(`/artists`),
-  ]);
-
   return {
-    props: { claimableData, organizers, artists },
+    props: { claimableData },
     revalidate: 10, // In seconds
   };
 }

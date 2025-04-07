@@ -8,6 +8,15 @@ import {
 import NFTclaim from "@/components/NFTclaim";
 import KukaiEmbedComponent from "../../components/KukaiEmbedComponent";
 
+// Add these imports for the dialog
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 const AkaDropAPI = "https://mars.akaswap.com/drop/api/pools";
 
@@ -64,6 +73,82 @@ export default function NFTPage({
   const [claimStatus, setClaimStatus] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const embedRef = useRef(null);
+
+  // Add states for the dialog
+  const [openDialog, setOpenDialog] = useState(false);
+  const [userMessage, setUserMessage] = useState("");
+  const [tokenID, setTokenID] = useState("");
+  const [userAddress, setUserAddress] = useState("");
+
+  // Handle dialog close
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
+
+  // Handle message submission
+  const handleSubmitMessage = async () => {
+    try {
+      const response = await fetch("/api/post-comment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tokenID: tokenID,
+          walletAddress: userAddress,
+          message: userMessage,
+        }),
+      });
+
+      // Handle different status codes
+      let statusMessage = "";
+
+      switch (response.status) {
+        case 200:
+          statusMessage = "200 OK: The message was received successfully.";
+          break;
+        case 201:
+          statusMessage = "201 Created: Your message was successfully created.";
+          break;
+        case 400:
+          statusMessage =
+            "400 Bad Request: Invalid message format or missing required information.";
+          break;
+        case 403:
+          statusMessage =
+            "403 Forbidden: You don't have permission to leave a message.";
+          break;
+        case 500:
+          statusMessage =
+            "500 Internal Server Error: An error occurred on the server.";
+          break;
+        default:
+          statusMessage = `Unexpected status code: ${response.status}`;
+      }
+
+      if (!response.ok) {
+        throw new Error(`${statusMessage}`);
+      }
+
+      const result = await response.json();
+      console.log("Message submission result:", result);
+      setClaimStatus((prevStatus) => prevStatus + " • " + statusMessage);
+    } catch (error) {
+      console.error("Error submitting message:", error);
+      setClaimStatus((prevStatus) => prevStatus + " • Error: " + error.message);
+    } finally {
+      setOpenDialog(false);
+    }
+  };
+
+  //add test for dry testing comment dialogbox
+  // Add this function to your component
+  // const openTestDialog = () => {
+  //   // Set sample values for testing
+  //   setTokenID("123");
+  //   setUserAddress("tz1testAddress123456789");
+  //   setOpenDialog(true);
+  // };
 
   const handleClaim = async (userInfo) => {
     const {
@@ -176,9 +261,11 @@ export default function NFTPage({
         const addUserWalletResult = await addUserWalletResponse.json();
         console.log("addUserWalletResult:", addUserWalletResult);
 
+        // lauch dialog to let user able to leave the one time message
+        setTokenID(data[0].tokenId.toString());
+        setUserAddress(address);
+        setOpenDialog(true);
       }
-
-      
     } catch (error) {
       console.error("Error claiming NFT:", error);
       setClaimStatus(`Error claiming NFT: ${error.message}`);
@@ -224,6 +311,18 @@ export default function NFTPage({
 
   return (
     <div>
+      {/* Test button - remove this in production */}
+      {/* <div style={{ margin: "20px 0", textAlign: "center" }}>
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={openTestDialog}
+          style={{ marginBottom: "20px" }}
+        >
+          Test Message Dialog
+        </Button>
+      </div> */}
+
       {data &&
         data.map((d, index) => (
           <div key={index}>
@@ -234,6 +333,41 @@ export default function NFTPage({
       <div style={{ display: "flex", justifyContent: "center", margin: "5px" }}>
         {claimStatus && <div>{claimStatus}</div>}
       </div>
+      {/* Message Dialog */}
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>Leave a Message</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Congratulations on your successful claim! Would you like to leave a
+            message for Artist or Publisher?
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="message"
+            label="Your Message"
+            type="text"
+            fullWidth
+            multiline
+            rows={4}
+            variant="outlined"
+            value={userMessage}
+            onChange={(e) => setUserMessage(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog} color="primary">
+            Skip
+          </Button>
+          <Button
+            onClick={handleSubmitMessage}
+            color="primary"
+            disabled={!userMessage.trim()}
+          >
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

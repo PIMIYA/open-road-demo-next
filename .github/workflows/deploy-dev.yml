@@ -24,6 +24,7 @@ jobs:
       WALLET_PASSPHRASE: ${{ secrets.WALLET_PASSPHRASE }}
       SERVER_URL: ${{ secrets.SERVER_URL }}
       DIRECTUS: ${{ secrets.DIRECTUS }}
+      COMMENT_URL: ${{ secrets.COMMENT_URL }}
 
     steps:
       - name: Checkout code
@@ -91,6 +92,7 @@ jobs:
             echo "WALLET_PASSPHRASE=\"${{ secrets.WALLET_PASSPHRASE }}\"" >> .env
             echo "SERVER_URL=\"${{ secrets.SERVER_URL }}\"" >> .env
             echo "DIRECTUS=\"${{ secrets.DIRECTUS }}\"" >> .env
+            echo "COMMENT_URL=\"${{ secrets.COMMENT_URL }}\"" >> .env
             echo "PORT=3002" >> .env
 
             # Copy .env to .env.local
@@ -113,6 +115,3 @@ jobs:
             # Save PM2 configuration to persist across reboots
             pm2 save
           '
-
-
-          

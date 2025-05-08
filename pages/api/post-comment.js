@@ -14,7 +14,7 @@ export default async function handler(req, res) {
         }
 
         // Forward the request to the actual API endpoint
-        const response = await fetch("http://localhost:3040/post-comment", {
+        const response = await fetch(`${process.env.COMMENT_URL}/post-comment`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

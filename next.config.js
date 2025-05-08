@@ -45,6 +45,7 @@ const nextConfig = {
     NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL: process.env.NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL,
     NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD: process.env.NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD,
     DIRECTUS: process.env.DIRECTUS,
+    COMMENT_URL: process.env.COMMENT_URL,
   },
 
   // async headers() {

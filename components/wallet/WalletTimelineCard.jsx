@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -7,10 +8,20 @@ import {
   Typography,
   Chip,
   CardMedia,
+  Input,
 } from "@mui/material";
 import Tags from "@/components/Tags";
 
-export default function WalletTimelineCard({ data, index }) {
+// Add these imports for the dialog
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+
+export default function WalletTimelineCard({ data, index, address }) {
   if (!data) {
     return (
       <Box mb={10}>
@@ -48,6 +59,92 @@ export default function WalletTimelineCard({ data, index }) {
   // const { contract, tokenId } = data;
   const contract = data.contract.address;
   const tokenId = data.tokenId;
+
+  // Add states for the dialog
+  const [openDialog, setOpenDialog] = useState(false);
+  const [userMessage, setUserMessage] = useState("");
+  const [tokenID, setTokenID] = useState("");
+  const [userAddress, setUserAddress] = useState("");
+  const [messageStatus, setMessageStatus] = useState(false);
+
+  // Handle dialog open
+  const handleClickOpen = () => {
+    setOpenDialog(true);
+  };
+  // Handle dialog close
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
+  // Handle message submission
+  const handleSubmitMessage = async () => {
+    try {
+      const response = await fetch("/api/post-comment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tokenID: tokenId,
+          walletAddress: address,
+          message: userMessage,
+        }),
+      });
+
+      // Handle different status codes
+      let statusMessage = "";
+
+      switch (response.status) {
+        case 200:
+          statusMessage = "200 OK: The message was received successfully.";
+          break;
+        case 201:
+          statusMessage = "201 Created: Your message was successfully created.";
+          break;
+        case 400:
+          statusMessage =
+            "400 Bad Request: Invalid message format or missing required information.";
+          break;
+        case 403:
+          statusMessage =
+            "403 Forbidden: You don't have permission to leave a message.";
+          break;
+        case 500:
+          statusMessage =
+            "500 Internal Server Error: An error occurred on the server.";
+          break;
+        default:
+          statusMessage = `Unexpected status code: ${response.status}`;
+      }
+
+      if (!response.ok) {
+        throw new Error(`${statusMessage}`);
+      }
+
+      const result = await response.json();
+      console.log("Message submission result:", result);
+      setMessageStatus(true);
+    } catch (error) {
+      console.error("Error submitting message:", error);
+      setMessageStatus(false);
+      // setClaimStatus((prevStatus) => prevStatus + " • Error: " + error.message);
+    } finally {
+      setOpenDialog(false);
+    }
+  };
+
+  // Keep watching the message status, if the message is sent successfully, then hide .addComment and display the userMessage to the #tokenId
+  useEffect(() => {
+    if (messageStatus) {
+      const addCommentElement = document.getElementById(tokenId + `addComment`);
+      if (addCommentElement) {
+        addCommentElement.style.display = "none";
+      }
+      const tokenIdElement = document.getElementById(tokenId + `thisComment`);
+      if (tokenIdElement) {
+        tokenIdElement.innerHTML = userMessage;
+      }
+    }
+  }, [messageStatus, userMessage, tokenId]);
 
   return (
     <Box mb={10}>
@@ -118,6 +215,62 @@ export default function WalletTimelineCard({ data, index }) {
           </Box>
           {/* <Tags tags={data.token.metadata.tags} /> */}
           <Chip label={data.metadata.category} size="small" />
+
+          {/* COMMENTS */}
+          <Box mt={1} mb={2} sx={{ color: "text.secondary" }}>
+            {data.comment ? (
+              <Box dangerouslySetInnerHTML={{ __html: data.comment }}></Box>
+            ) : (
+              <>
+                {/* THIS COMMENT */}
+                <Box
+                  id={tokenId + `thisComment`}
+                  sx={{ paddingTop: "14px" }}
+                ></Box>
+                <Input
+                  id={tokenId + `addComment`}
+                  placeholder="Add a comment"
+                  onClick={handleClickOpen}
+                />
+              </>
+            )}
+          </Box>
+
+          {/* Message Dialog */}
+          <Dialog open={openDialog} onClose={handleCloseDialog}>
+            <DialogTitle>Leave a Message</DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                Congratulations on your successful claim! Would you like to
+                leave a message for Artist or Publisher?
+              </DialogContentText>
+              <TextField
+                autoFocus
+                margin="dense"
+                id="message"
+                label="Your Message"
+                type="text"
+                fullWidth
+                multiline
+                rows={4}
+                variant="outlined"
+                value={userMessage}
+                onChange={(e) => setUserMessage(e.target.value)}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseDialog} color="primary">
+                Skip
+              </Button>
+              <Button
+                onClick={handleSubmitMessage}
+                color="primary"
+                disabled={!userMessage.trim()}
+              >
+                Submit
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Box>
       </Stack>
     </Box>

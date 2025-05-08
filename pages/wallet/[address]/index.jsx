@@ -47,6 +47,8 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
   const [createdData, setCreatedData] = useState(null);
   /* Filter tokens' data */
   const [filteredData, setFilteredData] = useState(null);
+  /* Client fetch comments */
+  const [comments, setComments] = useState(null);
 
   const myclaims = claims.claims.map((claim) => {
     let result = {
@@ -214,6 +216,22 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
       setFilteredData(filteredByCat);
     }
   };
+
+  /* API route: Client fetch Comments by WALLET ADDRESS at KairosDrop NFT Comments API */
+  useEffect(() => {
+    fetch("/api/get-comments", {
+      method: "POST",
+      body: addressFromURL,
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        let data = res.data;
+        setComments(data);
+      });
+  }, [createdPoolURL]);
+  // console.log("comments", comments);
+
+  /* console log filtered data */
   // console.log("filteredData", filteredData);
   if (router.isFallback) {
     return <div>Loading...</div>;
@@ -321,15 +339,21 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
                   filteredData && filteredData.length > 0 ? "block" : "none",
               }}
             >
-              <WalletCanvas
-                canvasData={filteredData}
-                address={addressFromURL}
-              />
+              {filteredData && filteredData.length > 0 && (
+                <WalletCanvas
+                  canvasData={filteredData}
+                  address={addressFromURL}
+                />
+              )}
             </Box>
 
             <Stack direction="row">
               <Box width={"100%"}>
-                <WalletTimeline cardData={filteredData} />
+                <WalletTimeline
+                  cardData={filteredData}
+                  comments={comments}
+                  address={addressFromURL}
+                />
               </Box>
             </Stack>
           </Box>

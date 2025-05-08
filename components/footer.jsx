@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import Image from 'next/image';
+import Link from "next/link";
+import Image from "next/image";
 
 import { Box, Container, List, ListItem, Typography } from "@mui/material";
 import { useGlobalContext } from "@/contexts/GlobalContext";
@@ -14,33 +14,31 @@ export function Footer() {
       <ListItem
         sx={{
           padding: 0,
-          marginBottom: '.5em',
+          marginBottom: ".5em",
           a: {
-            color: 'white',
-            textDecoration: 'none',
-            '&:hover': {
-              textDecoration: 'underline',
-            }
-          }
+            color: "white",
+            textDecoration: "none",
+            "&:hover": {
+              textDecoration: "underline",
+            },
+          },
         }}
       >
         <Link href={href}>
-          <Typography variant="body2">
-            {label}
-          </Typography>
+          <Typography variant="body2">{label}</Typography>
         </Link>
       </ListItem>
-    )
+    );
   }
 
   return (
     <Box
       sx={{
-        bgcolor: '#7b7b7b',
-        color: 'white',
-        mt: '5em',
-        padding: '2em 0',
-        display: isLanded ? 'block' : 'none',
+        bgcolor: "#7b7b7b",
+        color: "white",
+        mt: "5em",
+        padding: "2em 0",
+        display: isLanded ? "block" : "none",
       }}
     >
       <Container>
@@ -48,7 +46,7 @@ export function Footer() {
           sx={{
             width: 130,
             marginLeft: {
-              sm: 'auto'
+              sm: "auto",
             },
           }}
         >
@@ -56,11 +54,11 @@ export function Footer() {
             <Image
               src={logo}
               alt="Kairos"
-              width='100'
-              height='100'
+              width="100"
+              height="100"
               style={{
-                width: '100%',
-                height: 'auto',
+                width: "100%",
+                height: "auto",
               }}
             />
           </Box>
@@ -69,10 +67,9 @@ export function Footer() {
             {/* <FooterLink href="/faq" label="FAQ" /> */}
             {/* <FooterLink href="/privacy_policy" label="Privacy Policy" /> */}
             {/* <FooterLink href="/press_kit" label="Press Kit" /> */}
+            <FooterLink href="/terms_of_service" label="Terms of Service" />
           </List>
-          <Typography variant="smallest">
-            Copyright © 2024 Kairos
-          </Typography>
+          <Typography variant="smallest">Copyright © 2024 Kairos</Typography>
         </Box>
       </Container>
     </Box>

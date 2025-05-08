@@ -22,50 +22,40 @@ import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 
 export default function WalletTimelineCard({ data, index, address }) {
-  if (!data) {
-    return (
-      <Box mb={10}>
-        <Stack
-          direction={{
-            xs: "column",
-            md: "row",
-          }}
-          spacing={2}
-        >
-          <Box
-            width={{
-              xs: 100,
-              md: 200,
-            }}
-          >
-            <Skeleton width="50%" />
-            <Skeleton />
-          </Box>
-          <Box width="100%">
-            <Skeleton variant="rectangular" width="100%" height={300} />
-            <Box mt={1}>
-              <Skeleton width="30%" />
-              <Skeleton width="20%" />
-            </Box>
-          </Box>
-        </Stack>
-      </Box>
-    );
-  }
-  const tokenImageUrl = `https://assets.akaswap.com/ipfs/${data.metadata.thumbnailUri.replace(
-    "ipfs://",
-    ""
-  )}`;
   // const { contract, tokenId } = data;
   const contract = data.contract.address;
   const tokenId = data.tokenId;
 
+  const [messageStatus, setMessageStatus] = useState(false);
   // Add states for the dialog
   const [openDialog, setOpenDialog] = useState(false);
   const [userMessage, setUserMessage] = useState("");
   const [tokenID, setTokenID] = useState("");
   const [userAddress, setUserAddress] = useState("");
-  const [messageStatus, setMessageStatus] = useState(false);
+
+  // Keep watching the message status, if the message is sent successfully, then hide .addComment and display the userMessage to the #tokenId
+  useEffect(() => {
+    if (messageStatus) {
+      const addCommentElement = document.getElementById(tokenId + `addComment`);
+      if (addCommentElement) {
+        addCommentElement.style.display = "none";
+      }
+      const tokenIdElement = document.getElementById(tokenId + `thisComment`);
+      if (tokenIdElement) {
+        tokenIdElement.innerHTML = userMessage;
+      }
+    }
+    if (!messageStatus) {
+      const addCommentElement = document.getElementById(tokenId + `addComment`);
+      if (addCommentElement) {
+        addCommentElement.style.display = "block";
+      }
+      const tokenIdElement = document.getElementById(tokenId + `thisComment`);
+      if (tokenIdElement) {
+        tokenIdElement.innerHTML = "";
+      }
+    }
+  }, [userMessage, tokenId, messageStatus]);
 
   // Handle dialog open
   const handleClickOpen = () => {
@@ -131,20 +121,40 @@ export default function WalletTimelineCard({ data, index, address }) {
       setOpenDialog(false);
     }
   };
-
-  // Keep watching the message status, if the message is sent successfully, then hide .addComment and display the userMessage to the #tokenId
-  useEffect(() => {
-    if (messageStatus) {
-      const addCommentElement = document.getElementById(tokenId + `addComment`);
-      if (addCommentElement) {
-        addCommentElement.style.display = "none";
-      }
-      const tokenIdElement = document.getElementById(tokenId + `thisComment`);
-      if (tokenIdElement) {
-        tokenIdElement.innerHTML = userMessage;
-      }
-    }
-  }, [messageStatus, userMessage, tokenId]);
+  if (!data) {
+    return (
+      <Box mb={10}>
+        <Stack
+          direction={{
+            xs: "column",
+            md: "row",
+          }}
+          spacing={2}
+        >
+          <Box
+            width={{
+              xs: 100,
+              md: 200,
+            }}
+          >
+            <Skeleton width="50%" />
+            <Skeleton />
+          </Box>
+          <Box width="100%">
+            <Skeleton variant="rectangular" width="100%" height={300} />
+            <Box mt={1}>
+              <Skeleton width="30%" />
+              <Skeleton width="20%" />
+            </Box>
+          </Box>
+        </Stack>
+      </Box>
+    );
+  }
+  const tokenImageUrl = `https://assets.akaswap.com/ipfs/${data.metadata.thumbnailUri.replace(
+    "ipfs://",
+    ""
+  )}`;
 
   return (
     <Box mb={10}>

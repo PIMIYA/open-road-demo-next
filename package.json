@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@airgap/beacon-sdk": "4.2.2",
+    "@airgap/beacon-sdk": "4.3.3",
     "@airgap/beacon-types": "^4.1.2",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",

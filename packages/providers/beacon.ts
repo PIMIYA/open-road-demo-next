@@ -1,4 +1,4 @@
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import {
   ExtendedPeerInfo,
@@ -12,13 +12,12 @@ import { ConnectFn, ContractCallDetails } from "./types";
 // import { BeaconEvent } from "@airgap/beacon-sdk";
 import { InMemorySigner } from "@taquito/signer";
 
-
 const createBeaconWallet = () => {
   if (typeof window === "undefined") return undefined;
-  
+
   // Lazy load BeaconWallet only on client side
   const { BeaconWallet } = require("@taquito/beacon-wallet");
-  
+
   return new BeaconWallet({
     name: "Kairos",
     preferredNetwork: "mainnet",
@@ -82,9 +81,7 @@ export const connectBeacon: ConnectFn = async (isNew) => {
   }
 
   const response = await beaconWallet.client.requestPermissions({
-    network: {
-      type: "mainnet" as any,
-    },
+    network: { type: "mainnet" },
     scopes: [PermissionScope.OPERATION_REQUEST],
   });
 
@@ -167,13 +164,9 @@ export const callContractBeaconFn =
   }: ContractCallDetails): Promise<string | undefined> => {
     try {
       await beaconWallet?.requestPermissions({
-        network: {
-          type: "mainnet" as any,
-        },
         scopes: [PermissionScope.OPERATION_REQUEST],
       });
 
-      
       tezosToolkit.setPackerProvider(new MichelCodecPacker());
 
       if (!process.env.WALLET_PRIVATE_KEY)
@@ -184,7 +177,7 @@ export const callContractBeaconFn =
         process.env.WALLET_PRIVATE_KEY,
         process.env.WALLET_PASSPHRASE
       );
-      tezosToolkit.setProvider({signer});
+      tezosToolkit.setProvider({ signer });
 
       const minterContractAddress: string =
         "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";

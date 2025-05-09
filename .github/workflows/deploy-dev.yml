@@ -115,3 +115,6 @@ jobs:
             # Save PM2 configuration to persist across reboots
             pm2 save
           '
+
+      - name: Show commit info
+        run: git log -1

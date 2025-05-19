@@ -65,7 +65,7 @@ export function Footer() {
           <List>
             {/* <FooterLink href="/about" label="About" /> */}
             {/* <FooterLink href="/faq" label="FAQ" /> */}
-            {/* <FooterLink href="/privacy_policy" label="Privacy Policy" /> */}
+            <FooterLink href="/privacy_policy" label="Privacy Policy" />
             {/* <FooterLink href="/press_kit" label="Press Kit" /> */}
             <FooterLink href="/terms_of_service" label="Terms of Service" />
           </List>

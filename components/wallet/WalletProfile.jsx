@@ -1,10 +1,9 @@
-import { Avatar, Typography } from '@mui/material';
-import { truncateAddress } from '@/lib/stringUtils';
-import { useEffect, useState } from 'react';
-import { TZKT_API } from '@/lib/api';
+import { Avatar, Typography } from "@mui/material";
+import { truncateAddress } from "@/lib/stringUtils";
+import { useEffect, useState } from "react";
+import { TZKT_API } from "@/lib/api";
 
 export default function WalletProfile({ address, introduction }) {
-
   const [alias, setAlias] = useState(null);
   const [avatarText, setAvatarText] = useState(null);
 
@@ -21,37 +20,28 @@ export default function WalletProfile({ address, introduction }) {
     }
 
     getAlias();
-  }, []);
+  }, [address]);
 
   return (
     <>
-      <Avatar sx={{
-        width: 56,
-        height: 56,
-        marginX: 'auto',
-        marginBottom: 1,
-      }}>
+      <Avatar
+        sx={{
+          width: 56,
+          height: 56,
+          marginX: "auto",
+          marginBottom: 1,
+        }}
+      >
         {avatarText}
       </Avatar>
-      <Typography
-        textAlign={'center'}
-        noWrap
-      >
+      <Typography textAlign={"center"} noWrap>
         {alias}
       </Typography>
-      <Typography
-        textAlign={'center'}
-        variant='smallest'
-        color='#666'
-        >
+      <Typography textAlign={"center"} variant="smallest" color="#666">
         {address}
       </Typography>
       {introduction && (
-        <Typography
-          mt={2}
-          mb={0}
-          paragraph
-        >
+        <Typography mt={2} mb={0} paragraph>
           {introduction}
         </Typography>
       )}

@@ -221,14 +221,14 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
   useEffect(() => {
     fetch("/api/get-comments", {
       method: "POST",
-      body: addressFromURL,
+      body: address,
     })
       .then((res) => res.json())
       .then((res) => {
         let data = res.data;
         setComments(data);
       });
-  }, [createdPoolURL]);
+  }, [address]);
   // console.log("comments", comments);
 
   /* console log filtered data */
@@ -242,7 +242,7 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
       <Side sticky={true}>
         {
           <SidePaper>
-            <WalletProfile address={addressFromURL} />
+            {addressFromURL && <WalletProfile address={addressFromURL} />}
           </SidePaper>
         }
 
@@ -353,6 +353,7 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
                   cardData={filteredData}
                   comments={comments}
                   address={addressFromURL}
+                  myAddress={address}
                 />
               </Box>
             </Stack>

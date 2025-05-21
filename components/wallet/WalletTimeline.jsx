@@ -17,10 +17,17 @@ import { getRandomDate, getRandomPlace, getRandomCreator } from "@/lib/dummy";
 
 // TODO: infinite scroll
 // TODO: skeleton loading
-export default function WalletTimeline({ cardData, comments, address }) {
+export default function WalletTimeline({
+  cardData,
+  comments,
+  address,
+  myAddress,
+}) {
+  // console.log("myAddress", myAddress);
+  // console.log("address", address);
   /* combine commets with cardData if tokenId is the same */
   const combinedData = useMemo(() => {
-    if (!cardData || !comments) return cardData;
+    if (!cardData || !comments || !comments.data) return cardData;
 
     const combined = cardData.map((card) => {
       const comment = comments.data.find(
@@ -54,7 +61,12 @@ export default function WalletTimeline({ cardData, comments, address }) {
               {index !== cardData.length - 1 && <TimelineConnector />}
             </TimelineSeparator>
             <TimelineContent>
-              <WalletTimelineCard data={card} key={index} address={address} />
+              <WalletTimelineCard
+                data={card}
+                key={index}
+                address={address}
+                myAddress={myAddress}
+              />
             </TimelineContent>
           </TimelineItem>
         ))}

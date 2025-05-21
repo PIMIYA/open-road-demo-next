@@ -47,7 +47,14 @@ export default class Shape {
     if (this.hueIndex == null) {
       this.hueIndex = 0;
     }
-    const randomTag = this.token.tags[this.hueIndex % this.token.tags.length];
+    // checking undefined tags
+    let randomTag;
+    if (Array.isArray(this.token.tags) && this.token.tags.length > 0) {
+      randomTag = this.token.tags[this.hueIndex % this.token.tags.length];
+    } else {
+      // fallback to a default tag or value if tags is undefined or empty
+      randomTag = Object.keys(hueMap)[0];
+    }
     return hueMap[randomTag];
   }
 

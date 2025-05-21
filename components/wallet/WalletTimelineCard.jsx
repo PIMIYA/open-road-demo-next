@@ -21,7 +21,12 @@ import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 
-export default function WalletTimelineCard({ data, index, address }) {
+export default function WalletTimelineCard({
+  data,
+  index,
+  address,
+  myAddress,
+}) {
   // const { contract, tokenId } = data;
   const contract = data.contract.address;
   const tokenId = data.tokenId;
@@ -75,7 +80,7 @@ export default function WalletTimelineCard({ data, index, address }) {
         },
         body: JSON.stringify({
           tokenID: tokenId,
-          walletAddress: address,
+          walletAddress: myAddress,
           message: userMessage,
         }),
       });
@@ -227,24 +232,26 @@ export default function WalletTimelineCard({ data, index, address }) {
           <Chip label={data.metadata.category} size="small" />
 
           {/* COMMENTS */}
-          <Box mt={1} mb={2} sx={{ color: "text.secondary" }}>
-            {data.comment ? (
-              <Box dangerouslySetInnerHTML={{ __html: data.comment }}></Box>
-            ) : (
-              <>
-                {/* THIS COMMENT */}
-                <Box
-                  id={tokenId + `thisComment`}
-                  sx={{ paddingTop: "14px" }}
-                ></Box>
-                <Input
-                  id={tokenId + `addComment`}
-                  placeholder="Add a comment"
-                  onClick={handleClickOpen}
-                />
-              </>
-            )}
-          </Box>
+          {address === myAddress && (
+            <Box mt={1} mb={2} sx={{ color: "text.secondary" }}>
+              {data.comment ? (
+                <Box dangerouslySetInnerHTML={{ __html: data.comment }}></Box>
+              ) : (
+                <>
+                  {/* THIS COMMENT */}
+                  <Box
+                    id={tokenId + `thisComment`}
+                    sx={{ paddingTop: "14px" }}
+                  ></Box>
+                  <Input
+                    id={tokenId + `addComment`}
+                    placeholder="Add a comment"
+                    onClick={handleClickOpen}
+                  />
+                </>
+              )}
+            </Box>
+          )}
 
           {/* Message Dialog */}
           <Dialog open={openDialog} onClose={handleCloseDialog}>

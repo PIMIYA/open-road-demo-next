@@ -24,8 +24,8 @@ import Button from "@mui/material/Button";
 export default function WalletTimelineCard({
   data,
   index,
-  address,
-  myAddress,
+  addressFromURL,
+  myWalletAddress,
 }) {
   // const { contract, tokenId } = data;
   const contract = data.contract.address;
@@ -80,7 +80,7 @@ export default function WalletTimelineCard({
         },
         body: JSON.stringify({
           tokenID: tokenId,
-          walletAddress: myAddress,
+          walletAddress: myWalletAddress,
           message: userMessage,
         }),
       });
@@ -230,15 +230,13 @@ export default function WalletTimelineCard({
           </Box>
           {/* <Tags tags={data.token.metadata.tags} /> */}
           <Chip label={data.metadata.category} size="small" />
-
           {/* COMMENTS */}
-          {address === myAddress && (
+          {addressFromURL === myWalletAddress ? (
             <Box mt={1} mb={2} sx={{ color: "text.secondary" }}>
               {data.comment ? (
                 <Box dangerouslySetInnerHTML={{ __html: data.comment }}></Box>
               ) : (
                 <>
-                  {/* THIS COMMENT */}
                   <Box
                     id={tokenId + `thisComment`}
                     sx={{ paddingTop: "14px" }}
@@ -249,6 +247,12 @@ export default function WalletTimelineCard({
                     onClick={handleClickOpen}
                   />
                 </>
+              )}
+            </Box>
+          ) : (
+            <Box mt={1} mb={2} sx={{ color: "text.secondary" }}>
+              {data.comment && (
+                <Box dangerouslySetInnerHTML={{ __html: data.comment }}></Box>
               )}
             </Box>
           )}

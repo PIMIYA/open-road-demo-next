@@ -1,4 +1,4 @@
-/*** API for Get Comments by Wallet Address ***/
+/*** API for Get Comments by Token ID ***/
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(
@@ -10,9 +10,7 @@ export default async function handler(
 
   async function getData() {
     const data = (
-      await fetch(
-        `${process.env.COMMENT_URL}/get-comments-by-wallet?walletAddress=${body}`
-      )
+      await fetch(`${process.env.COMMENT_URL}/get-comments?tokenID=${body}`)
     ).json();
     return data;
   }

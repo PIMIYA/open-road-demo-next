@@ -221,14 +221,14 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
   useEffect(() => {
     fetch("/api/get-comments", {
       method: "POST",
-      body: address,
+      body: addressFromURL,
     })
       .then((res) => res.json())
       .then((res) => {
         let data = res.data;
         setComments(data);
       });
-  }, [address]);
+  }, [addressFromURL]);
   // console.log("comments", comments);
 
   /* console log filtered data */
@@ -352,8 +352,8 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
                 <WalletTimeline
                   cardData={filteredData}
                   comments={comments}
-                  address={addressFromURL}
-                  myAddress={address}
+                  addressFromURL={addressFromURL}
+                  myWalletAddress={address}
                 />
               </Box>
             </Stack>

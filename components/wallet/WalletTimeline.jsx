@@ -20,10 +20,10 @@ import { getRandomDate, getRandomPlace, getRandomCreator } from "@/lib/dummy";
 export default function WalletTimeline({
   cardData,
   comments,
-  address,
-  myAddress,
+  addressFromURL,
+  myWalletAddress,
 }) {
-  // console.log("myAddress", myAddress);
+  // console.log("comments", comments);
   // console.log("address", address);
   /* combine commets with cardData if tokenId is the same */
   const combinedData = useMemo(() => {
@@ -64,8 +64,8 @@ export default function WalletTimeline({
               <WalletTimelineCard
                 data={card}
                 key={index}
-                address={address}
-                myAddress={myAddress}
+                addressFromURL={addressFromURL}
+                myWalletAddress={myWalletAddress}
               />
             </TimelineContent>
           </TimelineItem>

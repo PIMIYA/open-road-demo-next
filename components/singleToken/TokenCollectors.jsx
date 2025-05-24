@@ -2,26 +2,32 @@ import Link from "next/link";
 import { Avatar, Box, Container, Stack, Typography } from "@mui/material";
 import { truncateAddress } from "@/lib/stringUtils";
 
-export default function TokenCollectors({ owners, ownerAddresses = [], ownerAliases = []}) {
+export default function TokenCollectors({
+  owners,
+  ownerAddresses = [],
+  ownerAliases = [],
+}) {
   return (
     <Container maxWidth="lg">
       <Box py={6} minHeight={300}>
-        <Typography
+        {/* <Typography
           variant='h5'
           component='div'
           mb={4}
           textAlign='center'
         >
           Collectors
-        </Typography>
-        <Box sx={{
-          columnCount: {
-            sm: 2,
-            md: 3,
-            lg: 4,
-          },
-          columnGap: 1,
-        }}>
+        </Typography> */}
+        <Box
+          sx={{
+            columnCount: {
+              sm: 2,
+              md: 3,
+              lg: 4,
+            },
+            columnGap: 1,
+          }}
+        >
           {ownerAddresses.map((address, index) => (
             <Link
               key={index}
@@ -45,16 +51,19 @@ export default function TokenCollectors({ owners, ownerAddresses = [], ownerAlia
                 }}
               >
                 <Avatar>
-                  {(ownerAliases[address] || truncateAddress(address)).slice(0, 2)}
+                  {(ownerAliases[address] || truncateAddress(address)).slice(
+                    0,
+                    2
+                  )}
                 </Avatar>
-                <Box
-                  width="60%"
-                >
-                  <Typography noWrap>{ownerAliases[address] || truncateAddress(address)}</Typography>
+                <Box width="60%">
+                  <Typography noWrap>
+                    {ownerAliases[address] || truncateAddress(address)}
+                  </Typography>
                 </Box>
                 <Box
                   sx={{
-                    opacity: 0.2  ,
+                    opacity: 0.2,
                   }}
                 >
                   {owners[address]}

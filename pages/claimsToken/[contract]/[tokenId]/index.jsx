@@ -1,8 +1,4 @@
-/* NEXT */
-import dynamic from "next/dynamic";
-/* MUI */
-import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
+import { useEffect, useState } from "react";
 /* Fetch data */
 import {
   TZKT_API,
@@ -31,7 +27,7 @@ export default function Id({
   organizers,
   artists,
 }) {
-  // console.log("current active claimable token data", data_from_pool[0].key);
+  // console.log("current active claimable token data", data[0].tokenId);
 
   // TODO: remove dummy data after api ready
   if (data) {
@@ -58,7 +54,22 @@ export default function Id({
     });
   }
 
-  // return <SingleToken data={data} />;
+  /* Client fetch comments */
+  const [comments, setComments] = useState(null);
+  /* API route: Client fetch Comments by Token ID at KairosDrop NFT Comments API */
+  useEffect(() => {
+    fetch("/api/get-comments-byTokenID", {
+      method: "POST",
+      body: data[0].tokenId,
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        let data = res.data;
+        setComments(data);
+      });
+  }, []);
+  // console.log("comments", comments);
+
   return (
     <>
       {data.map((d, index) => {
@@ -69,6 +80,7 @@ export default function Id({
               ownersData={ownersData}
               organizers={organizers}
               artists={artists}
+              comments={comments}
             />
           </div>
         );

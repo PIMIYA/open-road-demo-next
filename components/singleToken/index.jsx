@@ -23,6 +23,9 @@ import { getAkaswapAssetUrl } from "@/lib/stringUtils";
 import { encrypt } from "@/lib/dummy";
 
 import Organizer from "@/components/Organizer";
+import TokenComments from "./TokenComments";
+
+import { useEffect, useMemo, useState } from "react";
 
 /* stack Item setting */
 const Item = styled(Paper)(({ theme }) => ({
@@ -30,7 +33,13 @@ const Item = styled(Paper)(({ theme }) => ({
   boxShadow: "none",
 }));
 
-export default function SingleToken({ ownersData, data, organizers, artists }) {
+export default function SingleToken({
+  ownersData,
+  data,
+  organizers,
+  artists,
+  comments,
+}) {
   const router = useRouter();
   const theme = useTheme();
   const tokenImageUrl = getAkaswapAssetUrl(data.metadata.displayUri);
@@ -48,7 +57,16 @@ export default function SingleToken({ ownersData, data, organizers, artists }) {
   const poolId = data.poolId;
   const duration = data.duration;
   // console.log(mimeType);
-  // console.log(duration);
+  // console.log(ownersData);
+
+  /* Tab: Collectors and Comments */
+  const [value, setValue] = useState(0);
+  const handleCollectors = async () => {
+    setValue(0);
+  };
+  const handleComments = async () => {
+    setValue(1);
+  };
 
   return (
     <>
@@ -174,13 +192,53 @@ export default function SingleToken({ ownersData, data, organizers, artists }) {
           </Box>
         </Container>
       </Box>
-      {ownerAddresses === 0 ? null : (
-        <TokenCollectors
-          owners={ownersData.owners}
-          ownerAddresses={ownerAddresses}
-          ownerAliases={ownersData.ownerAliases}
-        />
-      )}
+
+      <Box sx={{ textAlign: "center", paddingTop: 6 }}>
+        <Button
+          variant={value === 0 ? "contained" : "outlined"}
+          size="small"
+          onClick={handleCollectors}
+          disabled={
+            !ownersData ||
+            ownersData.owners === null ||
+            ownersData.owners.length === 0
+          }
+          sx={{ mr: 1 }}
+        >
+          Collectors
+        </Button>
+
+        <Button
+          variant={value === 1 ? "contained" : "outlined"}
+          size="small"
+          onClick={handleComments}
+          disabled={
+            !comments || comments.data === null || comments.data.length === 0
+          }
+          sx={{ ml: 1 }}
+        >
+          Comments
+        </Button>
+      </Box>
+      <Box sx={{ display: value === 0 ? "block" : "none" }}>
+        {ownerAddresses === 0 ? null : (
+          <TokenCollectors
+            owners={ownersData.owners}
+            ownerAddresses={ownerAddresses}
+            ownerAliases={ownersData.ownerAliases}
+          />
+        )}
+      </Box>
+      <Box sx={{ display: value === 1 ? "block" : "none" }}>
+        {ownerAddresses === 0 ? null : (
+          <TokenComments
+            owners={ownersData.owners}
+            ownerAddresses={ownerAddresses}
+            ownerAliases={ownersData.ownerAliases}
+            comments={comments}
+          />
+        )}
+      </Box>
     </>
   );
 }

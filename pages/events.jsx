@@ -21,7 +21,13 @@ import TwoColumnLayout, {
 import GeneralTokenCardGrid from "@/components/GeneralTokenCardGrid";
 import SidePaper from "@/components/SidePaper";
 
-export default function Events({ claimableData, organizers, artists }) {
+export default function Events({
+  claimableData,
+  organizers,
+  artists,
+  projects,
+}) {
+  // console.log("projects", projects);
   if (claimableData) {
     // if data's category is "座談", change it to "座談會"
     claimableData.forEach((item) => {
@@ -199,6 +205,7 @@ export default function Events({ claimableData, organizers, artists }) {
           data={paginateAppend(filteredData, currentPage, pageSize)}
           organizers={organizers}
           artists={artists}
+          projects={projects}
         />
         {filteredData.length > 0 && (
           <Box
@@ -253,9 +260,10 @@ export async function getStaticProps() {
     })
   );
 
-  const [organizers, artists] = await Promise.all([
+  const [organizers, artists, projects] = await Promise.all([
     await FetchDirectusData(`/organizers`),
     await FetchDirectusData(`/artists`),
+    await FetchDirectusData(`/projects`),
   ]);
 
   return {
@@ -263,6 +271,7 @@ export async function getStaticProps() {
       claimableData: claimableData,
       organizers: organizers,
       artists: artists,
+      projects: projects,
     },
     revalidate: 10, // In seconds
   };

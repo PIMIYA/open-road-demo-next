@@ -50,7 +50,7 @@ const features = [
   },
 ];
 
-export default function Home({ claimableData, organizers, artists }) {
+export default function Home({ claimableData, organizers, artists, projects }) {
   const { isLanded } = useGlobalContext();
   const theme = useTheme();
 
@@ -130,6 +130,7 @@ export default function Home({ claimableData, organizers, artists }) {
             data={claimableData}
             organizers={organizers}
             artists={artists}
+            projects={projects}
           />
 
           <Box textAlign="center" mt={10}>
@@ -182,9 +183,10 @@ export async function getStaticProps() {
     })
   );
 
-  const [organizers, artists] = await Promise.all([
+  const [organizers, artists, projects] = await Promise.all([
     await FetchDirectusData(`/organizers`),
     await FetchDirectusData(`/artists`),
+    await FetchDirectusData(`/projects`),
   ]);
 
   return {
@@ -192,6 +194,7 @@ export async function getStaticProps() {
       claimableData: claimableData,
       organizers: organizers,
       artists: artists,
+      projects: projects,
     },
     revalidate: 10, // In seconds
   };

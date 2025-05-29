@@ -70,8 +70,20 @@ export default function GeneralTokenCardGrid(props) {
 
   const organizers = props.organizers;
   const artists = props.artists;
-  // console.log("organizers", organizers.data[1].address);
-  // console.log("organizers", organizers.data);
+  const projects = props.projects;
+
+  /* Add project name to each item if event_location matches a project's location */
+  if (data && projects) {
+    data.forEach((item) => {
+      const project = projects.data.find(
+        (p) => p.location === item.metadata.event_location
+      );
+      if (project) {
+        item.project = project.name;
+        item.projectId = project.id;
+      }
+    });
+  }
 
   return (
     <>
@@ -102,6 +114,8 @@ export default function GeneralTokenCardGrid(props) {
                 end_time,
                 metadata,
                 poolID,
+                project,
+                projectId,
               },
               index
             ) => (
@@ -144,6 +158,7 @@ export default function GeneralTokenCardGrid(props) {
                       />
                     </Box>
                   </Link>
+
                   <Box id="primary-info" mb={1}>
                     <Stack direction="row" spacing={1}>
                       <Typography
@@ -164,12 +179,18 @@ export default function GeneralTokenCardGrid(props) {
                         }}
                       />
                     </Stack>
+                    <Box>
+                      <Link href="/project/[id]" as={`/project/${projectId}`}>
+                        {project}
+                      </Link>
+                    </Box>
                     <Organizer
                       organizer={metadata.organizer}
                       artists={artists ? artists : null}
                       organizers={organizers ? organizers : null}
                     />
                   </Box>
+
                   <Box id="secondary-info" mb={2}>
                     <Typography variant="body2">
                       {metadata.start_time
@@ -186,27 +207,6 @@ export default function GeneralTokenCardGrid(props) {
                     <Tags tags={metadata.tags} />
                   </Stack>
                 </Box>
-                {/* add poolID for claim page and event time from akadrop  */}
-                {/* <Box
-                  sx={{
-                    position: "relative",
-                    top: 16,
-                    right: 16,
-                    backgroundColor: "rgba(0, 0, 0, 0.7)",
-                    color: "#fff",
-                    padding: "4px 8px",
-                    borderRadius: "4px",
-                  }}
-                >
-                  {poolID !== null ? (
-                    <>
-                      Pool ID: {poolID} <br />
-                    </>
-                  ) : (
-                    "Expired or not able to claim"
-                  )}
-                </Box> */}
-                {/*  */}
               </Grid>
             )
           )}

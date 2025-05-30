@@ -76,7 +76,9 @@ export default function GeneralTokenCardGrid(props) {
   if (data && projects) {
     data.forEach((item) => {
       const project = projects.data.find(
-        (p) => p.location === item.metadata.event_location
+        (p) =>
+          p.location === item.metadata.event_location &&
+          p.status === "published"
       );
       if (project) {
         item.project = project.name;

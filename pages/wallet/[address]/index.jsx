@@ -198,7 +198,7 @@ export default function Wallet({
               item.metadata.tags = ["科學"];
             }
           });
-          // add projectName to data"
+          // add projectName to data
           if (data && projects) {
             data.forEach((item) => {
               const matchingProject = projects.data.find(

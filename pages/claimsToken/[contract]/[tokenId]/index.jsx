@@ -26,6 +26,7 @@ export default function Id({
   data_from_pool,
   organizers,
   artists,
+  projects,
 }) {
   // console.log("current active claimable token data", data[0].tokenId);
 
@@ -51,6 +52,24 @@ export default function Id({
       }
 
       return d;
+    });
+  }
+  /* add projectName to data */
+  if (data && projects) {
+    data.forEach((item) => {
+      const matchingProject = projects.data.find(
+        (project) =>
+          project.status === "published" &&
+          project.location === item.metadata.event_location &&
+          project.start_time &&
+          new Date(
+            new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000
+          ).toUTCString() === item.metadata.start_time
+      );
+      if (matchingProject) {
+        item.metadata.projectName = matchingProject.name;
+        item.metadata.projectId = matchingProject.id;
+      }
     });
   }
 
@@ -91,7 +110,7 @@ export default function Id({
 
 export async function getServerSideProps(params) {
   //   console.log(params.params.id);
-  const [ownersData, data, data_from_pool, organizers, artists] =
+  const [ownersData, data, data_from_pool, organizers, artists, projects] =
     await Promise.all([
       await MainnetAPI(
         `/fa2tokens/${params.params.contract}/${params.params.tokenId}`
@@ -106,9 +125,10 @@ export async function getServerSideProps(params) {
       ),
       await FetchDirectusData(`/organizers`),
       await FetchDirectusData(`/artists`),
+      await FetchDirectusData(`/projects`),
     ]);
 
   return {
-    props: { ownersData, data, data_from_pool, organizers, artists },
+    props: { ownersData, data, data_from_pool, organizers, artists, projects },
   };
 }

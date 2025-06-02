@@ -142,6 +142,14 @@ export default function SingleToken({
                     <Typography variant="h4" component="h1">
                       {data.metadata.name}
                     </Typography>
+                    <Typography variant="h6" component="div" mb={2} mt={1}>
+                      <Link
+                        href="/project/[id]"
+                        as={`/project/${data.metadata.projectId}`}
+                      >
+                        {data.metadata.projectName}
+                      </Link>
+                    </Typography>
 
                     <Typography variant="h6" component="div" mb={2}>
                       <Organizer

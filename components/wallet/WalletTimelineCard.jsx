@@ -21,11 +21,15 @@ import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 
+import Organizer from "@/components/Organizer";
+
 export default function WalletTimelineCard({
   data,
   index,
   addressFromURL,
   myWalletAddress,
+  organizers,
+  artists,
 }) {
   // const { contract, tokenId } = data;
   const contract = data.contract.address;
@@ -226,7 +230,20 @@ export default function WalletTimelineCard({
                 {data.metadata.name}
               </Link>
             </Typography>
-            <Typography variant="body1">{data.metadata.organizer}</Typography>
+            <Box>
+              <Link
+                href="/project/[id]"
+                as={`/project/${data.metadata.projectId}`}
+              >
+                {data.metadata.projectName}
+              </Link>
+            </Box>
+            <Organizer
+              organizer={data.metadata.organizer}
+              artists={artists ? artists : null}
+              organizers={organizers ? organizers : null}
+            />
+            {/* <Typography variant="body1">{data.metadata.organizer}</Typography> */}
           </Box>
           {/* <Tags tags={data.token.metadata.tags} /> */}
           <Chip label={data.metadata.category} size="small" />

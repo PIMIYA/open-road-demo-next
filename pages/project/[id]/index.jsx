@@ -6,16 +6,16 @@ import GeneralTokenCardGrid from "@/components/GeneralTokenCardGrid";
 import { TZKT_API, GetClaimablePoolID, FetchDirectusData } from "@/lib/api";
 
 export default function Project({ project, organizers, artists, tokens }) {
-  /* Format project.start_time and project.end_time */
+  // format project.start_time to GMT timezone, and subtract 8 hours
   const formattedStartTime = project.start_time
-    ? new Date(project.start_time)
-        .toUTCString()
-        .replace(/00:00:00 GMT/, "16:00:00 GMT")
+    ? new Date(
+        new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000
+      ).toUTCString()
     : "";
   const formattedEndTime = project.end_time
-    ? new Date(project.end_time)
-        .toUTCString()
-        .replace(/00:00:00 GMT/, "16:00:00 GMT")
+    ? new Date(
+        new Date(project.end_time).getTime() - 8 * 60 * 60 * 1000
+      ).toUTCString()
     : "";
 
   /* Mapping tags to new value */
@@ -103,10 +103,10 @@ export async function getStaticProps({ params }) {
     .map((item) => item.token.tokenId)
     .join(",");
 
-  // formate project.data.start_time to Fri, 31 May 2024 16:00:00 GMT
-  const formattedDate = new Date(project.data.start_time)
-    .toUTCString()
-    .replace(/00:00:00 GMT/, "16:00:00 GMT");
+  // formate project.data.start_time to GMT timezone, and subtract 8 hours
+  const formattedDate = new Date(
+    new Date(project.data.start_time).getTime() - 8 * 60 * 60 * 1000
+  ).toUTCString();
 
   const data = await TZKT_API(
     `/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.ni=${burned_tokenIds}&sort.desc=tokenId&metadata.event_location=${project.data.location}&metadata.start_time=${formattedDate}` // Filter by event location and formatted start_time

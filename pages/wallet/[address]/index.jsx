@@ -14,8 +14,7 @@ import {
   Tab,
 } from "@mui/material";
 /* Fetch data */
-import { WalletRoleAPI } from "@/lib/api";
-import { AkaDropAPI } from "@/lib/api";
+import { WalletRoleAPI, AkaDropAPI, FetchDirectusData } from "@/lib/api";
 /* Sub Components */
 import TwoColumnLayout, {
   Side,
@@ -34,7 +33,15 @@ import Filter from "@/components/Filter";
 
 import { useRouter } from "next/router";
 
-export default function Wallet({ role, pools, claims, addressFromURL }) {
+export default function Wallet({
+  role,
+  pools,
+  claims,
+  addressFromURL,
+  projects,
+  organizers,
+  artists,
+}) {
   const router = useRouter();
   /* Connected wallet */
   const { address, connect, disconnect } = useConnection();
@@ -99,6 +106,48 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
           data.sort((a, b) => {
             return new Date(b.metadata.date) - new Date(a.metadata.date);
           });
+          // if data's category is "座談", change it to "座談會"
+          data.forEach((item) => {
+            if (item.metadata.category === "座談") {
+              item.metadata.category = "研討會 / 論壇 / 座談";
+            }
+          });
+          // if data's tags, each include "視覺", then combine and change it to one "視覺藝術"
+          data.forEach((item) => {
+            if (item.metadata.tags.some((tag) => tag.includes("視覺"))) {
+              item.metadata.tags = ["視覺藝術"];
+            } else if (item.metadata.tags.some((tag) => tag.includes("舞蹈"))) {
+              item.metadata.tags = ["舞蹈"];
+            } else if (item.metadata.tags.some((tag) => tag.includes("音樂"))) {
+              item.metadata.tags = ["音樂"];
+            } else if (item.metadata.tags.some((tag) => tag.includes("設計"))) {
+              item.metadata.tags = ["設計"];
+            } else if (item.metadata.tags.some((tag) => tag.includes("科技"))) {
+              item.metadata.tags = ["元宇宙"];
+            } else if (item.metadata.tags.some((tag) => tag.includes("書籍"))) {
+              item.metadata.tags = ["出版"];
+            } else if (item.metadata.tags.some((tag) => tag.includes("科學"))) {
+              item.metadata.tags = ["科學"];
+            }
+          });
+          // add projectName to data"
+          if (data && projects) {
+            data.forEach((item) => {
+              const matchingProject = projects.data.find(
+                (project) =>
+                  project.status === "published" &&
+                  project.location === item.metadata.event_location &&
+                  project.start_time &&
+                  new Date(
+                    new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000
+                  ).toUTCString() === item.metadata.start_time
+              );
+              if (matchingProject) {
+                item.metadata.projectName = matchingProject.name;
+                item.metadata.projectId = matchingProject.id;
+              }
+            });
+          }
         }
         setClaimData(data);
       });
@@ -125,6 +174,48 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
           data.sort((a, b) => {
             return new Date(b.metadata.date) - new Date(a.metadata.date);
           });
+          // if data's category is "座談", change it to "座談會"
+          data.forEach((item) => {
+            if (item.metadata.category === "座談") {
+              item.metadata.category = "研討會 / 論壇 / 座談";
+            }
+          });
+          // if data's tags, each include "視覺", then combine and change it to one "視覺藝術"
+          data.forEach((item) => {
+            if (item.metadata.tags.some((tag) => tag.includes("視覺"))) {
+              item.metadata.tags = ["視覺藝術"];
+            } else if (item.metadata.tags.some((tag) => tag.includes("舞蹈"))) {
+              item.metadata.tags = ["舞蹈"];
+            } else if (item.metadata.tags.some((tag) => tag.includes("音樂"))) {
+              item.metadata.tags = ["音樂"];
+            } else if (item.metadata.tags.some((tag) => tag.includes("設計"))) {
+              item.metadata.tags = ["設計"];
+            } else if (item.metadata.tags.some((tag) => tag.includes("科技"))) {
+              item.metadata.tags = ["元宇宙"];
+            } else if (item.metadata.tags.some((tag) => tag.includes("書籍"))) {
+              item.metadata.tags = ["出版"];
+            } else if (item.metadata.tags.some((tag) => tag.includes("科學"))) {
+              item.metadata.tags = ["科學"];
+            }
+          });
+          // add projectName to data"
+          if (data && projects) {
+            data.forEach((item) => {
+              const matchingProject = projects.data.find(
+                (project) =>
+                  project.status === "published" &&
+                  project.location === item.metadata.event_location &&
+                  project.start_time &&
+                  new Date(
+                    new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000
+                  ).toUTCString() === item.metadata.start_time
+              );
+              if (matchingProject) {
+                item.metadata.projectName = matchingProject.name;
+                item.metadata.projectId = matchingProject.id;
+              }
+            });
+          }
         }
         setCreatedData(data);
       });
@@ -354,6 +445,8 @@ export default function Wallet({ role, pools, claims, addressFromURL }) {
                   comments={comments}
                   addressFromURL={addressFromURL}
                   myWalletAddress={address}
+                  organizers={organizers}
+                  artists={artists}
                 />
               </Box>
             </Stack>
@@ -392,11 +485,15 @@ export async function getStaticProps({ params }) {
   }
 
   /* Fetch data */
-  const [role, pools, claims] = await Promise.all([
-    await WalletRoleAPI(`/${addressFromURL}`),
-    await AkaDropAPI(`/${addressFromURL}/pools?offset=0&limit=0`),
-    await AkaDropAPI(`/${addressFromURL}/claims?offset=0&limit=0`),
-  ]);
+  const [role, pools, claims, projects, organizers, artists] =
+    await Promise.all([
+      await WalletRoleAPI(`/${addressFromURL}`),
+      await AkaDropAPI(`/${addressFromURL}/pools?offset=0&limit=0`),
+      await AkaDropAPI(`/${addressFromURL}/claims?offset=0&limit=0`),
+      await FetchDirectusData(`/projects`),
+      await FetchDirectusData(`/organizers`),
+      await FetchDirectusData(`/artists`),
+    ]);
 
   return {
     props: {
@@ -404,6 +501,9 @@ export async function getStaticProps({ params }) {
       pools: pools,
       claims: claims,
       addressFromURL: addressFromURL,
+      projects: projects,
+      organizers: organizers,
+      artists: artists,
     },
     revalidate: 10,
   };

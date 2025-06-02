@@ -63,29 +63,11 @@ export default function GeneralTokenCardGrid(props) {
           ? getAkaswapAssetUrl(item.thumbnailUri)
           : "https://via.placeholder.com/400";
       }
-      // console.log(item.contract.address);
-      // item.start_time = item.start_time ? new Date(item.start_time) : "";
     });
   }
 
   const organizers = props.organizers;
   const artists = props.artists;
-  const projects = props.projects;
-
-  /* Add project name to each item if event_location matches a project's location */
-  if (data && projects) {
-    data.forEach((item) => {
-      const project = projects.data.find(
-        (p) =>
-          p.location === item.metadata.event_location &&
-          p.status === "published"
-      );
-      if (project) {
-        item.project = project.name;
-        item.projectId = project.id;
-      }
-    });
-  }
 
   return (
     <>
@@ -116,8 +98,6 @@ export default function GeneralTokenCardGrid(props) {
                 end_time,
                 metadata,
                 poolID,
-                project,
-                projectId,
               },
               index
             ) => (
@@ -182,10 +162,14 @@ export default function GeneralTokenCardGrid(props) {
                       />
                     </Stack>
                     <Box>
-                      <Link href="/project/[id]" as={`/project/${projectId}`}>
-                        {project}
+                      <Link
+                        href="/project/[id]"
+                        as={`/project/${metadata.projectId}`}
+                      >
+                        {metadata.projectName}
                       </Link>
                     </Box>
+
                     <Organizer
                       organizer={metadata.organizer}
                       artists={artists ? artists : null}

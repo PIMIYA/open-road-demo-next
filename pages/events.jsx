@@ -54,6 +54,28 @@ export default function Events({
       }
     });
   }
+  /* add projects.data.name to each claimableData item if the event_location and start_time matches a project's location and start_time
+   and the project's status is "published"
+   and the project's start_time is in GMT timezone, subtract 8 hours */
+  if (claimableData && projects) {
+    claimableData.forEach((item) => {
+      const matchingProject = projects.data.find(
+        (project) =>
+          project.status === "published" &&
+          project.location === item.metadata.event_location &&
+          project.start_time &&
+          new Date(
+            new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000
+          ).toUTCString() === item.metadata.start_time
+      );
+      if (matchingProject) {
+        item.metadata.projectName = matchingProject.name;
+        item.metadata.projectId = matchingProject.id;
+      }
+    });
+  }
+
+  // console.log("claimableData", claimableData);
 
   // get all categories from data
   const categories = [
@@ -65,8 +87,14 @@ export default function Events({
     .flat()
     .filter((item, index, self) => self.indexOf(item) === index);
 
+  // get all project names from data
+  const projectNames = [
+    ...new Set(claimableData.map((item) => item.metadata.projectName)),
+  ];
+
   const [catValue, setCatValue] = useState("");
   const [tagValue, setTagValue] = useState("");
+  const [projectValue, setProjectValue] = useState("");
   const [filteredData, setFilteredData] = useState(claimableData);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -83,7 +111,10 @@ export default function Events({
     const filterdByCat = claimableData.filter(
       (c) =>
         (!catValue || c.metadata.category.includes(catValue)) &&
-        (!tagValue || c.metadata.tags.some((tag) => tag.includes(tagValue)))
+        (!tagValue || c.metadata.tags.some((tag) => tag.includes(tagValue))) &&
+        (!projectValue ||
+          (c.metadata.projectName &&
+            c.metadata.projectName.includes(projectValue)))
     );
     changePage(1);
     setFilteredData(filterdByCat);
@@ -100,6 +131,7 @@ export default function Events({
   const router = useRouter();
   const catState = router.query.cat ? router.query.cat : "";
   const tagState = router.query.tag ? router.query.tag : "";
+  const projectState = router.query.project ? router.query.project : "";
 
   // Custom hook to conditionally use useLayoutEffect on the client side
   const useIsomorphicLayoutEffect =
@@ -109,15 +141,19 @@ export default function Events({
     if (catState || tagState) {
       setCatValue(catState);
       setTagValue(tagState);
+      setProjectValue(projectState);
       const filterdByCat = claimableData.filter(
         (c) =>
           (!catState || c.metadata.category.includes(catState)) &&
-          (!tagState || c.metadata.tags.some((tag) => tag.includes(tagState)))
+          (!tagState ||
+            c.metadata.tags.some((tag) => tag.includes(tagState))) &&
+          (!projectValue || c.metadata.projectName.includes(projectValue))
       );
       setFilteredData(filterdByCat);
     } else {
       setCatValue("");
       setTagValue("");
+      setProjectValue("");
       setFilteredData(claimableData);
     }
   }, [catState, tagState, claimableData]);
@@ -160,7 +196,7 @@ export default function Events({
               <Autocomplete
                 id="category"
                 options={categories}
-                getOptionLabel={(option) => option}
+                getOptionLabel={(option) => (option ? option : "")}
                 isOptionEqualToValue={(option, value) => option === value}
                 value={categories.find((cat) => cat === catValue) || null}
                 onChange={(event, newValue) => {
@@ -175,7 +211,7 @@ export default function Events({
               <Autocomplete
                 id="tag"
                 options={tags}
-                getOptionLabel={(option) => option}
+                getOptionLabel={(option) => (option ? option : "")}
                 value={tags.find((tag) => tag === tagValue) || null}
                 isOptionEqualToValue={(option, value) => option === value}
                 onChange={(event, newValue) => {
@@ -183,6 +219,25 @@ export default function Events({
                 }}
                 renderInput={(params) => (
                   <TextField {...params} label="Tag" variant="standard" />
+                )}
+              />
+            </Box>
+            <Box>
+              <Autocomplete
+                id="project"
+                options={projectNames}
+                getOptionLabel={(option) => (option ? option : "")}
+                value={
+                  projectNames.find(
+                    (projectName) => projectName === projectValue
+                  ) || null
+                }
+                isOptionEqualToValue={(option, value) => option === value}
+                onChange={(_, newValue) => {
+                  setProjectValue(newValue ? newValue : "");
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} label="Project" variant="standard" />
                 )}
               />
             </Box>

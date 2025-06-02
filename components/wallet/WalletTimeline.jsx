@@ -22,17 +22,18 @@ export default function WalletTimeline({
   comments,
   addressFromURL,
   myWalletAddress,
+  organizers,
+  artists,
 }) {
-  // console.log("comments", comments);
-  // console.log("address", address);
   /* combine commets with cardData if tokenId is the same */
   const combinedData = useMemo(() => {
     if (!cardData || !comments || !comments.data) return cardData;
 
-    const combined = cardData.map((card) => {
+    const combined = cardData.map((card, index) => {
       const comment = comments.data.find(
         (comment) => comment.tokenID === card.tokenId
       );
+
       return {
         ...card,
         comment: comment ? comment.message : null,
@@ -66,6 +67,8 @@ export default function WalletTimeline({
                 key={index}
                 addressFromURL={addressFromURL}
                 myWalletAddress={myWalletAddress}
+                organizers={organizers}
+                artists={artists}
               />
             </TimelineContent>
           </TimelineItem>

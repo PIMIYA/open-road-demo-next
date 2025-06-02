@@ -82,6 +82,28 @@ export default function Home({ claimableData, organizers, artists, projects }) {
       }
     });
   }
+  /* add projects.data.name to each claimableData item if the event_location and start_time matches a project's location and start_time
+   and the project's status is "published"
+   and the project's start_time is in GMT timezone, subtract 8 hours */
+  if (claimableData && projects) {
+    claimableData.forEach((item) => {
+      const matchingProject = projects.data.find(
+        (project) =>
+          project.status === "published" &&
+          project.location === item.metadata.event_location &&
+          project.start_time &&
+          new Date(
+            new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000
+          ).toUTCString() === item.metadata.start_time
+      );
+      if (matchingProject) {
+        item.metadata.projectName = matchingProject.name;
+        item.metadata.projectId = matchingProject.id;
+      } else {
+        item.metadata.projectName = "Unknown Project";
+      }
+    });
+  }
 
   return (
     <>

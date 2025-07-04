@@ -1,5 +1,7 @@
-// claim token lists by this wallet address.
-// redirect from akadrop claim page.
+/*** Listing tokens in user's wallet, including claimed and created ***/
+/*** Redirect from akadrop claim page ***/
+
+/* React */
 import { useEffect, useMemo, useState } from "react";
 /* Providers */
 import { useConnection } from "@/packages/providers";
@@ -29,7 +31,6 @@ import WalletProfile from "@/components/wallet/WalletProfile";
 import WalletTimeline from "@/components/wallet/WalletTimeline";
 import WalletCanvas from "@/components/wallet/WalletCanvas";
 import SidePaper from "@/components/SidePaper";
-import Filter from "@/components/Filter";
 
 import { useRouter } from "next/router";
 

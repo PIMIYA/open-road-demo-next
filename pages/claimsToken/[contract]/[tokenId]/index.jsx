@@ -1,3 +1,5 @@
+/*** Data, collectors and comments of a single token ***/
+
 import { useEffect, useState } from "react";
 /* Fetch data */
 import {

@@ -1,14 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // swcMinify: true,
-  // typescript: {
-  //   // !! WARN !!
-  //   // Dangerously allow production builds to successfully complete even if
-  //   // your project has type errors.
-  //   // !! WARN !!
-  //   ignoreBuildErrors: true,
-  // },
 
   webpack: (config, { isServer }) => {
     if (!isServer) {
@@ -47,20 +39,6 @@ const nextConfig = {
     DIRECTUS: process.env.DIRECTUS,
     COMMENT_URL: process.env.COMMENT_URL,
   },
-
-  // async headers() {
-  //   return [
-  //     {
-  //       source: "/_next/:path*",
-  //       headers: [
-  //         {
-  //           key: "Access-Control-Allow-Origin",
-  //           value: "http://localhost:3000",
-  //         },
-  //       ],
-  //     },
-  //   ];
-  // },
 
 }
 module.exports = nextConfig

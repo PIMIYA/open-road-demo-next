@@ -1,19 +1,17 @@
-import "@/styles/global.css";
+/* Next */
 import type { AppProps } from "next/app";
 import Head from "next/head";
-import NavBar from "@/components/navBar";
-
-import { useEffect } from "react";
-
 /* Providers */
 import { ConnectionProvider } from "@/packages/providers";
 import { GlobalProvider } from "@/contexts/GlobalContext";
-
 /* MUI */
 import { Box, CssBaseline, ThemeProvider } from "@mui/material";
-
+/* Styles */
+import "@/styles/global.css";
 import theme from "@/styles/theme";
+/* Components */
 import { Footer } from "@/components/footer";
+import NavBar from "@/components/navBar";
 
 export default function App({ Component, pageProps }: AppProps) {
   let isMinimal = false;

@@ -1,9 +1,8 @@
-//2025 1/24 comment for testing CI/CD
-// React
+/* React */
 import { useState, useEffect, useRef, useMemo } from "react";
-// Next
+/* Next */
 import { useRouter } from "next/router";
-// MUI
+/* MUI */
 import {
   Box,
   TextField,
@@ -20,7 +19,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-// MUI Icons
+/* MUI Icons */
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 // MUI + Google Maps Places Autocomplete

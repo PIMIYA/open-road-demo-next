@@ -27,7 +27,7 @@ import logo from "/public/logo.svg";
 // TODO: only creator role have 'Mint' and 'My Creator Page' in the menu
 // TODO: remove 'My Wallet (temp)' after wallet page ready
 
-export default function () {
+export default function NavBar() {
   const { isLanded } = useGlobalContext();
   const [anchorEl, setAnchorEl] = useState(null);
   const { address, connect, disconnect } = useConnection();
@@ -66,49 +66,6 @@ export default function () {
     router.push("/");
   };
 
-  const connectBtn = (
-    <Button
-      variant="contained"
-      color="secondary"
-      startIcon={<LoginIcon />}
-      onClick={connect}
-    >
-      connect
-    </Button>
-  );
-
-  const NavLink = function (props) {
-    const borderWidth = router.pathname === props.href ? "2px" : "1px";
-
-    return (
-      <Box
-        sx={{
-          display: {
-            xs: "none",
-            sm: "block",
-          },
-        }}
-      >
-        <Link href={props.href} passHref>
-          <Button
-            variant="contained"
-            sx={{
-              bgcolor: "white",
-              color: "secondary.main",
-              boxShadow: `inset 0 0 0 ${borderWidth} ${theme.palette.secondary.main}`,
-              "&:hover": {
-                bgcolor: "secondary.main",
-                color: "white",
-              },
-            }}
-          >
-            {props.label}
-          </Button>
-        </Link>
-      </Box>
-    );
-  };
-
   const open = Boolean(anchorEl);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -121,7 +78,29 @@ export default function () {
     }
   };
 
-  const connectedMenu = (
+  // Common menu items for both logged in and logged out states
+  const commonMenuItems = (
+    <>
+      <MenuItem onClick={handleClose}>
+        <Link href="/">Home</Link>
+      </MenuItem>
+      <MenuItem onClick={handleClose}>
+        <Link href="/events">Events</Link>
+      </MenuItem>
+      <MenuItem onClick={handleClose}>
+        <Link href="/faq">FAQ</Link>
+      </MenuItem>
+      <MenuItem onClick={handleClose}>
+        <Link href="/privacy_policy">Privacy Policy</Link>
+      </MenuItem>
+      <MenuItem onClick={handleClose}>
+        <Link href="/terms_of_service">Terms of Service</Link>
+      </MenuItem>
+    </>
+  );
+
+  // Menu component that always shows MenuIcon
+  const menuComponent = (
     <div>
       <IconButton
         id="basic-button"
@@ -157,90 +136,57 @@ export default function () {
           },
         }}
       >
-        <Box
-          sx={{
-            display: {
-              xs: "block",
-              sm: "none",
-            },
-          }}
-        >
-          <MenuItem onClick={handleClose}>
-            <Link href="/events">所有活動</Link>
-          </MenuItem>
-          {/* <MenuItem onClick={handleClose}>
-            <Link href="/creators">所有創作者</Link>
-          </MenuItem> */}
-          <Divider />
-        </Box>
-        <MenuItem onClick={handleClose}>
-          <Link
-            href={{
-              pathname: `/wallet/${address}`,
-            }}
-          >
-            My Wallet
-          </Link>
-        </MenuItem>
-        {roleData && roleData.data && roleData.data.length === 0 ? null : (
-          <Divider />
+        {commonMenuItems}
+
+        {address && (
+          <>
+            <Divider />
+            <MenuItem onClick={handleClose}>
+              <Link
+                href={{
+                  pathname: `/wallet/${address}`,
+                }}
+              >
+                My Wallet
+              </Link>
+            </MenuItem>
+            {roleData && roleData.data && roleData.data.length === 0 ? null : (
+              <Divider />
+            )}
+            <MenuItem
+              onClick={handleClose}
+              sx={{
+                display: `${
+                  roleData && roleData.data && roleData.data.length === 0
+                    ? "none"
+                    : "block"
+                }`,
+              }}
+            >
+              {roleData &&
+              roleData.data &&
+              roleData.data.length === 0 ? null : (
+                <>
+                  <Link
+                    href={{
+                      pathname: "/mint",
+                    }}
+                    as="/mint"
+                  >
+                    Mint
+                  </Link>
+                </>
+              )}
+            </MenuItem>
+            <Divider />
+            <MenuItem onClick={() => handleClose(disconnect)}>
+              <ListItemIcon>
+                <LogoutIcon fontSize="small" />
+              </ListItemIcon>
+              Disconnect
+            </MenuItem>
+          </>
         )}
-
-        {/* <MenuItem
-          onClick={handleClose}
-          sx={{
-            display: `${
-              roleData && roleData.data && roleData.data.length === 0
-                ? "none"
-                : "block"
-            }`,
-          }}
-        >
-          {roleData && roleData.data && roleData.data.length === 0 ? null : (
-            <>
-              <Link
-                href={{
-                  pathname: "/creator/[address]",
-                  query: { address },
-                }}
-              >
-                My Creator Page
-              </Link>
-            </>
-          )}
-        </MenuItem> */}
-
-        <MenuItem
-          onClick={handleClose}
-          sx={{
-            display: `${
-              roleData && roleData.data && roleData.data.length === 0
-                ? "none"
-                : "block"
-            }`,
-          }}
-        >
-          {roleData && roleData.data && roleData.data.length === 0 ? null : (
-            <>
-              <Link
-                href={{
-                  pathname: "/mint",
-                }}
-                as="/mint"
-              >
-                Mint
-              </Link>
-            </>
-          )}
-        </MenuItem>
-        <Divider />
-
-        <MenuItem onClick={() => handleClose(disconnect)}>
-          <ListItemIcon>
-            <LogoutIcon fontSize="small" />
-          </ListItemIcon>
-          Disconnect
-        </MenuItem>
       </Menu>
     </div>
   );
@@ -293,15 +239,23 @@ export default function () {
           />
         </Box>
         <Box>
-          <Stack direction="row" alignItems="center" spacing={4}>
-            {/* <NavLink label="所有活動" href="/events" /> */}
-            {/* <NavLink label="所有創作者" href="/creators" /> */}
-            {/* {address ? connectedMenu : connectBtn} */}
-            {router.pathname !== "/claim" && (
-              <NavLink label="所有活動" href="/events" />
+          <Stack direction="row" alignItems="center" spacing={2}>
+            {/* Connect Wallet Button - 只在未登入時顯示 */}
+            {router.pathname !== "/claim" && !address && (
+              <Button
+                variant="contained"
+                color="secondary"
+                startIcon={<LoginIcon />}
+                onClick={connect}
+                sx={{
+                  minWidth: "auto",
+                  px: 2,
+                }}
+              >
+                Connect
+              </Button>
             )}
-            {router.pathname !== "/claim" &&
-              (address ? connectedMenu : connectBtn)}
+            {router.pathname !== "/claim" && menuComponent}
           </Stack>
         </Box>
       </Stack>

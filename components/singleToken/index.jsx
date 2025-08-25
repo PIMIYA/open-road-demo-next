@@ -19,7 +19,7 @@ import TokenCollectors from "./TokenCollectors";
 import TokenClaimedProgress from "./TokenClaimedProgress";
 import RenderMedia from "@/components/render-media";
 
-import { getAkaswapAssetUrl } from "@/lib/stringUtils";
+import { formatDateRange, getAkaswapAssetUrl } from "@/lib/stringUtils";
 import { encrypt } from "@/lib/dummy";
 
 import Organizer from "@/components/Organizer";
@@ -43,9 +43,9 @@ export default function SingleToken({
   const router = useRouter();
   const theme = useTheme();
   const tokenImageUrl = getAkaswapAssetUrl(data.metadata.displayUri);
-  const total = ownersData.amount;
-  const collected = ownersData ? Object.keys(ownersData.owners).length - 2 : 0;
-  const ownerAddresses = ownersData ? Object.keys(ownersData.owners) : 0;
+  const total = ownersData?.amount;
+  const collected = ownersData ? Object.keys(ownersData?.owners).length - 2 : 0;
+  const ownerAddresses = ownersData ? Object.keys(ownersData?.owners) : 0;
 
   const url = `${router.query.contract}/${router.query.tokenId}`;
   const hash = encrypt(url);
@@ -144,8 +144,8 @@ export default function SingleToken({
                     </Typography>
                     <Typography variant="h6" component="div" mb={2} mt={1}>
                       <Link
-                        href="/project/[id]"
-                        as={`/project/${data.metadata.projectId}`}
+                        href="/events/[id]"
+                        as={`/events/${data.metadata.projectId}`}
                       >
                         {data.metadata.projectName}
                       </Link>
@@ -160,10 +160,11 @@ export default function SingleToken({
                     </Typography>
 
                     <Typography variant="body2">
-                      {data.start_time
-                        ? new Date(data.start_time).toLocaleDateString() +
-                          " - " +
-                          new Date(data.end_time).toLocaleDateString()
+                      {data.metadata.start_time
+                        ? formatDateRange(
+                            data.metadata.start_time,
+                            data.metadata.end_time
+                          )
                         : eventDate}
                     </Typography>
                     <Typography mb={2}>{data.eventPlace}</Typography>

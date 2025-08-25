@@ -9,7 +9,7 @@ import {
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { useTheme } from "@emotion/react";
 /* MUI */
-import { Box, Button, Container } from "@mui/material";
+import { Box, Button, Container, Typography } from "@mui/material";
 /* Components */
 import KeyVisual from "@/components/homepage/keyVisual";
 import FeatureBox from "@/components/homepage/featureBox";
@@ -50,10 +50,43 @@ const features = [
   },
 ];
 
-export default function Home({ claimableData, organizers, artists, projects }) {
+export default function Home({ claimableData, organizers, artists, events }) {
   const { isLanded } = useGlobalContext();
   const theme = useTheme();
 
+  // Helper function to determine event status
+  const getEventStatus = (event) => {
+    const now = new Date();
+    const startTime = new Date(event.start_time);
+    const endTime = new Date(event.end_time);
+
+    if (now < startTime) {
+      return "upcoming";
+    } else if (now >= startTime && now <= endTime) {
+      return "current";
+    } else {
+      return "past";
+    }
+  };
+
+  // Helper function to get tokens for a specific event
+  const getTokensForEvent = (event) => {
+    if (!claimableData) return [];
+
+    const formattedEventStartTime = new Date(
+      new Date(event.start_time).getTime() - 8 * 60 * 60 * 1000
+    ).toUTCString();
+
+    return claimableData
+      .filter(
+        (item) =>
+          item.metadata.event_location === event.location &&
+          item.metadata.start_time === formattedEventStartTime
+      )
+      .slice(0, 3); // Only show 3 NFTs per event
+  };
+
+  // Process claimableData as before
   if (claimableData) {
     // sort data by tokenId
     claimableData.sort((a, b) => b.tokenId - a.tokenId);
@@ -82,12 +115,12 @@ export default function Home({ claimableData, organizers, artists, projects }) {
       }
     });
   }
-  /* add projects.data.name to each claimableData item if the event_location and start_time matches a project's location and start_time
+  /* add event.data.name to each claimableData item if the event_location and start_time matches a project's location and start_time
    and the project's status is "published"
    and the project's start_time is in GMT timezone, subtract 8 hours */
-  if (claimableData && projects) {
+  if (claimableData && events) {
     claimableData.forEach((item) => {
-      const matchingProject = projects.data.find(
+      const matchingProject = events.data.find(
         (project) =>
           project.status === "published" &&
           project.location === item.metadata.event_location &&
@@ -104,6 +137,19 @@ export default function Home({ claimableData, organizers, artists, projects }) {
       }
     });
   }
+
+  // Categorize events
+  const upcomingEvents =
+    events?.data?.filter(
+      (event) =>
+        event.status === "published" && getEventStatus(event) === "upcoming"
+    ) || [];
+
+  const currentEvents =
+    events?.data?.filter(
+      (event) =>
+        event.status === "published" && getEventStatus(event) === "current"
+    ) || [];
 
   return (
     <>
@@ -148,12 +194,77 @@ export default function Home({ claimableData, organizers, artists, projects }) {
       )}
       {isLanded && (
         <Container maxWidth="lg">
-          <GeneralTokenCardGrid
-            data={claimableData}
-            organizers={organizers}
-            artists={artists}
-            projects={projects}
-          />
+          {/* Current Events Section */}
+          {currentEvents.length > 0 && (
+            <Box mb={6}>
+              <Typography variant="h5" component="h5" gutterBottom>
+                Current Events
+              </Typography>
+              {currentEvents.map((event) => {
+                const eventTokens = getTokensForEvent(event);
+                return (
+                  <Box key={event.id} mb={4}>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      mb={2}
+                    >
+                      <Typography>{event.name}</Typography>
+                      <Link href={`/events/${event.id}`}>
+                        <Button variant="outlined" color="primary" size="small">
+                          See more
+                        </Button>
+                      </Link>
+                    </Box>
+                    {eventTokens.length > 0 && (
+                      <GeneralTokenCardGrid
+                        data={eventTokens}
+                        organizers={organizers}
+                        artists={artists}
+                      />
+                    )}
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
+
+          {/* Upcoming Events Section */}
+          {upcomingEvents.length > 0 && (
+            <Box mb={6}>
+              <Typography variant="h5" component="h5" gutterBottom>
+                Upcoming Events
+              </Typography>
+              {upcomingEvents.map((event) => {
+                const eventTokens = getTokensForEvent(event);
+                return (
+                  <Box key={event.id} mb={4}>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      mb={2}
+                    >
+                      <Typography>{event.name}</Typography>
+                      <Link href={`/events/${event.id}`}>
+                        <Button variant="outlined" color="primary" size="small">
+                          See more
+                        </Button>
+                      </Link>
+                    </Box>
+                    {eventTokens.length > 0 && (
+                      <GeneralTokenCardGrid
+                        data={eventTokens}
+                        organizers={organizers}
+                        artists={artists}
+                      />
+                    )}
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
 
           <Box textAlign="center" mt={10}>
             <FadeOnScroll onceonly>
@@ -205,10 +316,10 @@ export async function getStaticProps() {
     })
   );
 
-  const [organizers, artists, projects] = await Promise.all([
+  const [organizers, artists, events] = await Promise.all([
     await FetchDirectusData(`/organizers`),
     await FetchDirectusData(`/artists`),
-    await FetchDirectusData(`/projects`),
+    await FetchDirectusData(`/events`),
   ]);
 
   return {
@@ -216,7 +327,7 @@ export async function getStaticProps() {
       claimableData: claimableData,
       organizers: organizers,
       artists: artists,
-      projects: projects,
+      events: events,
     },
     revalidate: 10, // In seconds
   };

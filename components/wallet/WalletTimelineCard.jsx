@@ -232,8 +232,8 @@ export default function WalletTimelineCard({
             </Typography>
             <Box>
               <Link
-                href="/project/[id]"
-                as={`/project/${data.metadata.projectId}`}
+                href="/events/[id]"
+                as={`/events/${data.metadata.projectId}`}
               >
                 {data.metadata.projectName}
               </Link>

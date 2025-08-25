@@ -1,12 +1,12 @@
 import { Box } from "@mui/material";
 import Link from "next/link";
 
-export default function ({ organizer, artists, organizers }) {
+export default function Organizer({ organizer, artists, organizers }) {
   const first_org = {};
   const second_org = {};
   const third_org = {};
-  const org_frontend = organizer.split(" x ");
-  //   console.log("org_frontend", org_frontend);
+  const org_frontend = organizer ? organizer.split(" x ") : [];
+  // console.log("org_frontend", org_frontend);
   const org_backend = [...organizers.data, ...artists.data];
   //   console.log("org_backend", org_backend);
 

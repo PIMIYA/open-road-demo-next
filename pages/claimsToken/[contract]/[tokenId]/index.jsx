@@ -22,14 +22,7 @@ import {
 
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 
-export default function Id({
-  ownersData,
-  data,
-  data_from_pool,
-  organizers,
-  artists,
-  projects,
-}) {
+export default function Id({ ownersData, data, data_from_pool, organizers, artists, events }) {
   // console.log("current active claimable token data", data[0].tokenId);
 
   // TODO: remove dummy data after api ready
@@ -57,9 +50,9 @@ export default function Id({
     });
   }
   /* add projectName to data */
-  if (data && projects) {
+  if (data && events) {
     data.forEach((item) => {
-      const matchingProject = projects.data.find(
+      const matchingProject = events.data.find(
         (project) =>
           project.status === "published" &&
           project.location === item.metadata.event_location &&
@@ -112,7 +105,7 @@ export default function Id({
 
 export async function getServerSideProps(params) {
   //   console.log(params.params.id);
-  const [ownersData, data, data_from_pool, organizers, artists, projects] =
+  const [ownersData, data, data_from_pool, organizers, artists, events] =
     await Promise.all([
       await MainnetAPI(
         `/fa2tokens/${params.params.contract}/${params.params.tokenId}`
@@ -127,10 +120,10 @@ export async function getServerSideProps(params) {
       ),
       await FetchDirectusData(`/organizers`),
       await FetchDirectusData(`/artists`),
-      await FetchDirectusData(`/projects`),
+      await FetchDirectusData(`/events`),
     ]);
 
   return {
-    props: { ownersData, data, data_from_pool, organizers, artists, projects },
+    props: { ownersData, data, data_from_pool, organizers, artists, events },
   };
 }

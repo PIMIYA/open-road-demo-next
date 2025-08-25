@@ -12,13 +12,10 @@ import {
 import Grid from "@mui/material/Unstable_Grid2";
 
 import Tags from "@/components/Tags";
-import { formatDateRange, getAkaswapAssetUrl } from "@/lib/stringUtils";
-import { getRandomObjectType, getRandomPeriod } from "@/lib/dummy";
+import { formatDateRange } from "@/lib/stringUtils";
 import FadeOnScroll from "./fadeOnScroll";
 
-import Organizer from "@/components/Organizer";
-
-export default function GeneralTokenCardGrid(props) {
+export default function EventCardGrid(props) {
   const router = useRouter();
 
   const data = props.data;
@@ -46,29 +43,6 @@ export default function GeneralTokenCardGrid(props) {
     },
   };
 
-  // TODO: replace dummy data with real data
-  if (data) {
-    // console.log(data);
-    data.forEach((item) => {
-      if (!item.objectType) {
-        item.objectType = getRandomObjectType();
-      }
-
-      if (!item.eventDate) {
-        item.eventDate = getRandomPeriod();
-      }
-
-      if (!item.tokenImageUrl) {
-        item.tokenImageUrl = item.thumbnailUri
-          ? getAkaswapAssetUrl(item.thumbnailUri)
-          : "https://via.placeholder.com/400";
-      }
-    });
-  }
-
-  const organizers = props.organizers;
-  const artists = props.artists;
-
   return (
     <>
       <Grid container spacing={4} columns={columnSettings.grid}>
@@ -85,19 +59,13 @@ export default function GeneralTokenCardGrid(props) {
           data.map(
             (
               {
-                tokenId,
+                id,
                 name,
-                creator,
-                tokenImageUrl,
-                tags,
-                contract,
-                objectType,
-                eventDate,
-                eventPlace,
                 start_time,
                 end_time,
-                metadata,
-                poolID,
+                description,
+                location,
+                cover,
               },
               index
             ) => (
@@ -115,10 +83,7 @@ export default function GeneralTokenCardGrid(props) {
                 }}
               >
                 <Box>
-                  <Link
-                    href="/claimsToken/[contract]/[tokenId]"
-                    as={`/claimsToken/${contract.address}/${tokenId}`}
-                  >
+                  <Link href="/events/[id]" as={`/events/${id}`}>
                     <Box
                       sx={{
                         bgcolor: "white",
@@ -129,14 +94,14 @@ export default function GeneralTokenCardGrid(props) {
                     >
                       <CardMedia
                         component="img"
-                        alt="thumbnail"
+                        alt="event cover"
                         sx={{
                           objectFit: "contain",
                           height: "100%",
                           width: "100%",
                           margin: "auto",
                         }}
-                        image={getAkaswapAssetUrl(metadata.thumbnailUri)}
+                        image={cover || "https://dummyimage.com/400x200/cccccc/666666?text=Cover"}
                       />
                     </Box>
                   </Link>
@@ -148,51 +113,47 @@ export default function GeneralTokenCardGrid(props) {
                         component="h6"
                         gutterBottom
                       >
-                        {metadata.name}
+                        {name}
                       </Typography>
-                      <Chip
-                        label={metadata.category}
-                        size="small"
-                        onClick={() => {
-                          router.push({
-                            pathname: "/events",
-                            query: { cat: metadata.category },
-                          });
-                        }}
-                      />
                     </Stack>
-                    <Box>
-                      <Link
-                        href="/events/[id]"
-                        as={`/events/${metadata.projectId}`}
-                      >
-                        {metadata.projectName}
-                      </Link>
-                    </Box>
-
-                    <Organizer
-                      organizer={metadata.organizer}
-                      artists={artists ? artists : null}
-                      organizers={organizers ? organizers : null}
-                    />
                   </Box>
 
                   <Box id="secondary-info" mb={2}>
                     <Typography variant="body2">
-                      {metadata.start_time
-                        ? formatDateRange(
-                            metadata.start_time,
-                            metadata.end_time
-                          )
-                        : eventDate}
+                      {start_time && end_time
+                        ? formatDateRange(start_time, end_time)
+                        : start_time
+                        ? new Date(start_time).toLocaleDateString()
+                        : "TBD"}
                     </Typography>
                     <Typography variant="body2">
-                      {metadata.event_location}
+                      {location || "Location TBD"}
                     </Typography>
                   </Box>
-                  <Stack direction="row" flexWrap="wrap">
-                    <Tags tags={metadata.tags} />
-                  </Stack>
+                  
+                  {description && (
+                    <Box 
+                      variant="body2" 
+                      color="text.secondary" 
+                      mb={2}
+                      dangerouslySetInnerHTML={{ 
+                        __html: description.length > 200 
+                          ? `${description.substring(0, 200)}...` 
+                          : description 
+                      }}
+                      sx={{
+                        fontSize: '0.875rem',
+                        color: 'text.secondary',
+                        '& p': {
+                          margin: 0,
+                        },
+                        '& *': {
+                          fontSize: 'inherit',
+                          color: 'inherit',
+                        }
+                      }}
+                    />
+                  )}
                 </Box>
               </Grid>
             )

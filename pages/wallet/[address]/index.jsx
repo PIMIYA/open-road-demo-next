@@ -30,7 +30,7 @@ import {
 import WalletProfile from "@/components/wallet/WalletProfile";
 import WalletTimeline from "@/components/wallet/WalletTimeline";
 import WalletCanvas from "@/components/wallet/WalletCanvas";
-import SidePaper from "@/components/SidePaper";
+import Card from "@/components/Card";
 
 import { useRouter } from "next/router";
 
@@ -39,9 +39,10 @@ export default function Wallet({
   pools,
   claims,
   addressFromURL,
-  projects,
+  events,
   organizers,
   artists,
+  walletInfo,
 }) {
   const router = useRouter();
   /* Connected wallet */
@@ -132,9 +133,9 @@ export default function Wallet({
             }
           });
           // add projectName to data"
-          if (data && projects) {
+          if (data && events) {
             data.forEach((item) => {
-              const matchingProject = projects.data.find(
+              const matchingProject = events.data.find(
                 (project) =>
                   project.status === "published" &&
                   project.location === item.metadata.event_location &&
@@ -200,9 +201,9 @@ export default function Wallet({
             }
           });
           // add projectName to data
-          if (data && projects) {
+          if (data && events) {
             data.forEach((item) => {
-              const matchingProject = projects.data.find(
+              const matchingProject = events.data.find(
                 (project) =>
                   project.status === "published" &&
                   project.location === item.metadata.event_location &&
@@ -330,131 +331,118 @@ export default function Wallet({
   }
 
   return (
-    <TwoColumnLayout>
-      <Side sticky={true}>
-        {
-          <SidePaper>
-            {addressFromURL && <WalletProfile address={addressFromURL} />}
-          </SidePaper>
-        }
+    <Box sx={{ padding: "2rem 1.5rem" }}>
+      {/* Top Section: WalletProfile */}
+      <Box sx={{ mb: 4 }}>
+        <Card>
+          {addressFromURL && (
+            <WalletProfile address={addressFromURL} walletInfo={walletInfo} />
+          )}
+        </Card>
+      </Box>
 
-        <>
-          <SidePaper>
-            <Box sx={{ textAlign: "center" }}>
-              <Button
-                variant={value === 0 ? "contained" : "outlined"}
-                size="small"
-                onClick={handleClaimed}
-                disabled={claimData === null || claimData.length === 0}
-                sx={{ mr: 1 }}
-              >
-                Claimed
-              </Button>
-
-              <Button
-                variant={value === 1 ? "contained" : "outlined"}
-                size="small"
-                onClick={handleCreated}
-                disabled={createdData === null || createdData.length === 0}
-                sx={{ ml: 1 }}
-              >
-                Created
-              </Button>
-            </Box>
-          </SidePaper>
-          <SidePaper>
-            <Box component="form">
-              <Box>
-                <Autocomplete
-                  id="location"
-                  options={locations}
-                  getOptionLabel={(option) => option}
-                  isOptionEqualToValue={(option, value) => option === value}
-                  onChange={(event, newValue) => {
-                    setLocValue(newValue ? newValue : "");
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Location"
-                      variant="standard"
-                    />
-                  )}
-                />
-              </Box>
-              <Box>
-                <Autocomplete
-                  id="category"
-                  options={categories}
-                  getOptionLabel={(option) => option}
-                  isOptionEqualToValue={(option, value) => option === value}
-                  onChange={(event, newValue) => {
-                    setCatValue(newValue ? newValue : "");
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Category"
-                      variant="standard"
-                    />
-                  )}
-                />
-              </Box>
-            </Box>
-            <Box mt={4}>
-              <Button
-                variant="contained"
-                color="primary"
-                size="small"
-                onClick={handleFilter}
-              >
-                Apply
-              </Button>
-            </Box>
-          </SidePaper>
-        </>
-      </Side>
-      <Main>
-        <>
-          <Box>
-            <Box
-              sx={{
-                display:
-                  filteredData && filteredData.length > 0 ? "none" : "block",
-              }}
+      {/* Middle Section: Filter Controls */}
+      <Box sx={{ mb: 4 }}>
+        <Card>
+          <Box sx={{ textAlign: "center" }}>
+            <Button
+              variant={value === 0 ? "contained" : "outlined"}
+              size="small"
+              onClick={handleClaimed}
+              disabled={claimData === null || claimData.length === 0}
+              sx={{ mr: 1 }}
             >
-              No Token
-            </Box>
-            <Box
-              sx={{
-                display:
-                  filteredData && filteredData.length > 0 ? "block" : "none",
-              }}
-            >
-              {filteredData && filteredData.length > 0 && (
-                <WalletCanvas
-                  canvasData={filteredData}
-                  address={addressFromURL}
-                />
-              )}
-            </Box>
+              Claimed
+            </Button>
 
-            <Stack direction="row">
-              <Box width={"100%"}>
-                <WalletTimeline
-                  cardData={filteredData}
-                  comments={comments}
-                  addressFromURL={addressFromURL}
-                  myWalletAddress={address}
-                  organizers={organizers}
-                  artists={artists}
-                />
-              </Box>
-            </Stack>
+            <Button
+              variant={value === 1 ? "contained" : "outlined"}
+              size="small"
+              onClick={handleCreated}
+              disabled={createdData === null || createdData.length === 0}
+              sx={{ ml: 1 }}
+            >
+              Created
+            </Button>
           </Box>
-        </>
-      </Main>
-    </TwoColumnLayout>
+        </Card>
+        <Card>
+          <Box component="form">
+            <Box>
+              <Autocomplete
+                id="location"
+                options={locations}
+                getOptionLabel={(option) => option}
+                isOptionEqualToValue={(option, value) => option === value}
+                onChange={(event, newValue) => {
+                  setLocValue(newValue ? newValue : "");
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} label="Location" variant="standard" />
+                )}
+              />
+            </Box>
+            <Box>
+              <Autocomplete
+                id="category"
+                options={categories}
+                getOptionLabel={(option) => option}
+                isOptionEqualToValue={(option, value) => option === value}
+                onChange={(event, newValue) => {
+                  setCatValue(newValue ? newValue : "");
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} label="Category" variant="standard" />
+                )}
+              />
+            </Box>
+          </Box>
+          <Box mt={4}>
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              onClick={handleFilter}
+            >
+              Apply
+            </Button>
+          </Box>
+        </Card>
+      </Box>
+
+      {/* Bottom Section: Main Content */}
+      <Box>
+        <Box
+          sx={{
+            display: filteredData && filteredData.length > 0 ? "none" : "block",
+          }}
+        >
+          No Token
+        </Box>
+        <Box
+          sx={{
+            display: filteredData && filteredData.length > 0 ? "block" : "none",
+          }}
+        >
+          {filteredData && filteredData.length > 0 && (
+            <WalletCanvas canvasData={filteredData} address={addressFromURL} />
+          )}
+        </Box>
+
+        <Stack direction="row">
+          <Box width={"100%"}>
+            <WalletTimeline
+              cardData={filteredData}
+              comments={comments}
+              addressFromURL={addressFromURL}
+              myWalletAddress={address}
+              organizers={organizers}
+              artists={artists}
+            />
+          </Box>
+        </Stack>
+      </Box>
+    </Box>
   );
 }
 
@@ -486,25 +474,47 @@ export async function getStaticProps({ params }) {
   }
 
   /* Fetch data */
-  const [role, pools, claims, projects, organizers, artists] =
-    await Promise.all([
-      await WalletRoleAPI(`/${addressFromURL}`),
-      await AkaDropAPI(`/${addressFromURL}/pools?offset=0&limit=0`),
-      await AkaDropAPI(`/${addressFromURL}/claims?offset=0&limit=0`),
-      await FetchDirectusData(`/projects`),
-      await FetchDirectusData(`/organizers`),
-      await FetchDirectusData(`/artists`),
-    ]);
+  const [
+    role,
+    pools,
+    claims,
+    events,
+    organizers,
+    artists,
+    walletData,
+    userWalletsData,
+  ] = await Promise.all([
+    await WalletRoleAPI(`/${addressFromURL}`),
+    await AkaDropAPI(`/${addressFromURL}/pools?offset=0&limit=0`),
+    await AkaDropAPI(`/${addressFromURL}/claims?offset=0&limit=0`),
+    await FetchDirectusData(`/events`),
+    await FetchDirectusData(`/organizers`),
+    await FetchDirectusData(`/artists`),
+    await FetchDirectusData(`/Wallet?filter[address][_eq]=${addressFromURL}`),
+    await FetchDirectusData(
+      `/userWallets?filter[address][_eq]=${addressFromURL}`
+    ),
+  ]);
+
+  // 合併兩個 collections 的資料
+  let walletInfo = null;
+
+  // 檢查 wallet collection 是否有資料
+  if (walletData?.data?.length > 0) walletInfo = walletData.data[0];
+  // 如果 wallet 沒有資料，檢查 userWallets collection
+  else if (userWalletsData?.data?.length > 0)
+    walletInfo = userWalletsData.data[0];
 
   return {
     props: {
-      role: role,
-      pools: pools,
-      claims: claims,
-      addressFromURL: addressFromURL,
-      projects: projects,
-      organizers: organizers,
-      artists: artists,
+      role,
+      pools,
+      claims,
+      addressFromURL,
+      events,
+      organizers,
+      artists,
+      walletInfo,
     },
     revalidate: 10,
   };

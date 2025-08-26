@@ -309,9 +309,10 @@ export async function getStaticProps({ params }) {
   );
 
   // Extract burned tokenIds and join them into a comma-separated string
-  const burned_tokenIds = burnedData
-    .map((item) => item.token.tokenId)
-    .join(",");
+  const burned_tokenIds =
+    burnedData && Array.isArray(burnedData)
+      ? burnedData.map((item) => item.token.tokenId).join(",")
+      : "";
 
   // formate event.data.start_time to GMT timezone, and subtract 8 hours
   const formattedDate = new Date(
@@ -323,20 +324,23 @@ export async function getStaticProps({ params }) {
   );
 
   // Check if tokens are claimable and add claimable status and poolID
-  const claimableData = await Promise.all(
-    data.map(async (item) => {
-      const data_from_pool = await GetClaimablePoolID(
-        contractAddress,
-        targetContractAddress,
-        item.tokenId
-      );
-      return {
-        ...item,
-        claimable: !!data_from_pool,
-        poolID: data_from_pool ? data_from_pool[0].key : null,
-      };
-    })
-  );
+  const claimableData =
+    data && Array.isArray(data) && data.length > 0
+      ? await Promise.all(
+          data.map(async (item) => {
+            const data_from_pool = await GetClaimablePoolID(
+              contractAddress,
+              targetContractAddress,
+              item.tokenId
+            );
+            return {
+              ...item,
+              claimable: !!data_from_pool,
+              poolID: data_from_pool ? data_from_pool[0].key : null,
+            };
+          })
+        )
+      : [];
 
   const [organizers, artists] = await Promise.all([
     await FetchDirectusData(`/organizers`),

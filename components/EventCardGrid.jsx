@@ -1,19 +1,11 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 
-import {
-  Box,
-  Chip,
-  CardMedia,
-  Stack,
-  Skeleton,
-  Typography,
-} from "@mui/material";
+import { Box, Stack, Skeleton, Typography } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
-
-import Tags from "@/components/Tags";
 import { formatDateRange } from "@/lib/stringUtils";
 import FadeOnScroll from "./fadeOnScroll";
+import DirectusImage from "./DirectusImage";
 
 export default function EventCardGrid(props) {
   const router = useRouter();
@@ -58,15 +50,7 @@ export default function EventCardGrid(props) {
         {data &&
           data.map(
             (
-              {
-                id,
-                name,
-                start_time,
-                end_time,
-                description,
-                location,
-                cover,
-              },
+              { id, name, start_time, end_time, description, location, cover },
               index
             ) => (
               <Grid
@@ -92,17 +76,7 @@ export default function EventCardGrid(props) {
                         mb: 1.5,
                       }}
                     >
-                      <CardMedia
-                        component="img"
-                        alt="event cover"
-                        sx={{
-                          objectFit: "contain",
-                          height: "100%",
-                          width: "100%",
-                          margin: "auto",
-                        }}
-                        image={cover || "https://dummyimage.com/400x200/cccccc/666666?text=Cover"}
-                      />
+                      <DirectusImage fileId={cover} />
                     </Box>
                   </Link>
 
@@ -130,27 +104,28 @@ export default function EventCardGrid(props) {
                       {location || "Location TBD"}
                     </Typography>
                   </Box>
-                  
+
                   {description && (
-                    <Box 
-                      variant="body2" 
-                      color="text.secondary" 
+                    <Box
+                      variant="body2"
+                      color="text.secondary"
                       mb={2}
-                      dangerouslySetInnerHTML={{ 
-                        __html: description.length > 200 
-                          ? `${description.substring(0, 200)}...` 
-                          : description 
+                      dangerouslySetInnerHTML={{
+                        __html:
+                          description.length > 200
+                            ? `${description.substring(0, 200)}...`
+                            : description,
                       }}
                       sx={{
-                        fontSize: '0.875rem',
-                        color: 'text.secondary',
-                        '& p': {
+                        fontSize: "0.875rem",
+                        color: "text.secondary",
+                        "& p": {
                           margin: 0,
                         },
-                        '& *': {
-                          fontSize: 'inherit',
-                          color: 'inherit',
-                        }
+                        "& *": {
+                          fontSize: "inherit",
+                          color: "inherit",
+                        },
                       }}
                     />
                   )}

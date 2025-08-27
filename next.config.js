@@ -26,6 +26,12 @@ const nextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "data.kairos-mint.art",
+        port: "",
+        pathname: "/assets/**",
+      },
     ],
   },
 

@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const directusBaseUrl = process.env.NODE_ENV === 'production' ?  'http://localhost:8055' : 'https://data.kairos-mint.art';
+const directusBaseUrl = "https://data.kairos-mint.art";
 async function getDirectusToken(email, password) {
     // const directusBaseUrl = process.env.DIRECTUS || 'http://localhost:8055';
     const url = `${directusBaseUrl}/auth/login`;

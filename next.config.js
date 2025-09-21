@@ -54,4 +54,14 @@ const nextConfig = {
     COMMENT_URL: process.env.COMMENT_URL,
   },
 };
-module.exports = nextConfig
+module.exports = {
+  ...nextConfig,
+  async rewrites() {
+    return [
+      {
+        source: "/mint",
+        destination: "https://mint.kairos-mint.art/mint",
+      },
+    ];
+  },
+};

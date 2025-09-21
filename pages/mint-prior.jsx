@@ -1,5 +1,8 @@
+/* React */
 import { useState, useEffect, useRef, useMemo } from "react";
+/* Next */
 import { useRouter } from "next/router";
+/* MUI */
 import {
   Box,
   TextField,
@@ -16,18 +19,19 @@ import { ThemeProvider } from "@mui/material/styles";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+/* MUI Icons */
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 
-/* MUI + Google Maps Places Autocomplete */
+// MUI + Google Maps Places Autocomplete
 import parse from "autosuggest-highlight/parse";
+// Get the lat and lng from the address
 import { getGeocode, getLatLng } from "use-places-autocomplete";
-
-/* Kairos */
+// Kairos
 import { useConnection } from "@/packages/providers";
-
-/* Components */
+// Components
 import { Sharer } from "@/components/sharer";
-
+import { prepareFilesFromZIP } from "@/components/render-media/html/utils/html";
+import { prepareDirectory } from "@/components/mint/prepareDirectory";
 // List value of categories, tags, and licenses
 import {
   categories,
@@ -35,49 +39,17 @@ import {
   licenses,
   VisuallyHiddenInput,
   theme,
+  MIMETYPE,
 } from "@/components/mint/const";
 
 import { FetchDirectusData } from "@/lib/api";
 
-const ACCEPT_EXTS =
-  ".bmp,.gif,.jpg,.jpeg,.png,.svg,.webp," +
-  ".mp4,.ogv,.mov,.webm," +
-  ".glb,.gltf," +
-  ".mp3,.oga," +
-  ".pdf,.zip";
-
-function classifyFile(file) {
-  if (!file) return {};
-  const name = (file.name || "").toLowerCase();
-  const type = (file.type || "").toLowerCase();
-  const hasExt = (ext) => name.endsWith(ext);
-
-  const isImage =
-    type.startsWith("image/") ||
-    [".bmp", ".gif", ".jpg", ".jpeg", ".png", ".svg", ".webp"].some(hasExt);
-
-  const isVideo =
-    type.startsWith("video/") || [".mp4", ".ogv", ".mov", ".webm"].some(hasExt);
-
-  const isAudio = type.startsWith("audio/") || [".mp3", ".oga"].some(hasExt);
-
-  const is3D = [".glb", ".gltf"].some(hasExt);
-
-  const isPDF = type === "application/pdf" || hasExt(".pdf");
-
-  const isZip = type === "application/zip" || hasExt(".zip");
-
-  // 非圖片 → 一律需要縮圖（由後端產 thumbnail）
-  const needsDisplay = !isImage;
-
-  return { isImage, isVideo, isAudio, is3D, isPDF, isZip, needsDisplay };
-}
-
-/* ------------------------------------------------ */
-
+// MUI + Google Maps Places Autocomplete
 const GOOGLE_MAPS_API_KEY = `${process.env.GoogleMapsAPIKey}`;
 function loadScript(src, position, id) {
-  if (!position) return;
+  if (!position) {
+    return;
+  }
   const script = document.createElement("script");
   script.setAttribute("async", "");
   script.setAttribute("id", id);
@@ -89,13 +61,15 @@ const autocompleteService = { current: null };
 export default function Mint({ organizers, artists }) {
   const router = useRouter();
 
+  // State variables for places autocomplete
   const [value, setValue] = useState(null);
   const [inputValue, setInputValue] = useState("");
   const [options, setOptions] = useState([]);
   const loaded = useRef(false);
+  // State variables for lat and lng
   const [lat, setLat] = useState(null);
   const [lng, setLng] = useState(null);
-
+  // Google autocomplete service
   if (typeof window !== "undefined" && !loaded.current) {
     if (!document.querySelector("#google-maps")) {
       loadScript(
@@ -106,67 +80,55 @@ export default function Mint({ organizers, artists }) {
     }
     loaded.current = true;
   }
-
   const fetchPlacePredictions = useMemo(
     () =>
       debounce((request, callback) => {
-        if (!autocompleteService.current) return;
         autocompleteService.current.getPlacePredictions(request, callback);
       }, 400),
     []
   );
 
-  // Form states
+  // State variables for form
   let pinningMetadata = false;
   let mintingToken = false;
-
-  // const serverUrl =
-  //   process.env.NODE_ENV === "production"
-  //     ? process.env.SERVER_URL
-  //     : "http://localhost:3030";
   const serverUrl = process.env.SERVER_URL;
-
   const contractAddress = "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
-  const contractId = 92340; // 正式92340 測試91040
-
+  const contractId = 92340; // 正式版kairosNFTs = 92340 測試版blackpeople = 91040
   const { address, callcontract } = useConnection();
-  const createrAddress = "tz1XBEMJfYoMoMMZafjYv3Q5V9u3QKv1xuBR";
-
+  const createrAddress = "tz1XBEMJfYoMoMMZafjYv3Q5V9u3QKv1xuBR"; // address, address will be used in the future, now it is a fixed value
   const titleRef = useRef();
   const descriptionRef = useRef();
-  const walletRef = useRef();
-
   const [selectedOrganizer, setSelectedOrganizer] = useState(null);
   const [selectedArtists, setSelectedArtists] = useState([]);
+  const walletRef = useRef();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedTags, setSelectedTags] = useState([]);
   const [selectedLicense, setSelectedLicense] = useState(null);
   const [mintingTokenQty, setMintingTokenQty] = useState(1);
   const [royaltyPercentage, setRoyaltyPercentage] = useState(10);
   const [walletAddress, setWalletAddress] = useState(``);
-
-  const [file, setFile] = useState(undefined);
-  const [display, setDisplay] = useState(undefined);
-  const [fileKind, setFileKind] = useState(null);
-  const [isXDirectory, setIsXDirectory] = useState(true); // ZIP 預設視為 x-directory
-
+  const [file, setFile] = useState();
+  const [thumb, setThumb] = useState();
   const [miningInProgress, setMiningInProgress] = useState(false);
   const [startTime, setStartTime] = useState();
   const [endTime, setEndTime] = useState();
-
   // royalties share
   const [useRoyaltiesShare, setUseRoyaltiesShare] = useState();
   const [royaltiesSharers, setRoyaltiesSharer] = useState([
-    { id: 0, address: walletAddress, share: 100 },
+    {
+      id: 0,
+      address: walletAddress,
+      share: 100,
+    },
   ]);
-
-  // Wallet role
+  // API ROUTE : Fetch wallet role
   const [roleData, setRoleData] = useState(null);
   const [isLoadingRole, setLoadingRole] = useState(true);
 
   useEffect(() => {
-    if (!address) return;
-
+    if (!address) {
+      return;
+    }
     // Auto import wallet address to input field
     setWalletAddress(address);
 
@@ -187,167 +149,211 @@ export default function Mint({ organizers, artists }) {
       autocompleteService.current =
         new window.google.maps.places.AutocompleteService();
     }
-    if (!autocompleteService.current) return;
-
+    if (!autocompleteService.current) {
+      return undefined;
+    }
     if (inputValue === "") {
       setOptions(value ? [value] : []);
-      return;
+      return undefined;
     }
     fetchPlacePredictions({ input: inputValue }, (results) => {
-      if (!active) return;
-      let newOptions = [];
-      if (value) newOptions = [value];
-      if (results) newOptions = [...newOptions, ...results];
-      setOptions(newOptions);
+      if (active) {
+        let newOptions = [];
+        if (value) {
+          newOptions = [value];
+        }
+        if (results) {
+          newOptions = [...newOptions, ...results];
+        }
+        setOptions(newOptions);
+      }
     });
-
     return () => {
       active = false;
     };
   }, [value, inputValue, fetchPlacePredictions, address]);
 
+  // Fetch wallet role
   if (isLoadingRole) return <p>Loading...</p>;
   if (!roleData) return <p>No role data</p>;
-  if (roleData.data.length === 0 || !address) {
+  // console.log(roleData.data.length);
+  // Redirect to cannotMint page if the wallet role is not allowed to mint or not connected to wallet
+  if (roleData.data.length == 0 || !address) {
     router.push("/cannotMint");
   }
 
-  /**
-   * 檔案上傳：不在前端解 ZIP
-   * 由後端解壓、處理檔案內容、驗證、pinFromFS
-   */
-  const handleFileUpload = (e) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    const kind = classifyFile(f);
-    setFile(f);
-    setFileKind(kind);
-    if (kind.isZip) setIsXDirectory(true);
+  // function handleFileChange(event) {
+  //   console.log("file", file);
+  //   setFile(event.target.files[0]);
+  // }
+
+  const Buffer = require("buffer").Buffer;
+  const handleFileUpload = async (props) => {
+    const mimeType = props.target.files[0].type;
+    const myFile = props.target.files[0];
+    let nftCid;
+    if ([MIMETYPE.ZIP, MIMETYPE.ZIP1, MIMETYPE.ZIP2].includes(mimeType)) {
+      // console.log("zip file");
+      const buffer = Buffer.from(await myFile.arrayBuffer());
+      const files = await prepareFilesFromZIP(buffer);
+      files.type = "application/x-directory";
+      files.name = myFile.name;
+      console.log("files", files); // !!!!!! Alreday unzip file and get files's path and blob, how to upload to IPFS?
+      // nftCid = await prepareDirectory({ files });
+      // console.log("nftCid", nftCid);
+      setFile(files);
+    } else {
+      // console.log("not zip file");
+      // console.log("file", myFile);
+      setFile(myFile);
+    }
   };
 
-  const handleDisplayChange = (e) => {
-    const t = e.target.files?.[0];
-    if (!t) return;
-    setDisplay(t);
-  };
-  /* ------------------------------------------------ */
+  function handleThumbChange(event) {
+    // console.log("thumb", thumb);
+    setThumb(event.target.files[0]);
+  }
 
   const upload = async (event) => {
+    // console.log(selectedOrganizer.name);
     event.preventDefault();
-
+    // Check if the Google Maps Places library is loaded
     if (!autocompleteService.current) {
       console.error("Google Maps Places library is not loaded yet");
       return;
     }
-    if (!file) {
-      console.error("No primary file selected");
-      return;
-    }
-
-    const kind = fileKind ?? classifyFile(file);
-    if (kind && !kind.isImage && !display) {
-      console.error("Display required for non-image types");
-      return;
-    }
-
     try {
       pinningMetadata = true;
+      // Create a new FormData instance
       const data = new FormData();
 
-      // Base metadata
-      data.append("title", titleRef.current.value || "");
-      data.append("description", descriptionRef.current.value || "");
-      data.append("organizer", selectedOrganizer?.name || "");
-
-      const resultArtists = (selectedArtists || []).map((a) => a.name);
+      // Append each form field to the FormData instance
+      data.append("title", titleRef.current.value);
+      data.append("description", descriptionRef.current.value);
+      data.append("organizer", selectedOrganizer.name);
+      // array aryists
+      let resultArtists = [];
+      selectedArtists.forEach((artist) => {
+        resultArtists.push(artist.name);
+      });
       data.append("artists", JSON.stringify(resultArtists));
-      data.append("category", selectedCategory?.label || "");
+      data.append("category", selectedCategory.label);
 
-      const resultTags = (selectedTags || []).map((t) => t.label);
+      //array tags
+      let resultTags = [];
+      selectedTags.forEach((tag) => {
+        resultTags.push(tag.label);
+      });
       data.append("tags", JSON.stringify(resultTags));
 
-      data.append("eventPlace", inputValue || "");
-      data.append("geoLocation", JSON.stringify([lat, lng]));
-      data.append("startTime", startTime || "");
-      data.append("endTime", endTime || "");
+      // Append the location name to the FormData instance
+      data.append("eventPlace", inputValue);
+      // Append the lat and lng to the FormData instance
+      const geolocation = [lat, lng];
+      data.append("geoLocation", JSON.stringify(geolocation));
 
+      // Append the start time to the FormData instance
+      data.append("startTime", startTime);
+      data.append("endTime", endTime);
+
+      // Append the creator address to the FormData instance
       data.append("creator", createrAddress);
+      // Append the minter address to the FormData instance
       data.append("minter", contractAddress);
+      // Append the minting tool to the FormData instance
       data.append("mintingTool", serverUrl);
-      data.append("rights", selectedLicense?.label || "");
-
-      // Royalties
+      // Append the copyright to the FormData instance,
+      data.append("rights", selectedLicense.label);
+      // Append the royalties to the FormData instance
       const beautyShares = Object.fromEntries(
-        (royaltiesSharers || []).map((s) => [
-          s.address,
-          royaltyPercentage * s.share,
+        royaltiesSharers.map((sharer) => [
+          sharer.address,
+          royaltyPercentage * sharer.share,
         ])
       );
-      const royaltiesShare = { decimals: 4, shares: beautyShares };
-      const royaltySimple = {
+      // royalties share
+      const royalties = {
+        decimals: 4,
+        shares: beautyShares,
+      };
+      // royalty not share
+      const royalty = {
         decimals: 4,
         shares: { [address]: royaltyPercentage * 100 },
       };
       if (useRoyaltiesShare) {
-        data.append("royalties", JSON.stringify(royaltiesShare));
+        data.append("royalties", JSON.stringify(royalties));
       } else {
-        data.append("royalties", JSON.stringify(royaltySimple));
+        data.append("royalties", JSON.stringify(royalty));
       }
 
-      // Files
-      data.append("image", file);
-      if (display) data.append("display", display);
+      // file
+      if (file) {
+        data.append("image", file);
+      }
 
-      // ZIP → 是否要求後端走 x-directory 流程（仍由後端驗證 index.html 等）
-      if (kind?.isZip) data.append("xdir", isXDirectory ? "1" : "0");
+      if (thumb) {
+        data.append("thumbnail", thumb);
+      }
 
+      console.log(data);
+
+      // Make a POST request to the server
       const response = await fetch(`${serverUrl}/mint`, {
         method: "POST",
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+        },
         body: data,
       });
 
-      if (!response.ok) {
-        const text = await response.text().catch(() => "");
-        throw new Error(`Mint failed: ${response.status} ${text}`);
-      }
+      // Parse the JSON response
+      if (response) {
+        const data = await response.json();
+        // console.log(data);
+        if (
+          data.status === true &&
+          data.msg.metadataHash &&
+          data.msg.imageHash
+        ) {
+          pinningMetadata = false;
+          mintingToken = true;
 
-      const payload = await response.json();
+          // Minting token
+          console.log("Minting token...");
 
-      if (
-        payload?.status === true &&
-        payload?.msg?.metadataHash &&
-        payload?.msg?.imageHash
-      ) {
-        console.log("===== IPFS 上傳成功 =====");
-        console.log("Metadata Hash:", payload.msg.metadataHash);
-        console.log("Image Hash:", payload.msg.imageHash);
+          const metadataHash = `ipfs://${data.msg.metadataHash}`;
 
-        pinningMetadata = false;
-        mintingToken = true;
+          //quick test mint-factory
+          //Editions
+          const metadataHashes = [metadataHash];
 
-        const metadataHash = `ipfs://${payload.msg.metadataHash}`;
-        const metadataHashes = [metadataHash];
-        const creators = [createrAddress, address];
+          const creators = [createrAddress, address];
 
-        const contractCallDetails = {
-          contractId,
-          tokenQty: mintingTokenQty,
-          creators,
-          tokens: metadataHashes,
-        };
+          const contractCallDetails = {
+            contractId: contractId,
+            tokenQty: mintingTokenQty,
+            creators: creators,
+            tokens: metadataHashes,
+          };
 
-        try {
-          setMiningInProgress(true);
-          const opHash = await callcontract(contractCallDetails);
-          console.log("Operation successful with hash:", opHash);
-        } catch (err) {
-          console.error("Error calling contract function:", err);
+          // console.log(mintingTokenQty);
+
+          try {
+            setMiningInProgress(true);
+            const opHash = await callcontract(contractCallDetails);
+            console.log("Operation successful with hash:", opHash);
+          } catch (error) {
+            console.error("Error calling contract function:", error);
+          }
+        } else {
+          throw "No IPFS hash";
         }
       } else {
-        throw new Error("No IPFS hash in response");
+        throw "No response";
       }
     } catch (error) {
-      console.error(error);
+      console.log(error);
     } finally {
       setMiningInProgress(false);
       pinningMetadata = false;
@@ -387,11 +393,17 @@ export default function Mint({ organizers, artists }) {
           <Box>
             <Autocomplete
               id="organizer"
-              options={organizers.data.filter((o) => o.status === "published")}
-              getOptionLabel={(o) => o.name}
-              isOptionEqualToValue={(o, v) => o.name === v.name}
+              options={organizers.data.filter(
+                (option) => option.status === "published"
+              )}
+              getOptionLabel={(option) => option.name}
+              isOptionEqualToValue={(option, value) =>
+                option.name === value.name
+              }
               sx={{ width: 300 }}
-              onChange={(e, v) => setSelectedOrganizer(v)}
+              onChange={(event, newValue) => {
+                setSelectedOrganizer(newValue);
+              }}
               renderInput={(params) => (
                 <TextField {...params} label="Organizer" variant="standard" />
               )}
@@ -401,10 +413,14 @@ export default function Mint({ organizers, artists }) {
             <Autocomplete
               multiple
               id="artist"
-              options={artists.data.filter((o) => o.status === "published")}
-              getOptionLabel={(o) => o.name}
+              options={artists.data.filter(
+                (option) => option.status === "published"
+              )}
+              getOptionLabel={(option) => option.name}
               sx={{ width: 300 }}
-              onChange={(e, v) => setSelectedArtists(v)}
+              onChange={(event, newValue) => {
+                setSelectedArtists(newValue);
+              }}
               renderInput={(params) => (
                 <TextField {...params} label="Artists" variant="standard" />
               )}
@@ -412,12 +428,17 @@ export default function Mint({ organizers, artists }) {
           </Box>
           <Box>
             <Autocomplete
+              // disablePortal
               id="categoriy"
               options={categories}
-              getOptionLabel={(o) => o.label}
-              isOptionEqualToValue={(o, v) => o.label === v.label}
+              getOptionLabel={(option) => option.label}
+              isOptionEqualToValue={(option, value) =>
+                option.label === value.label
+              }
               sx={{ width: 300 }}
-              onChange={(e, v) => setSelectedCategory(v)}
+              onChange={(event, newValue) => {
+                setSelectedCategory(newValue);
+              }}
               renderInput={(params) => (
                 <TextField {...params} label="Category" variant="standard" />
               )}
@@ -428,9 +449,11 @@ export default function Mint({ organizers, artists }) {
               multiple
               id="tag"
               options={tags}
-              getOptionLabel={(o) => o.label}
+              getOptionLabel={(option) => option.label}
               sx={{ width: 300 }}
-              onChange={(e, v) => setSelectedTags(v)}
+              onChange={(event, newValue) => {
+                setSelectedTags(newValue);
+              }}
               renderInput={(params) => (
                 <TextField {...params} label="Tag" variant="standard" />
               )}
@@ -455,6 +478,7 @@ export default function Mint({ organizers, artists }) {
               onChange={(event, newValue) => {
                 setOptions(newValue ? [newValue, ...options] : options);
                 setValue(newValue);
+                // if there is an input value, get the lat and lng
                 if (newValue) {
                   getGeocode({ address: newValue.description }).then(
                     (results) => {
@@ -483,10 +507,15 @@ export default function Mint({ organizers, artists }) {
                 const matches =
                   option.structured_formatting.main_text_matched_substrings ||
                   [];
+
                 const parts = parse(
                   option.structured_formatting.main_text,
-                  matches.map((m) => [m.offset, m.offset + m.length])
+                  matches.map((match) => [
+                    match.offset,
+                    match.offset + match.length,
+                  ])
                 );
+
                 return (
                   <li {...props}>
                     <Grid container alignItems="center">
@@ -521,8 +550,7 @@ export default function Mint({ organizers, artists }) {
               }}
             />
           </Box>
-
-          {/* lat/lng */}
+          {/* // If the user selects a location, display the lat and lng */}
           <Box>
             {lat ? (
               <Box sx={{ width: 300 }}>
@@ -533,15 +561,13 @@ export default function Mint({ organizers, artists }) {
               </Box>
             ) : null}
           </Box>
-
-          {/* time */}
           <Box>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
                 label="start time"
                 sx={{ width: 300 }}
                 value={startTime ?? null}
-                onChange={(v) => setStartTime(v)}
+                onChange={(newValue) => setStartTime(newValue)}
               />
             </LocalizationProvider>
           </Box>
@@ -551,27 +577,28 @@ export default function Mint({ organizers, artists }) {
                 label="end time"
                 sx={{ width: 300 }}
                 value={endTime ?? null}
-                onChange={(v) => setEndTime(v)}
+                onChange={(newValue) => setEndTime(newValue)}
               />
             </LocalizationProvider>
           </Box>
-
-          {/* license */}
           <Box>
             <Autocomplete
+              // disablePortal
               id="license"
               options={licenses}
-              getOptionLabel={(o) => o.label}
-              isOptionEqualToValue={(o, v) => o.label === v.label}
+              getOptionLabel={(option) => option.label}
+              isOptionEqualToValue={(option, value) =>
+                option.label === value.label
+              }
               sx={{ width: 300 }}
-              onChange={(e, v) => setSelectedLicense(v)}
+              onChange={(event, newValue) => {
+                setSelectedLicense(newValue);
+              }}
               renderInput={(params) => (
                 <TextField {...params} label="License" variant="standard" />
               )}
             />
           </Box>
-
-          {/* editions / royalty */}
           <Box>
             <TextField
               id="mintingTokenQty"
@@ -582,7 +609,9 @@ export default function Mint({ organizers, artists }) {
               variant="standard"
               inputProps={{ min: 1 }}
               value={mintingTokenQty}
-              onChange={(e) => setMintingTokenQty(Number(e.target.value))}
+              onChange={(event) =>
+                setMintingTokenQty(Number(event.target.value))
+              }
             />
           </Box>
           <Box>
@@ -595,21 +624,25 @@ export default function Mint({ organizers, artists }) {
               variant="standard"
               inputProps={{ min: 10, max: 25 }}
               value={royaltyPercentage}
-              onChange={(e) => setRoyaltyPercentage(Number(e.target.value))}
+              onChange={(event) =>
+                setRoyaltyPercentage(Number(event.target.value))
+              }
             />
           </Box>
-
-          {/* royalty sharing */}
           <Box>
             <FormControlLabel
               control={
                 <Checkbox
                   onChange={(e) => {
                     if (e.target.checked) {
-                      const arr = [
-                        { id: 0, address: walletAddress, share: 100 },
+                      let array = [
+                        {
+                          id: 0,
+                          address: walletAddress,
+                          share: 100,
+                        },
                       ];
-                      setRoyaltiesSharer(arr);
+                      setRoyaltiesSharer(array);
                     }
                     setUseRoyaltiesShare(e.target.checked);
                   }}
@@ -619,6 +652,7 @@ export default function Mint({ organizers, artists }) {
               label="Apply royalty sharing"
             />
           </Box>
+
           {useRoyaltiesShare && (
             <Sharer
               type="RoyaltiesShare"
@@ -628,7 +662,6 @@ export default function Mint({ organizers, artists }) {
             />
           )}
 
-          {/* wallet */}
           <Box>
             <Box>
               <TextField
@@ -641,8 +674,6 @@ export default function Mint({ organizers, artists }) {
               />
             </Box>
           </Box>
-
-          {/* file + display + x-directory */}
           <Box>
             <ThemeProvider theme={theme}>
               <Button
@@ -652,14 +683,9 @@ export default function Mint({ organizers, artists }) {
                 tabIndex={-1}
               >
                 Upload file
-                <VisuallyHiddenInput
-                  type="file"
-                  accept={ACCEPT_EXTS}
-                  onChange={handleFileUpload}
-                />
+                <VisuallyHiddenInput type="file" onChange={handleFileUpload} />
               </Button>
             </ThemeProvider>
-
             <Box>
               {file ? (
                 <Box sx={{ width: 300 }}>
@@ -667,61 +693,40 @@ export default function Mint({ organizers, artists }) {
                 </Box>
               ) : null}
             </Box>
-
-            {/* ZIP → 顯示 x-directory 切換 */}
-            {fileKind?.isZip && (
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={isXDirectory}
-                    onChange={(e) => setIsXDirectory(e.target.checked)}
-                  />
-                }
-                label="This ZIP is an HTML site (x-directory)"
-              />
-            )}
-
-            {/* 非圖片 → 要求縮圖 */}
-            {file && !fileKind?.isImage && (
-              <Box mt={1}>
-                <ThemeProvider theme={theme}>
-                  <Button
-                    id="display"
-                    component="label"
-                    role={undefined}
-                    variant="outlined"
-                    tabIndex={-1}
-                  >
-                    Upload display
-                    <VisuallyHiddenInput
-                      type="file"
-                      accept=".png,.jpg,.jpeg,.webp"
-                      onChange={handleDisplayChange}
-                    />
-                  </Button>
-                </ThemeProvider>
+            <Box>
+              {(file && file.type.startsWith("image/")) || !file ? (
+                <></>
+              ) : (
                 <Box>
-                  {display ? (
-                    <Box sx={{ width: 300 }}>
-                      <Box component="span">{display.name}</Box>
-                    </Box>
-                  ) : null}
+                  <ThemeProvider theme={theme}>
+                    <Button
+                      id="thumbnail"
+                      component="label"
+                      role={undefined}
+                      variant="outlined"
+                      tabIndex={-1}
+                    >
+                      Upload thumbnail
+                      <VisuallyHiddenInput
+                        type="file"
+                        onChange={handleThumbChange}
+                      />
+                    </Button>
+                  </ThemeProvider>
+                  <Box>
+                    {thumb ? (
+                      <Box sx={{ width: 300 }}>
+                        <Box component="span">{thumb.name}</Box>
+                      </Box>
+                    ) : null}
+                  </Box>
                 </Box>
-              </Box>
-            )}
+              )}
+            </Box>
           </Box>
-
-          {/* submit */}
           <Box pt={6}>
             <ThemeProvider theme={theme}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={upload}
-                disabled={
-                  !file || (!!file && !classifyFile(file).isImage && !display)
-                }
-              >
+              <Button variant="contained" color="primary" onClick={upload}>
                 Mint
               </Button>
               <div>

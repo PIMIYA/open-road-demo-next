@@ -72,6 +72,7 @@ export default function NFTPage({
   tokenId,
   error,
 }) {
+  const router = useRouter();
   const [claimStatus, setClaimStatus] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const embedRef = useRef(null);

@@ -17,7 +17,33 @@ import { getRandomDate, getRandomPlace, getRandomCreator } from "@/lib/dummy";
 
 // TODO: infinite scroll
 // TODO: skeleton loading
-export default function WalletTimeline({ cardData }) {
+export default function WalletTimeline({
+  cardData,
+  comments,
+  addressFromURL,
+  myWalletAddress,
+  organizers,
+  artists,
+}) {
+  /* combine commets with cardData if tokenId is the same */
+  const combinedData = useMemo(() => {
+    if (!cardData || !comments || !comments.data) return cardData;
+
+    const combined = cardData.map((card, index) => {
+      const comment = comments.data.find(
+        (comment) => comment.tokenID === card.tokenId
+      );
+
+      return {
+        ...card,
+        comment: comment ? comment.message : null,
+      };
+    });
+
+    return combined;
+  }, [cardData, comments]);
+  // console.log("combinedData", combinedData);
+
   return (
     <Timeline
       sx={{
@@ -28,15 +54,22 @@ export default function WalletTimeline({ cardData }) {
         },
       }}
     >
-      {cardData &&
-        cardData.map((card, index) => (
+      {combinedData &&
+        combinedData.map((card, index) => (
           <TimelineItem key={index}>
             <TimelineSeparator>
               <TimelineDot color="secondary" />
               {index !== cardData.length - 1 && <TimelineConnector />}
             </TimelineSeparator>
             <TimelineContent>
-              <WalletTimelineCard data={card} key={index} />
+              <WalletTimelineCard
+                data={card}
+                key={index}
+                addressFromURL={addressFromURL}
+                myWalletAddress={myWalletAddress}
+                organizers={organizers}
+                artists={artists}
+              />
             </TimelineContent>
           </TimelineItem>
         ))}

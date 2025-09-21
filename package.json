@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@airgap/beacon-sdk": "^4.2.2",
+    "@airgap/beacon-sdk": "4.3.3",
     "@airgap/beacon-types": "^4.1.2",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
@@ -28,18 +28,21 @@
     "axios": "^1.7.7",
     "dayjs": "^1.11.11",
     "fastclick": "^1.0.6",
+    "fflate": "^0.8.2",
     "html-react-parser": "^5.1.10",
     "kukai-embed": "^0.9.2",
-    "next": "14.2.14",
+    "next": "^13.5.5-canary.4",
     "qrcode": "^1.5.3",
     "random-seed": "^0.3.0",
     "react": "^18",
     "react-cookie": "^7.1.0",
     "react-cool-onclickoutside": "^1.7.0",
     "react-dom": "^18",
+    "read-json-lines-sync": "^2.2.5",
     "sass": "^1.77.2",
     "sharp": "^0.33.2",
-    "three": "^0.168.0",
+    "three": "^0.163.0",
+    "unzipit": "^1.4.3",
     "use-places-autocomplete": "^4.0.1"
   },
   "devDependencies": {

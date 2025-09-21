@@ -1,10 +1,13 @@
-/* NEXT */
-import dynamic from "next/dynamic";
-/* MUI */
-import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
+/*** Data, collectors and comments of a single token ***/
+
+import { useEffect, useState } from "react";
 /* Fetch data */
-import { TZKT_API, MainnetAPI, GetClaimablePoolID } from "@/lib/api";
+import {
+  TZKT_API,
+  MainnetAPI,
+  GetClaimablePoolID,
+  FetchDirectusData,
+} from "@/lib/api";
 /* Components */
 import SingleToken from "@/components/singleToken";
 /* Routing */
@@ -17,11 +20,10 @@ import {
   getRandomPlace,
 } from "@/lib/dummy";
 
-
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 
-export default function Id({ ownersData, data, data_from_pool }) {
-  // console.log("current active claimable token data", data_from_pool[0].key);
+export default function Id({ ownersData, data, data_from_pool, organizers, artists, events }) {
+  // console.log("current active claimable token data", data[0].tokenId);
 
   // TODO: remove dummy data after api ready
   if (data) {
@@ -36,10 +38,10 @@ export default function Id({ ownersData, data, data_from_pool }) {
       d.eventDate = getRandomPeriod();
       d.start_time = d.metadata.start_time;
       d.end_time = d.metadata.end_time;
-      if(data_from_pool){
+      if (data_from_pool) {
         d.poolId = data_from_pool[0].key;
         d.duration = data_from_pool[0].value.duration;
-      }else{
+      } else {
         d.poolId = null;
         d.duration = null;
       }
@@ -47,14 +49,53 @@ export default function Id({ ownersData, data, data_from_pool }) {
       return d;
     });
   }
+  /* add projectName to data */
+  if (data && events) {
+    data.forEach((item) => {
+      const matchingProject = events.data.find(
+        (project) =>
+          project.status === "published" &&
+          project.location === item.metadata.event_location &&
+          project.start_time &&
+          new Date(
+            new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000
+          ).toUTCString() === item.metadata.start_time
+      );
+      if (matchingProject) {
+        item.metadata.projectName = matchingProject.name;
+        item.metadata.projectId = matchingProject.id;
+      }
+    });
+  }
 
-  // return <SingleToken data={data} />;
+  /* Client fetch comments */
+  const [comments, setComments] = useState(null);
+  /* API route: Client fetch Comments by Token ID at KairosDrop NFT Comments API */
+  useEffect(() => {
+    fetch("/api/get-comments-byTokenID", {
+      method: "POST",
+      body: data[0].tokenId,
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        let data = res.data;
+        setComments(data);
+      });
+  }, []);
+  // console.log("comments", comments);
+
   return (
     <>
       {data.map((d, index) => {
         return (
           <div key={index}>
-            <SingleToken data={d} ownersData={ownersData} />
+            <SingleToken
+              data={d}
+              ownersData={ownersData}
+              organizers={organizers}
+              artists={artists}
+              comments={comments}
+            />
           </div>
         );
       })}
@@ -64,19 +105,25 @@ export default function Id({ ownersData, data, data_from_pool }) {
 
 export async function getServerSideProps(params) {
   //   console.log(params.params.id);
-  const [ownersData, data, data_from_pool] = await Promise.all([
-    await MainnetAPI(
-      `/fa2tokens/${params.params.contract}/${params.params.tokenId}`
-    ),
-    await TZKT_API(
-      `/v1/tokens?contract=${params.params.contract}&tokenId=${params.params.tokenId}`
-    ),
-    await GetClaimablePoolID(
-      contractAddress, params.params.contract, params.params.tokenId
-    ),
-  ]);
+  const [ownersData, data, data_from_pool, organizers, artists, events] =
+    await Promise.all([
+      await MainnetAPI(
+        `/fa2tokens/${params.params.contract}/${params.params.tokenId}`
+      ),
+      await TZKT_API(
+        `/v1/tokens?contract=${params.params.contract}&tokenId=${params.params.tokenId}`
+      ),
+      await GetClaimablePoolID(
+        contractAddress,
+        params.params.contract,
+        params.params.tokenId
+      ),
+      await FetchDirectusData(`/organizers`),
+      await FetchDirectusData(`/artists`),
+      await FetchDirectusData(`/events`),
+    ]);
 
   return {
-    props: { ownersData, data, data_from_pool },
+    props: { ownersData, data, data_from_pool, organizers, artists, events },
   };
 }

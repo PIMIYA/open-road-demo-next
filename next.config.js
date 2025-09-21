@@ -1,14 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // swcMinify: true,
-  // typescript: {
-  //   // !! WARN !!
-  //   // Dangerously allow production builds to successfully complete even if
-  //   // your project has type errors.
-  //   // !! WARN !!
-  //   ignoreBuildErrors: true,
-  // },
 
   webpack: (config, { isServer }) => {
     if (!isServer) {
@@ -23,10 +15,22 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'assets.akaswap.com',
-        port: '',
-        pathname: '/ipfs/**',
+        protocol: "https",
+        hostname: "assets.akaswap.com",
+        port: "",
+        pathname: "/ipfs/**",
+      },
+      {
+        protocol: "https",
+        hostname: "dummyimage.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "data.kairos-mint.art",
+        port: "",
+        pathname: "/assets/**",
       },
     ],
   },
@@ -42,32 +46,22 @@ const nextConfig = {
     NEXT_PUBLIC_PARTNER_ID: process.env.NEXT_PUBLIC_PARTNER_ID,
     NEXT_PUBLIC_BAUTH_USERNAME: process.env.NEXT_PUBLIC_BAUTH_USERNAME,
     NEXT_PUBLIC_BAUTH_PASSWORD: process.env.NEXT_PUBLIC_BAUTH_PASSWORD,
-    DirectusURL: process.env.DirectusURL,
+    NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL:
+      process.env.NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL,
+    NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD:
+      process.env.NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD,
+    DIRECTUS: process.env.DIRECTUS,
+    COMMENT_URL: process.env.COMMENT_URL,
   },
-  eslint: {
-    ignoreDuringBuilds: false,
-  },
-
-  // async headers() {
-  //   return [
-  //     {
-  //       source: "/:path*",
-  //       headers: [
-  //         {
-  //           key: "Access-Control-Allow-Origin",
-  //           value: "*", // Adjust this to your specific origin if needed
-  //         },
-  //         {
-  //           key: "Access-Control-Allow-Methods",
-  //           value: "GET, POST, PUT, DELETE, OPTIONS",
-  //         },
-  //         {
-  //           key: "Access-Control-Allow-Headers",
-  //           value: "X-Requested-With, Content-Type, Authorization",
-  //         },
-  //       ],
-  //     },
-  //   ];
-  // },
 };
-module.exports = nextConfig
+module.exports = {
+  ...nextConfig,
+  async rewrites() {
+    return [
+      {
+        source: "/mint",
+        destination: "https://mint.kairos-mint.art/mint",
+      },
+    ];
+  },
+};

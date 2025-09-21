@@ -1,3 +1,4 @@
+import dynamic from "next/dynamic";
 import { BeaconWallet } from "@taquito/beacon-wallet";
 import {
   ExtendedPeerInfo,
@@ -11,23 +12,38 @@ import { ConnectFn, ContractCallDetails } from "./types";
 import { BeaconEvent } from "@airgap/beacon-sdk";
 import { InMemorySigner } from "@taquito/signer";
 
+const createBeaconWallet = () => {
+  if (typeof window === "undefined") return undefined;
 
-const createBeaconWallet = () =>
-  typeof window === "undefined"
-    ? undefined
-    : new BeaconWallet({
-        name: "Kairos",
-        // appUrl: 'localhost:3000',
-        preferredNetwork: "mainnet",
-        // walletConnectOptions: {
-        //   projectId: '97f804b46f0db632c52af0556586a5f3',
-        //   relayUrl: 'wss://relay.walletconnect.com'
-        // },
-        featuredWallets: ["kukai", "trust", "temple", "umami"],
-        // disableDefaultEvents: false, // Disable all events when true/ UI. This also disables the pairing alert.
-      } as any);
+  // Lazy load BeaconWallet only on client side
+  const { BeaconWallet } = require("@taquito/beacon-wallet");
+
+  return new BeaconWallet({
+    name: "Kairos",
+    preferredNetwork: "mainnet",
+    featuredWallets: ["kukai", "trust", "temple", "umami"],
+  } as any);
+};
+
+// const createBeaconWallet = () =>
+//   typeof window === "undefined"
+//     ? undefined
+//     : new BeaconWallet({
+//         name: "Kairos",
+//         // appUrl: 'localhost:3000',
+//         preferredNetwork: "mainnet",
+//         // walletConnectOptions: {
+//         //   projectId: '97f804b46f0db632c52af0556586a5f3',
+//         //   relayUrl: 'wss://relay.walletconnect.com'
+//         // },
+//         featuredWallets: ["kukai", "trust", "temple", "umami"],
+//         // disableDefaultEvents: false, // Disable all events when true/ UI. This also disables the pairing alert.
+//       } as any);
 
 export const connectBeacon: ConnectFn = async (isNew) => {
+  if (typeof window === "undefined") {
+    throw new Error("Beacon wallet cannot be used on server side");
+  }
   if (!isNew) {
     const existingWallet = createBeaconWallet();
 
@@ -66,10 +82,8 @@ export const connectBeacon: ConnectFn = async (isNew) => {
     throw new Error("Tried to connect on the server");
   }
 
+  // 移除 network 屬性，因為它已經在創建 BeaconWallet 時設置了
   const response = await beaconWallet.client.requestPermissions({
-    network: {
-      type: "mainnet" as any,
-    },
     scopes: [PermissionScope.OPERATION_REQUEST],
   });
 
@@ -134,6 +148,14 @@ export const tezosToolkit = new TezosToolkit(
   "https://mainnet.smartpy.io"
 );
 
+// Only set up wallet provider on client side
+if (typeof window !== "undefined") {
+  const wallet = createBeaconWallet();
+  if (wallet) {
+    tezosToolkit.setWalletProvider(wallet);
+  }
+}
+
 export const callContractBeaconFn =
   (beaconWallet: BeaconWallet) =>
   async ({
@@ -144,13 +166,9 @@ export const callContractBeaconFn =
   }: ContractCallDetails): Promise<string | undefined> => {
     try {
       await beaconWallet?.requestPermissions({
-        network: {
-          type: "mainnet" as any,
-        },
         scopes: [PermissionScope.OPERATION_REQUEST],
       });
 
-      
       tezosToolkit.setPackerProvider(new MichelCodecPacker());
 
       if (!process.env.WALLET_PRIVATE_KEY)
@@ -161,32 +179,51 @@ export const callContractBeaconFn =
         process.env.WALLET_PRIVATE_KEY,
         process.env.WALLET_PASSPHRASE
       );
-      tezosToolkit.setProvider({signer});
+      tezosToolkit.setProvider({ signer });
 
       const minterContractAddress: string =
         "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
       const minter = await tezosToolkit.wallet.at(minterContractAddress);
-      console.log("Calling contract function");
-      console.log("collection_id:", collection_id);
-      console.log("editions:", editions);
-      console.log("metadata_cid:", stringToBytes(metadata_cid[0]));
-      console.log("target:", target[0]);
 
+      // const op = await minter.methods
+      //   .mint_artist(
+      //     contractId,
+      //     tokenQty,
+      //     stringToBytes(tokens[0]),
+      //     creators[0]
+      //   )
+      //   .send({ storageLimit: 350 });
+
+      const collectionId = 92340;
+      const editions = 1;
+      const cidBytes = stringToBytes(tokens[0]);
+      const recipient = creators[0];
+      console.log("=== Contract Call Parameters ===");
+      console.table({
+        collectionId,
+        editions,
+        cidBytes,
+        recipient,
+      });
       const op = await minter.methodsObject
         .mint_artist({
-          collection_id: Number(collection_id),
-          editions: Number(editions),
-          metadata_cid: stringToBytes(metadata_cid[0]),
-          target: target[0]
+          collection_id: collectionId,
+          editions,
+          metadata_cid: cidBytes,
+          target: recipient,
         })
-        .send();
+        .send({ storageLimit: 350 });
 
       console.log("Op hash:", op.opHash);
       const confirmation = await op.confirmation();
       console.log("Confirmation:", confirmation);
       return op.opHash;
     } catch (error) {
-      console.error("Error calling contract function:", error);
+      console.error(
+        "Error calling contract function:",
+        JSON.stringify(error, null, 2)
+      );
+
       throw error;
     }
   };

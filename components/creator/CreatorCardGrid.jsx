@@ -10,7 +10,8 @@ import {
   getUrlFromUid,
 } from "@/lib/stringUtils";
 
-export default function ({ rawPools }) {
+export default function ({ rawPools, address }) {
+  // console.log("rawPools", rawPools);
   const pools = rawPools.map((pool) => {
     let result = {
       poolURL: getUrlFromUid(pool.tokens_uid[0]),
@@ -26,27 +27,18 @@ export default function ({ rawPools }) {
 
   // Fetch data of creator's tokens from tzkt api
   useEffect(() => {
-    fetch("/api/walletRecords", {
+    fetch("/api/walletRecordsCreations", {
       method: "POST",
-      body: poolURLs,
+      body: [poolURLs, `.${address}`],
     })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Network response was not ok");
-        }
-        // console.log(res);
-        return res.json();
-      })
-      .then((res) => {
-        let data = res.data;
+      .then((res) => res.json())
+      .then((data) => {
         setCardData(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
         setLoading(false);
       });
   }, [poolURLs]);
+
+  console.log("cardData", cardData);
 
   if ((!isLoading && !cardData) || cardData == null) return <p>No mint data</p>;
 
@@ -57,6 +49,10 @@ export default function ({ rawPools }) {
   };
 
   return (
-    <GeneralTokenCardGrid data={cardData} columnSettings={columnSettings} />
+    // <>ss</>
+    <GeneralTokenCardGrid
+      data={cardData.data}
+      columnSettings={columnSettings}
+    />
   );
 }

@@ -1,116 +1,83 @@
-// MUI + Google Maps Places Autocomplete
-import TextField from "@mui/material/TextField";
-import Box from "@mui/material/Box";
-import Autocomplete from "@mui/material/Autocomplete";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import Grid from "@mui/material/Grid";
-import Typography from "@mui/material/Typography";
-import parse from "autosuggest-highlight/parse";
-import { debounce } from "@mui/material/utils";
 import { useState, useEffect, useRef, useMemo } from "react";
-// MUI
-import { Button, Checkbox, FormControlLabel } from "@mui/material";
-import { styled } from "@mui/material/styles";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import Container from "@mui/material/Container";
-import Slider from "@mui/material/Slider";
+import { useRouter } from "next/router";
+import {
+  Box,
+  TextField,
+  Autocomplete,
+  Grid,
+  Typography,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  Container,
+} from "@mui/material";
+import { debounce } from "@mui/material/utils";
+import { ThemeProvider } from "@mui/material/styles";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
-// Get the lat and lng from the address
+/* MUI + Google Maps Places Autocomplete */
+import parse from "autosuggest-highlight/parse";
 import { getGeocode, getLatLng } from "use-places-autocomplete";
-// Kairos
+
+/* Kairos */
 import { useConnection } from "@/packages/providers";
-// Componenta
+
+/* Components */
 import { Sharer } from "@/components/sharer";
-// Next
-import { useRouter } from "next/router";
 
-//List value of categories, tags, and licenses
-const categories = [
-  { label: "展覽" },
-  { label: "表演" },
-  { label: "課程" },
-  { label: "導覽" },
-  { label: "工作坊" },
-  { label: "黑客松" },
-  { label: "座談" },
-  { label: "親子" },
-  { label: "節祭／展會／市集" },
-  { label: "分享會／同好會／見面會" },
-];
-const tags = [
-  { main: "視覺", sub: "繪畫" },
-  { main: "視覺", sub: "裝置" },
-  { main: "視覺", sub: "工藝" },
-  { main: "視覺", sub: "雕塑" },
-  { main: "視覺", sub: "攝影" },
-  { main: "視覺", sub: "影像" },
-  { main: "表演", sub: "馬戲" },
-  { main: "表演", sub: "音樂劇（親子、百老匯）" },
-  { main: "表演", sub: "戲曲（歌仔戲、南管、京劇）" },
-  { main: "表演", sub: "現代戲劇" },
-  { main: "表演", sub: "讀劇" },
-  { main: "表演", sub: "音樂（搖滾、古典、電子、音像）" },
-  { main: "表演", sub: "說唱（漫才、相聲、站立喜劇）" },
-  { main: "表演", sub: "舞蹈（現代舞、舞踏、民俗）" },
-  { main: "設計", sub: "平面" },
-  { main: "設計", sub: "互動 ／媒體" },
-  { main: "設計", sub: "時尚" },
-  { main: "設計", sub: "建築" },
-  { main: "設計", sub: "工業／商品" },
-  { main: "電影", sub: "紀錄片" },
-  { main: "電影", sub: "劇情片" },
-  { main: "科技", sub: "區塊鏈" },
-  { main: "科技", sub: "AI" },
-  { main: "科技", sub: "VR／AR／MR" },
-  { main: "書籍", sub: "小說" },
-  { main: "書籍", sub: "詩歌" },
-  { main: "書籍", sub: "散文" },
-  { main: "書籍", sub: "漫畫" },
-  { main: "文化", sub: "公益（社會運動、地方創生、慈善捐贈）" },
-  { main: "文化", sub: "性別" },
-  { main: "文化", sub: "語言" },
-  { main: "文化", sub: "歷史" },
-  { main: "文化", sub: "環境" },
-  { main: "文化", sub: "動物" },
-  { main: "科學", sub: "社會科學（經濟、政治、國際關係）" },
-  { main: "科學", sub: "自然科學（天文、地理）" },
-];
-const licenses = [
-  { label: "All rights reserved" },
-  { label: "CC0 public (Public Domain)" },
-  { label: "CC BY (Attribution)" },
-  { label: "CC BY-SA (Attribution-ShareAlike)" },
-];
+// List value of categories, tags, and licenses
+import {
+  categories,
+  tags,
+  licenses,
+  VisuallyHiddenInput,
+  theme,
+} from "@/components/mint/const";
 
-// Custom styles for the file upload button and hide the input
-const VisuallyHiddenInput = styled("input")({
-  clip: "rect(0 0 0 0)",
-  clipPath: "inset(50%)",
-  height: 1,
-  overflow: "hidden",
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  whiteSpace: "nowrap",
-  width: 1,
-});
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: "rgba(0,0,0,0.87)",
-    },
-  },
-});
+import { FetchDirectusData } from "@/lib/api";
 
-// MUI + Google Maps Places Autocomplete
+const ACCEPT_EXTS =
+  ".bmp,.gif,.jpg,.jpeg,.png,.svg,.webp," +
+  ".mp4,.ogv,.mov,.webm," +
+  ".glb,.gltf," +
+  ".mp3,.oga," +
+  ".pdf,.zip";
+
+function classifyFile(file) {
+  if (!file) return {};
+  const name = (file.name || "").toLowerCase();
+  const type = (file.type || "").toLowerCase();
+  const hasExt = (ext) => name.endsWith(ext);
+
+  const isImage =
+    type.startsWith("image/") ||
+    [".bmp", ".gif", ".jpg", ".jpeg", ".png", ".svg", ".webp"].some(hasExt);
+
+  const isVideo =
+    type.startsWith("video/") || [".mp4", ".ogv", ".mov", ".webm"].some(hasExt);
+
+  const isAudio = type.startsWith("audio/") || [".mp3", ".oga"].some(hasExt);
+
+  const is3D = [".glb", ".gltf"].some(hasExt);
+
+  const isPDF = type === "application/pdf" || hasExt(".pdf");
+
+  const isZip = type === "application/zip" || hasExt(".zip");
+
+  // 非圖片 → 一律需要縮圖（由後端產 thumbnail）
+  const needsDisplay = !isImage;
+
+  return { isImage, isVideo, isAudio, is3D, isPDF, isZip, needsDisplay };
+}
+
+/* ------------------------------------------------ */
+
 const GOOGLE_MAPS_API_KEY = `${process.env.GoogleMapsAPIKey}`;
 function loadScript(src, position, id) {
-  if (!position) {
-    return;
-  }
+  if (!position) return;
   const script = document.createElement("script");
   script.setAttribute("async", "");
   script.setAttribute("id", id);
@@ -119,18 +86,16 @@ function loadScript(src, position, id) {
 }
 const autocompleteService = { current: null };
 
-export default function Mint() {
+export default function Mint({ organizers, artists }) {
   const router = useRouter();
-  // State variables for places autocomplete
+
   const [value, setValue] = useState(null);
   const [inputValue, setInputValue] = useState("");
   const [options, setOptions] = useState([]);
   const loaded = useRef(false);
-  // State variables for lat and lng
   const [lat, setLat] = useState(null);
   const [lng, setLng] = useState(null);
 
-  // Google autocomplete service
   if (typeof window !== "undefined" && !loaded.current) {
     if (!document.querySelector("#google-maps")) {
       loadScript(
@@ -141,250 +106,66 @@ export default function Mint() {
     }
     loaded.current = true;
   }
+
   const fetchPlacePredictions = useMemo(
     () =>
       debounce((request, callback) => {
+        if (!autocompleteService.current) return;
         autocompleteService.current.getPlacePredictions(request, callback);
       }, 400),
     []
   );
 
-  // State variables for form
+  // Form states
   let pinningMetadata = false;
   let mintingToken = false;
+
+  // const serverUrl =
+  //   process.env.NODE_ENV === "production"
+  //     ? process.env.SERVER_URL
+  //     : "http://localhost:3030";
   const serverUrl = process.env.SERVER_URL;
+
   const contractAddress = "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
-  const contractId = 92340; // 正式版kairosNFTs = 92340 測試版blackpeople = 91040 
+  const contractId = 92340; // 正式92340 測試91040
+
   const { address, callcontract } = useConnection();
-  const createrAddress = "tz1XBEMJfYoMoMMZafjYv3Q5V9u3QKv1xuBR" // address, address will be used in the future, now it is a fixed value
+  const createrAddress = "tz1XBEMJfYoMoMMZafjYv3Q5V9u3QKv1xuBR";
+
   const titleRef = useRef();
-  const organizerRef = useRef();
   const descriptionRef = useRef();
   const walletRef = useRef();
+
+  const [selectedOrganizer, setSelectedOrganizer] = useState(null);
+  const [selectedArtists, setSelectedArtists] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedTags, setSelectedTags] = useState([]);
   const [selectedLicense, setSelectedLicense] = useState(null);
   const [mintingTokenQty, setMintingTokenQty] = useState(1);
   const [royaltyPercentage, setRoyaltyPercentage] = useState(10);
   const [walletAddress, setWalletAddress] = useState(``);
-  const [file, setFile] = useState();
-  const [thumb, setThumb] = useState();
+
+  const [file, setFile] = useState(undefined);
+  const [display, setDisplay] = useState(undefined);
+  const [fileKind, setFileKind] = useState(null);
+  const [isXDirectory, setIsXDirectory] = useState(true); // ZIP 預設視為 x-directory
+
   const [miningInProgress, setMiningInProgress] = useState(false);
   const [startTime, setStartTime] = useState();
   const [endTime, setEndTime] = useState();
+
   // royalties share
   const [useRoyaltiesShare, setUseRoyaltiesShare] = useState();
   const [royaltiesSharers, setRoyaltiesSharer] = useState([
-    {
-      id: 0,
-      address: walletAddress,
-      share: 100,
-    },
+    { id: 0, address: walletAddress, share: 100 },
   ]);
 
-  function handleFileChange(event) {
-    console.log("file", file);
-    setFile(event.target.files[0]);
-  }
-  function handleThumbChange(event) {
-    console.log("thumb", thumb);
-    setThumb(event.target.files[0]);
-  }
-
-  const upload = async (event) => {
-    event.preventDefault();
-    // Check if the Google Maps Places library is loaded
-    if (!autocompleteService.current) {
-      console.error("Google Maps Places library is not loaded yet");
-      return;
-    }
-    try {
-      pinningMetadata = true;
-      // Create a new FormData instance
-      const data = new FormData();
-
-      // Append each form field to the FormData instance
-      data.append("organizer", organizerRef.current.value);
-      data.append("title", titleRef.current.value);
-      data.append("description", descriptionRef.current.value);
-      data.append("category", selectedCategory.label);
-
-      //solve ugly data tags
-      const transformedData = selectedTags.reduce((acc, { main, sub }) => {
-        const mainFormatted =
-          main.charAt(0).toUpperCase() + main.slice(1).toLowerCase();
-        const subFormatted =
-          sub.charAt(0).toUpperCase() + sub.slice(1).toLowerCase();
-        acc[mainFormatted] = acc[mainFormatted]
-          ? [...acc[mainFormatted], subFormatted]
-          : [subFormatted];
-        return acc;
-      }, {});
-      const beautyResult = Object.keys(transformedData).map((key) => ({
-        [key]: transformedData[key],
-      }));
-
-      //tags to list of strings
-      let result = [];
-
-      beautyResult.forEach((obj) => {
-        for (let key in obj) {
-          obj[key].forEach((value) => {
-            result.push(`${key}:${value}`);
-          });
-        }
-      });
-
-      data.append("tags", JSON.stringify(result));
-
-      // Append the location name to the FormData instance
-      data.append("eventPlace", inputValue);
-
-      // Append the lat and lng to the FormData instance
-      const geolocation = [lat, lng];
-      data.append("geoLocation", JSON.stringify(geolocation));
-
-      // Append the start time to the FormData instance
-      data.append("startTime", startTime);
-      data.append("endTime", endTime);
-
-      // Append the creator address to the FormData instance
-      data.append("creator", createrAddress);
-
-      // Append the minter address to the FormData instance
-      data.append("minter", contractAddress);
-
-      // Append the minting tool to the FormData instance
-      data.append("mintingTool", serverUrl);
-
-      // Append the copyright to the FormData instance,
-      data.append("rights", selectedLicense.label);
-
-      // Append the royalties to the FormData instance
-      const beautyShares = Object.fromEntries(
-        royaltiesSharers.map((sharer) => [
-          sharer.address,
-          royaltyPercentage * sharer.share,
-        ])
-      );
-      // console.log(beautyShares);
-      // royalties share
-      const royalties = {
-        decimals: 4,
-        shares: beautyShares,
-      };
-      // royalty not share
-      const royalty = {
-        decimals: 4,
-        shares: { [address]: royaltyPercentage * 100 },
-      };
-
-      // const testRoyalty = {};
-      // testRoyalty[address] = royaltyPercentage * 100;
-
-      if (useRoyaltiesShare) {
-        data.append("royalties", JSON.stringify(royalties));
-      } else {
-        data.append("royalties", JSON.stringify(royalty));
-      }
-
-      // data.append("royalties", JSON.stringify(royalties));
-
-      // Append the file to the FormData instance
-      // if (fileRef) {
-      //   data.append("image", fileRef.current.files[0]);
-      // }
-      console.log("file", file);
-      if (file) {
-        data.append("image", file);
-      } else {
-        console.error("No file provided");
-        return;
-      }
-      if (thumb) {
-        data.append("thumbnail", thumb);
-      }
-
-      // Log FormData content
-      for (let pair of data.entries()) {
-        console.log(pair[0] + ": " + pair[1]);
-      }
-
-      console.log(...data);
-
-      // Make a POST request to the server
-      const response = await fetch(`${serverUrl}/mint`, {
-        method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Access-Control-Allow-Origin": "*"
-        },
-        body: data,
-      });
-
-
-      // // Parse the JSON response
-      if (response) {
-        const data = await response.json();
-        console.log(data);
-        if (
-          data.status === true &&
-          data.msg.metadataHash &&
-          data.msg.imageHash
-        ) {
-          pinningMetadata = false;
-          mintingToken = true;
-
-          // Minting token
-          console.log("Minting token...");
-
-          const metadataHash = `ipfs://${data.msg.metadataHash}`;
-
-          //quick test mint-factory
-          //Editions
-          const metadataHashes = [metadataHash];
-
-          const creators = [createrAddress, address];
-
-          const contractCallDetails = {
-            collection_id: contractId,
-            editions: mintingTokenQty,
-            metadata_cid: metadataHashes,
-            target: creators,
-          };
-
-          console.log(mintingTokenQty);
-
-          try {
-            setMiningInProgress(true);
-            const opHash = await callcontract(contractCallDetails);
-            console.log("Operation successful with hash:", opHash);
-          } catch (error) {
-            console.error("Error calling contract function:", error);
-          }
-        } else {
-          throw "No IPFS hash";
-        }
-      } else {
-        throw "No response";
-      }
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setMiningInProgress(false);
-      pinningMetadata = false;
-      mintingToken = false;
-    }
-  };
-
-  // API ROUTE : Fetch wallet role
+  // Wallet role
   const [roleData, setRoleData] = useState(null);
   const [isLoadingRole, setLoadingRole] = useState(true);
 
   useEffect(() => {
-    if (!address) {
-      return;
-    }
+    if (!address) return;
 
     // Auto import wallet address to input field
     setWalletAddress(address);
@@ -406,38 +187,173 @@ export default function Mint() {
       autocompleteService.current =
         new window.google.maps.places.AutocompleteService();
     }
-    if (!autocompleteService.current) {
-      return undefined;
-    }
+    if (!autocompleteService.current) return;
+
     if (inputValue === "") {
       setOptions(value ? [value] : []);
-      return undefined;
+      return;
     }
     fetchPlacePredictions({ input: inputValue }, (results) => {
-      if (active) {
-        let newOptions = [];
-        if (value) {
-          newOptions = [value];
-        }
-        if (results) {
-          newOptions = [...newOptions, ...results];
-        }
-        setOptions(newOptions);
-      }
+      if (!active) return;
+      let newOptions = [];
+      if (value) newOptions = [value];
+      if (results) newOptions = [...newOptions, ...results];
+      setOptions(newOptions);
     });
+
     return () => {
       active = false;
     };
   }, [value, inputValue, fetchPlacePredictions, address]);
 
-  // Fetch wallet role
   if (isLoadingRole) return <p>Loading...</p>;
   if (!roleData) return <p>No role data</p>;
-  // console.log(roleData.data.length);
-  // Redirect to cannotMint page if the wallet role is not allowed to mint or not connected to wallet
-  if (roleData.data.length == 0 || !address) {
+  if (roleData.data.length === 0 || !address) {
     router.push("/cannotMint");
   }
+
+  /**
+   * 檔案上傳：不在前端解 ZIP
+   * 由後端解壓、處理檔案內容、驗證、pinFromFS
+   */
+  const handleFileUpload = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const kind = classifyFile(f);
+    setFile(f);
+    setFileKind(kind);
+    if (kind.isZip) setIsXDirectory(true);
+  };
+
+  const handleDisplayChange = (e) => {
+    const t = e.target.files?.[0];
+    if (!t) return;
+    setDisplay(t);
+  };
+  /* ------------------------------------------------ */
+
+  const upload = async (event) => {
+    event.preventDefault();
+
+    if (!autocompleteService.current) {
+      console.error("Google Maps Places library is not loaded yet");
+      return;
+    }
+    if (!file) {
+      console.error("No primary file selected");
+      return;
+    }
+
+    const kind = fileKind ?? classifyFile(file);
+    if (kind && !kind.isImage && !display) {
+      console.error("Display required for non-image types");
+      return;
+    }
+
+    try {
+      pinningMetadata = true;
+      const data = new FormData();
+
+      // Base metadata
+      data.append("title", titleRef.current.value || "");
+      data.append("description", descriptionRef.current.value || "");
+      data.append("organizer", selectedOrganizer?.name || "");
+
+      const resultArtists = (selectedArtists || []).map((a) => a.name);
+      data.append("artists", JSON.stringify(resultArtists));
+      data.append("category", selectedCategory?.label || "");
+
+      const resultTags = (selectedTags || []).map((t) => t.label);
+      data.append("tags", JSON.stringify(resultTags));
+
+      data.append("eventPlace", inputValue || "");
+      data.append("geoLocation", JSON.stringify([lat, lng]));
+      data.append("startTime", startTime || "");
+      data.append("endTime", endTime || "");
+
+      data.append("creator", createrAddress);
+      data.append("minter", contractAddress);
+      data.append("mintingTool", serverUrl);
+      data.append("rights", selectedLicense?.label || "");
+
+      // Royalties
+      const beautyShares = Object.fromEntries(
+        (royaltiesSharers || []).map((s) => [
+          s.address,
+          royaltyPercentage * s.share,
+        ])
+      );
+      const royaltiesShare = { decimals: 4, shares: beautyShares };
+      const royaltySimple = {
+        decimals: 4,
+        shares: { [address]: royaltyPercentage * 100 },
+      };
+      if (useRoyaltiesShare) {
+        data.append("royalties", JSON.stringify(royaltiesShare));
+      } else {
+        data.append("royalties", JSON.stringify(royaltySimple));
+      }
+
+      // Files
+      data.append("image", file);
+      if (display) data.append("display", display);
+
+      // ZIP → 是否要求後端走 x-directory 流程（仍由後端驗證 index.html 等）
+      if (kind?.isZip) data.append("xdir", isXDirectory ? "1" : "0");
+
+      const response = await fetch(`${serverUrl}/mint`, {
+        method: "POST",
+        body: data,
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => "");
+        throw new Error(`Mint failed: ${response.status} ${text}`);
+      }
+
+      const payload = await response.json();
+
+      if (
+        payload?.status === true &&
+        payload?.msg?.metadataHash &&
+        payload?.msg?.imageHash
+      ) {
+        console.log("===== IPFS 上傳成功 =====");
+        console.log("Metadata Hash:", payload.msg.metadataHash);
+        console.log("Image Hash:", payload.msg.imageHash);
+
+        pinningMetadata = false;
+        mintingToken = true;
+
+        const metadataHash = `ipfs://${payload.msg.metadataHash}`;
+        const metadataHashes = [metadataHash];
+        const creators = [createrAddress, address];
+
+        const contractCallDetails = {
+          contractId,
+          tokenQty: mintingTokenQty,
+          creators,
+          tokens: metadataHashes,
+        };
+
+        try {
+          setMiningInProgress(true);
+          const opHash = await callcontract(contractCallDetails);
+          console.log("Operation successful with hash:", opHash);
+        } catch (err) {
+          console.error("Error calling contract function:", err);
+        }
+      } else {
+        throw new Error("No IPFS hash in response");
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setMiningInProgress(false);
+      pinningMetadata = false;
+      mintingToken = false;
+    }
+  };
 
   return (
     <>
@@ -448,15 +364,6 @@ export default function Mint() {
           noValidate
           autoComplete="off"
         >
-          <Box>
-            <TextField
-              inputRef={organizerRef}
-              id="organizer"
-              label="Organizer"
-              variant="standard"
-              sx={{ width: 300 }}
-            />
-          </Box>
           <Box>
             <TextField
               inputRef={titleRef}
@@ -479,17 +386,38 @@ export default function Mint() {
           </Box>
           <Box>
             <Autocomplete
-              // disablePortal
+              id="organizer"
+              options={organizers.data.filter((o) => o.status === "published")}
+              getOptionLabel={(o) => o.name}
+              isOptionEqualToValue={(o, v) => o.name === v.name}
+              sx={{ width: 300 }}
+              onChange={(e, v) => setSelectedOrganizer(v)}
+              renderInput={(params) => (
+                <TextField {...params} label="Organizer" variant="standard" />
+              )}
+            />
+          </Box>
+          <Box>
+            <Autocomplete
+              multiple
+              id="artist"
+              options={artists.data.filter((o) => o.status === "published")}
+              getOptionLabel={(o) => o.name}
+              sx={{ width: 300 }}
+              onChange={(e, v) => setSelectedArtists(v)}
+              renderInput={(params) => (
+                <TextField {...params} label="Artists" variant="standard" />
+              )}
+            />
+          </Box>
+          <Box>
+            <Autocomplete
               id="categoriy"
               options={categories}
-              getOptionLabel={(option) => option.label}
-              isOptionEqualToValue={(option, value) =>
-                option.label === value.label
-              }
+              getOptionLabel={(o) => o.label}
+              isOptionEqualToValue={(o, v) => o.label === v.label}
               sx={{ width: 300 }}
-              onChange={(event, newValue) => {
-                setSelectedCategory(newValue);
-              }}
+              onChange={(e, v) => setSelectedCategory(v)}
               renderInput={(params) => (
                 <TextField {...params} label="Category" variant="standard" />
               )}
@@ -500,12 +428,9 @@ export default function Mint() {
               multiple
               id="tag"
               options={tags}
-              groupBy={(option) => option.main}
-              getOptionLabel={(option) => option.sub}
+              getOptionLabel={(o) => o.label}
               sx={{ width: 300 }}
-              onChange={(event, newValue) => {
-                setSelectedTags(newValue);
-              }}
+              onChange={(e, v) => setSelectedTags(v)}
               renderInput={(params) => (
                 <TextField {...params} label="Tag" variant="standard" />
               )}
@@ -530,7 +455,6 @@ export default function Mint() {
               onChange={(event, newValue) => {
                 setOptions(newValue ? [newValue, ...options] : options);
                 setValue(newValue);
-                // if there is an input value, get the lat and lng
                 if (newValue) {
                   getGeocode({ address: newValue.description }).then(
                     (results) => {
@@ -559,15 +483,10 @@ export default function Mint() {
                 const matches =
                   option.structured_formatting.main_text_matched_substrings ||
                   [];
-
                 const parts = parse(
                   option.structured_formatting.main_text,
-                  matches.map((match) => [
-                    match.offset,
-                    match.offset + match.length,
-                  ])
+                  matches.map((m) => [m.offset, m.offset + m.length])
                 );
-
                 return (
                   <li {...props}>
                     <Grid container alignItems="center">
@@ -602,7 +521,8 @@ export default function Mint() {
               }}
             />
           </Box>
-          {/* // If the user selects a location, display the lat and lng */}
+
+          {/* lat/lng */}
           <Box>
             {lat ? (
               <Box sx={{ width: 300 }}>
@@ -613,13 +533,15 @@ export default function Mint() {
               </Box>
             ) : null}
           </Box>
+
+          {/* time */}
           <Box>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
                 label="start time"
                 sx={{ width: 300 }}
-                value={startTime}
-                onChange={(newValue) => setStartTime(newValue)}
+                value={startTime ?? null}
+                onChange={(v) => setStartTime(v)}
               />
             </LocalizationProvider>
           </Box>
@@ -628,29 +550,28 @@ export default function Mint() {
               <DatePicker
                 label="end time"
                 sx={{ width: 300 }}
-                value={endTime}
-                onChange={(newValue) => setEndTime(newValue)}
+                value={endTime ?? null}
+                onChange={(v) => setEndTime(v)}
               />
             </LocalizationProvider>
           </Box>
+
+          {/* license */}
           <Box>
             <Autocomplete
-              // disablePortal
               id="license"
               options={licenses}
-              getOptionLabel={(option) => option.label}
-              isOptionEqualToValue={(option, value) =>
-                option.label === value.label
-              }
+              getOptionLabel={(o) => o.label}
+              isOptionEqualToValue={(o, v) => o.label === v.label}
               sx={{ width: 300 }}
-              onChange={(event, newValue) => {
-                setSelectedLicense(newValue);
-              }}
+              onChange={(e, v) => setSelectedLicense(v)}
               renderInput={(params) => (
                 <TextField {...params} label="License" variant="standard" />
               )}
             />
           </Box>
+
+          {/* editions / royalty */}
           <Box>
             <TextField
               id="mintingTokenQty"
@@ -661,9 +582,7 @@ export default function Mint() {
               variant="standard"
               inputProps={{ min: 1 }}
               value={mintingTokenQty}
-              onChange={(event) =>
-                setMintingTokenQty(Number(event.target.value))
-              }
+              onChange={(e) => setMintingTokenQty(Number(e.target.value))}
             />
           </Box>
           <Box>
@@ -676,25 +595,21 @@ export default function Mint() {
               variant="standard"
               inputProps={{ min: 10, max: 25 }}
               value={royaltyPercentage}
-              onChange={(event) =>
-                setRoyaltyPercentage(Number(event.target.value))
-              }
+              onChange={(e) => setRoyaltyPercentage(Number(e.target.value))}
             />
           </Box>
+
+          {/* royalty sharing */}
           <Box>
             <FormControlLabel
               control={
                 <Checkbox
                   onChange={(e) => {
                     if (e.target.checked) {
-                      let array = [
-                        {
-                          id: 0,
-                          address: walletAddress,
-                          share: 100,
-                        },
+                      const arr = [
+                        { id: 0, address: walletAddress, share: 100 },
                       ];
-                      setRoyaltiesSharer(array);
+                      setRoyaltiesSharer(arr);
                     }
                     setUseRoyaltiesShare(e.target.checked);
                   }}
@@ -704,7 +619,6 @@ export default function Mint() {
               label="Apply royalty sharing"
             />
           </Box>
-
           {useRoyaltiesShare && (
             <Sharer
               type="RoyaltiesShare"
@@ -714,6 +628,7 @@ export default function Mint() {
             />
           )}
 
+          {/* wallet */}
           <Box>
             <Box>
               <TextField
@@ -726,19 +641,25 @@ export default function Mint() {
               />
             </Box>
           </Box>
+
+          {/* file + display + x-directory */}
           <Box>
             <ThemeProvider theme={theme}>
               <Button
                 id="myfile"
                 component="label"
-                role={undefined}
                 variant="outlined"
                 tabIndex={-1}
               >
                 Upload file
-                <VisuallyHiddenInput type="file" onChange={handleFileChange} />
+                <VisuallyHiddenInput
+                  type="file"
+                  accept={ACCEPT_EXTS}
+                  onChange={handleFileUpload}
+                />
               </Button>
             </ThemeProvider>
+
             <Box>
               {file ? (
                 <Box sx={{ width: 300 }}>
@@ -746,36 +667,61 @@ export default function Mint() {
                 </Box>
               ) : null}
             </Box>
-            <Box>
+
+            {/* ZIP → 顯示 x-directory 切換 */}
+            {fileKind?.isZip && (
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={isXDirectory}
+                    onChange={(e) => setIsXDirectory(e.target.checked)}
+                  />
+                }
+                label="This ZIP is an HTML site (x-directory)"
+              />
+            )}
+
+            {/* 非圖片 → 要求縮圖 */}
+            {file && !fileKind?.isImage && (
+              <Box mt={1}>
+                <ThemeProvider theme={theme}>
+                  <Button
+                    id="display"
+                    component="label"
+                    role={undefined}
+                    variant="outlined"
+                    tabIndex={-1}
+                  >
+                    Upload display
+                    <VisuallyHiddenInput
+                      type="file"
+                      accept=".png,.jpg,.jpeg,.webp"
+                      onChange={handleDisplayChange}
+                    />
+                  </Button>
+                </ThemeProvider>
                 <Box>
-                  <ThemeProvider theme={theme}>
-                    <Button
-                      id="thumbnail"
-                      component="label"
-                      role={undefined}
-                      variant="outlined"
-                      tabIndex={-1}
-                    >
-                      Upload thumbnail
-                      <VisuallyHiddenInput
-                        type="file"
-                        onChange={handleThumbChange}
-                      />
-                    </Button>
-                  </ThemeProvider>
-                  <Box>
-                    {thumb ? (
-                      <Box sx={{ width: 300 }}>
-                        <Box component="span">{thumb.name}</Box>
-                      </Box>
-                    ) : null}
-                  </Box>
+                  {display ? (
+                    <Box sx={{ width: 300 }}>
+                      <Box component="span">{display.name}</Box>
+                    </Box>
+                  ) : null}
                 </Box>
-            </Box>
+              </Box>
+            )}
           </Box>
+
+          {/* submit */}
           <Box pt={6}>
             <ThemeProvider theme={theme}>
-              <Button variant="contained" color="primary" onClick={upload}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={upload}
+                disabled={
+                  !file || (!!file && !classifyFile(file).isImage && !display)
+                }
+              >
                 Mint
               </Button>
               <div>
@@ -787,4 +733,12 @@ export default function Mint() {
       </Container>
     </>
   );
+}
+
+export async function getServerSideProps() {
+  const [organizers, artists] = await Promise.all([
+    await FetchDirectusData(`/organizers`),
+    await FetchDirectusData(`/artists`),
+  ]);
+  return { props: { organizers, artists } };
 }

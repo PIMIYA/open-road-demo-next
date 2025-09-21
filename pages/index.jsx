@@ -1,11 +1,16 @@
+import { useEffect, useState } from "react";
 /* Fetch data */
-import { TZKT_API, MainnetAPI, GetClaimablePoolID } from "@/lib/api";
+import {
+  TZKT_API,
+  MainnetAPI,
+  GetClaimablePoolID,
+  FetchDirectusData,
+} from "@/lib/api";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 import { useTheme } from "@emotion/react";
-
+/* MUI */
+import { Box, Button, Container, Typography } from "@mui/material";
 /* Components */
-import { Box, Button, Container } from "@mui/material";
-
 import KeyVisual from "@/components/homepage/keyVisual";
 import FeatureBox from "@/components/homepage/featureBox";
 import FadeOnScroll from "@/components/fadeOnScroll";
@@ -45,14 +50,106 @@ const features = [
   },
 ];
 
-export default function Home({ data }) {
+export default function Home({ claimableData, organizers, artists, events }) {
   const { isLanded } = useGlobalContext();
   const theme = useTheme();
 
-  // sort data by tokenId
-  if (data) {
-    data.sort((a, b) => b.tokenId - a.tokenId);
+  // Helper function to determine event status
+  const getEventStatus = (event) => {
+    const now = new Date();
+    const startTime = new Date(event.start_time);
+    const endTime = new Date(event.end_time);
+
+    if (now < startTime) {
+      return "upcoming";
+    } else if (now >= startTime && now <= endTime) {
+      return "current";
+    } else {
+      return "past";
+    }
+  };
+
+  // Helper function to get tokens for a specific event
+  const getTokensForEvent = (event) => {
+    if (!claimableData) return [];
+
+    const formattedEventStartTime = new Date(
+      new Date(event.start_time).getTime() - 8 * 60 * 60 * 1000
+    ).toUTCString();
+
+    return claimableData
+      .filter(
+        (item) =>
+          item.metadata.event_location === event.location &&
+          item.metadata.start_time === formattedEventStartTime
+      )
+      .slice(0, 3); // Only show 3 NFTs per event
+  };
+
+  // Process claimableData as before
+  if (claimableData) {
+    // sort data by tokenId
+    claimableData.sort((a, b) => b.tokenId - a.tokenId);
+    // if data's category is "座談", change it to "座談會"
+    claimableData.forEach((item) => {
+      if (item.metadata.category === "座談") {
+        item.metadata.category = "研討會 / 論壇 / 座談";
+      }
+    });
+    // if data's tags, each include "視覺", then combine and change it to one "視覺藝術"
+    claimableData.forEach((item) => {
+      if (item.metadata.tags.some((tag) => tag.includes("視覺"))) {
+        item.metadata.tags = ["視覺藝術"];
+      } else if (item.metadata.tags.some((tag) => tag.includes("舞蹈"))) {
+        item.metadata.tags = ["舞蹈"];
+      } else if (item.metadata.tags.some((tag) => tag.includes("音樂"))) {
+        item.metadata.tags = ["音樂"];
+      } else if (item.metadata.tags.some((tag) => tag.includes("設計"))) {
+        item.metadata.tags = ["設計"];
+      } else if (item.metadata.tags.some((tag) => tag.includes("科技"))) {
+        item.metadata.tags = ["元宇宙"];
+      } else if (item.metadata.tags.some((tag) => tag.includes("書籍"))) {
+        item.metadata.tags = ["出版"];
+      } else if (item.metadata.tags.some((tag) => tag.includes("科學"))) {
+        item.metadata.tags = ["科學"];
+      }
+    });
   }
+  /* add event.data.name to each claimableData item if the event_location and start_time matches a project's location and start_time
+   and the project's status is "published"
+   and the project's start_time is in GMT timezone, subtract 8 hours */
+  if (claimableData && events) {
+    claimableData.forEach((item) => {
+      const matchingProject = events.data.find(
+        (project) =>
+          project.status === "published" &&
+          project.location === item.metadata.event_location &&
+          project.start_time &&
+          new Date(
+            new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000
+          ).toUTCString() === item.metadata.start_time
+      );
+      if (matchingProject) {
+        item.metadata.projectName = matchingProject.name;
+        item.metadata.projectId = matchingProject.id;
+      } else {
+        item.metadata.projectName = "Unknown Project";
+      }
+    });
+  }
+
+  // Categorize events
+  const upcomingEvents =
+    events?.data?.filter(
+      (event) =>
+        event.status === "published" && getEventStatus(event) === "upcoming"
+    ) || [];
+
+  const currentEvents =
+    events?.data?.filter(
+      (event) =>
+        event.status === "published" && getEventStatus(event) === "current"
+    ) || [];
 
   return (
     <>
@@ -97,7 +194,78 @@ export default function Home({ data }) {
       )}
       {isLanded && (
         <Container maxWidth="lg">
-          <GeneralTokenCardGrid data={data} />
+          {/* Current Events Section */}
+          {currentEvents.length > 0 && (
+            <Box mb={6}>
+              <Typography variant="h5" component="h5" gutterBottom>
+                Current Events
+              </Typography>
+              {currentEvents.map((event) => {
+                const eventTokens = getTokensForEvent(event);
+                return (
+                  <Box key={event.id} mb={4}>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      mb={2}
+                    >
+                      <Typography>{event.name}</Typography>
+                      <Link href={`/events/${event.id}`}>
+                        <Button variant="outlined" color="primary" size="small">
+                          See more
+                        </Button>
+                      </Link>
+                    </Box>
+                    {eventTokens.length > 0 && (
+                      <GeneralTokenCardGrid
+                        data={eventTokens}
+                        organizers={organizers}
+                        artists={artists}
+                      />
+                    )}
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
+
+          {/* Upcoming Events Section */}
+          {upcomingEvents.length > 0 && (
+            <Box mb={6}>
+              <Typography variant="h5" component="h5" gutterBottom>
+                Upcoming Events
+              </Typography>
+              {upcomingEvents.map((event) => {
+                const eventTokens = getTokensForEvent(event);
+                return (
+                  <Box key={event.id} mb={4}>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      mb={2}
+                    >
+                      <Typography>{event.name}</Typography>
+                      <Link href={`/events/${event.id}`}>
+                        <Button variant="outlined" color="primary" size="small">
+                          See more
+                        </Button>
+                      </Link>
+                    </Box>
+                    {eventTokens.length > 0 && (
+                      <GeneralTokenCardGrid
+                        data={eventTokens}
+                        organizers={organizers}
+                        artists={artists}
+                      />
+                    )}
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
+
           <Box textAlign="center" mt={10}>
             <FadeOnScroll onceonly>
               <Link href="/events">
@@ -123,7 +291,9 @@ export async function getStaticProps() {
   );
 
   // Extract burned tokenIds and join them into a comma-separated string
-  const burned_tokenIds = burnedData.map((item) => item.token.tokenId).join(",");
+  const burned_tokenIds = burnedData
+    .map((item) => item.token.tokenId)
+    .join(",");
 
   // Fetch tokens data excluding burned tokens
   const data = await TZKT_API(
@@ -133,7 +303,11 @@ export async function getStaticProps() {
   // Check if tokens are claimable and add claimable status and poolID
   const claimableData = await Promise.all(
     data.map(async (item) => {
-      const data_from_pool = await GetClaimablePoolID(contractAddress, targetContractAddress, item.tokenId);
+      const data_from_pool = await GetClaimablePoolID(
+        contractAddress,
+        targetContractAddress,
+        item.tokenId
+      );
       return {
         ...item,
         claimable: !!data_from_pool,
@@ -142,8 +316,19 @@ export async function getStaticProps() {
     })
   );
 
+  const [organizers, artists, events] = await Promise.all([
+    await FetchDirectusData(`/organizers`),
+    await FetchDirectusData(`/artists`),
+    await FetchDirectusData(`/events`),
+  ]);
+
   return {
-    props: { data: claimableData },
+    props: {
+      claimableData: claimableData,
+      organizers: organizers,
+      artists: artists,
+      events: events,
+    },
     revalidate: 10, // In seconds
   };
 }

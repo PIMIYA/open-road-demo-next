@@ -12,9 +12,11 @@ import {
 import Grid from "@mui/material/Unstable_Grid2";
 
 import Tags from "@/components/Tags";
-import { getAkaswapAssetUrl } from "@/lib/stringUtils";
+import { formatDateRange, getAkaswapAssetUrl } from "@/lib/stringUtils";
 import { getRandomObjectType, getRandomPeriod } from "@/lib/dummy";
 import FadeOnScroll from "./fadeOnScroll";
+
+import Organizer from "@/components/Organizer";
 
 export default function GeneralTokenCardGrid(props) {
   const router = useRouter();
@@ -61,10 +63,11 @@ export default function GeneralTokenCardGrid(props) {
           ? getAkaswapAssetUrl(item.thumbnailUri)
           : "https://via.placeholder.com/400";
       }
-      // console.log(item.contract.address);
-      // item.start_time = item.start_time ? new Date(item.start_time) : "";
     });
   }
+
+  const organizers = props.organizers;
+  const artists = props.artists;
 
   return (
     <>
@@ -137,6 +140,7 @@ export default function GeneralTokenCardGrid(props) {
                       />
                     </Box>
                   </Link>
+
                   <Box id="primary-info" mb={1}>
                     <Stack direction="row" spacing={1}>
                       <Typography
@@ -157,16 +161,29 @@ export default function GeneralTokenCardGrid(props) {
                         }}
                       />
                     </Stack>
-                    <Typography variant="body1">
-                      {metadata.organizer}
-                    </Typography>
+                    <Box>
+                      <Link
+                        href="/events/[id]"
+                        as={`/events/${metadata.projectId}`}
+                      >
+                        {metadata.projectName}
+                      </Link>
+                    </Box>
+
+                    <Organizer
+                      organizer={metadata.organizer}
+                      artists={artists ? artists : null}
+                      organizers={organizers ? organizers : null}
+                    />
                   </Box>
+
                   <Box id="secondary-info" mb={2}>
                     <Typography variant="body2">
                       {metadata.start_time
-                        ? new Date(metadata.start_time).toLocaleDateString() +
-                          " - " +
-                          new Date(metadata.end_time).toLocaleDateString()
+                        ? formatDateRange(
+                            metadata.start_time,
+                            metadata.end_time
+                          )
                         : eventDate}
                     </Typography>
                     <Typography variant="body2">
@@ -177,27 +194,6 @@ export default function GeneralTokenCardGrid(props) {
                     <Tags tags={metadata.tags} />
                   </Stack>
                 </Box>
-                {/* add poolID for claim page and event time from akadrop  */}
-                {/* <Box
-                  sx={{
-                    position: "relative",
-                    top: 16,
-                    right: 16,
-                    backgroundColor: "rgba(0, 0, 0, 0.7)",
-                    color: "#fff",
-                    padding: "4px 8px",
-                    borderRadius: "4px",
-                  }}
-                >
-                  {poolID !== null ? (
-                    <>
-                      Pool ID: {poolID} <br />
-                    </>
-                  ) : (
-                    "Expired or not able to claim"
-                  )}
-                </Box> */}
-                {/*  */}
               </Grid>
             )
           )}

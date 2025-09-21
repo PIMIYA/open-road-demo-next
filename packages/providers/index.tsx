@@ -57,10 +57,16 @@ export const ConnectionProvider = ({ children }: { children: any }) => {
         connect: async () => {
           return await connectBeacon(true)
             .then(onInitialConnectionComplete)
-            .catch(() => {
+            .catch((error) => {
+              console.error("Connection error details:", error);
+              console.error("Error message:", error.message);
+              console.error("Error stack:", error.stack);
+
               void disconnect();
               throw new Error(
-                "Error connecting to wallet, please try again later"
+                `Error connecting to wallet: ${
+                  error.message || error
+                }. Please try again later.`
               );
             });
         },

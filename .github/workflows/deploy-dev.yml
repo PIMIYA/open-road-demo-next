@@ -1,0 +1,120 @@
+name: Deploy dev to DigitalOcean
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      MainnetURL: ${{ secrets.MainnetURL }}
+      TestnetURL: ${{ secrets.TestnetURL }}
+      WalletRoleURL: ${{ secrets.WalletRoleURL }}
+      AkaDropURL: ${{ secrets.AkaDropURL }}
+      TZKT_URL: ${{ secrets.TZKT_URL }}
+      NEXT_PUBLIC_PARTNER_ID: ${{ secrets.NEXT_PUBLIC_PARTNER_ID }}
+      NEXT_PUBLIC_BAUTH_USERNAME: ${{ secrets.NEXT_PUBLIC_BAUTH_USERNAME }}
+      NEXT_PUBLIC_BAUTH_PASSWORD: ${{ secrets.NEXT_PUBLIC_BAUTH_PASSWORD }}
+      NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL: ${{ secrets.NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL }}
+      NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD: ${{ secrets.NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD }}
+      GoogleMapsAPIKey: ${{ secrets.GoogleMapsAPIKey }}
+      WALLET_PRIVATE_KEY: ${{ secrets.WALLET_PRIVATE_KEY }}
+      WALLET_PASSPHRASE: ${{ secrets.WALLET_PASSPHRASE }}
+      SERVER_URL: ${{ secrets.SERVER_URL }}
+      DIRECTUS: ${{ secrets.DIRECTUS }}
+      COMMENT_URL: ${{ secrets.COMMENT_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.8.0
+
+      - name: Install dependencies and build
+        run: |
+          npm install --legacy-peer-deps
+          npm run build
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploy dev to DigitalOcean
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
+            # Source NVM and use Node.js 20.8.0
+            export NVM_DIR=$HOME/.nvm
+            [ -s $NVM_DIR/nvm.sh ] && \. $NVM_DIR/nvm.sh
+            nvm use 20.8.0
+
+            # Install PM2 globally if not exists
+            npm install -g pm2
+
+            # Create or update repository
+            if [ ! -d "/var/www/dev.kairos-mint.art" ]; then
+              # First time setup
+              sudo mkdir -p /var/www/dev.kairos-mint.art
+              sudo chown -R $USER:$USER /var/www
+              sudo chmod -R 755 /var/www
+              cd /var/www
+              git clone -b dev https://github.com/PIMIYA/open-road-demo-next.git dev.kairos-mint.art
+              cd dev.kairos-mint.art
+            else
+              # Update existing repository
+              cd /var/www/dev.kairos-mint.art
+              git fetch origin dev
+              git reset --hard origin/dev
+              git clean -fd
+            fi
+
+            # Create .env file line by line
+            echo "MainnetURL=\"${{ secrets.MainnetURL }}\"" > .env
+            echo "TestnetURL=\"${{ secrets.TestnetURL }}\"" >> .env
+            echo "WalletRoleURL=\"${{ secrets.WalletRoleURL }}\"" >> .env
+            echo "AkaDropURL=\"${{ secrets.AkaDropURL }}\"" >> .env
+            echo "TZKT_URL=\"${{ secrets.TZKT_URL }}\"" >> .env
+            echo "NEXT_PUBLIC_PARTNER_ID=\"${{ secrets.NEXT_PUBLIC_PARTNER_ID }}\"" >> .env
+            echo "NEXT_PUBLIC_BAUTH_USERNAME=\"${{ secrets.NEXT_PUBLIC_BAUTH_USERNAME }}\"" >> .env
+            echo "NEXT_PUBLIC_BAUTH_PASSWORD=\"${{ secrets.NEXT_PUBLIC_BAUTH_PASSWORD }}\"" >> .env
+            echo "NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL=\"${{ secrets.NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL }}\"" >> .env
+            echo "NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD=\"${{ secrets.NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD }}\"" >> .env
+            echo "GoogleMapsAPIKey=\"${{ secrets.GoogleMapsAPIKey }}\"" >> .env
+            echo "WALLET_PRIVATE_KEY=\"${{ secrets.WALLET_PRIVATE_KEY }}\"" >> .env
+            echo "WALLET_PASSPHRASE=\"${{ secrets.WALLET_PASSPHRASE }}\"" >> .env
+            echo "SERVER_URL=\"${{ secrets.SERVER_URL }}\"" >> .env
+            echo "DIRECTUS=\"${{ secrets.DIRECTUS }}\"" >> .env
+            echo "COMMENT_URL=\"${{ secrets.COMMENT_URL }}\"" >> .env
+            echo "PORT=3002" >> .env
+
+            # Copy .env to .env.local
+            cp .env .env.local
+            
+            # Clean install dependencies and build
+            rm -rf node_modules package-lock.json
+            npm install --legacy-peer-deps
+            npm run build
+            
+            # Check if PM2 process exists and handle accordingly
+            if pm2 show open-road-demo-next-dev > /dev/null 2>&1; then
+              # Process exists, restart it
+              PORT=3002 pm2 restart open-road-demo-next-dev --update-env
+            else
+              # Process doesnt exist, start it
+              PORT=3002 pm2 start npm --name "open-road-demo-next-dev" -- start
+            fi
+            
+            # Save PM2 configuration to persist across reboots
+            pm2 save
+          '
+
+      - name: Show commit info
+        run: git log -1

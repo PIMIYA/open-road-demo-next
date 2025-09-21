@@ -12,7 +12,6 @@ export default async function handler(
   async function getData() {
     const result = await fetch( `${process.env.WalletRoleURL}/${address}`)
     const data = await result.json();
-
     return data
   }
   

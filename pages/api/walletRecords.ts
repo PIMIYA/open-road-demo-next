@@ -31,7 +31,8 @@ export default async function handler(
     // console.log(tokenIdArray);
 
     async function getData() {
-      const data =  (await fetch(`${process.env.TZKT_URL}/v1/tokens/transfers?token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&token.tokenId.in=${tokenIdArray}&to=${body2[1]}`)).json();      
+      // const data =  (await fetch(`${process.env.TZKT_URL}/v1/tokens/transfers?token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&token.tokenId.in=${tokenIdArray}&to=${body2[1]}`)).json();    
+      const data =  (await fetch(`${process.env.TZKT_URL}/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.in=${tokenIdArray}&to=${body2[1]}`)).json();        
       return data;
     }
     // if filterd is empty, then not to fetch data

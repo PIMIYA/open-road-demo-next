@@ -2,106 +2,98 @@
 
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { paginateAppend } from "@/lib/paginate";
-
-/* NEXT */
-import Link from "next/link";
 /* Routing */
 import { useRouter } from "next/router";
 /* MUI */
-import { Box, Autocomplete, TextField, Button } from "@mui/material";
+import {
+  Box,
+  Autocomplete,
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
 /* Fetch data */
-import { TZKT_API, MainnetAPI, GetClaimablePoolID } from "@/lib/api";
+import { FetchDirectusData } from "@/lib/api";
 /* Components */
 import TwoColumnLayout, {
   Main,
   Side,
 } from "@/components/layouts/TwoColumnLayout";
-import GeneralTokenCardGrid from "@/components/GeneralTokenCardGrid";
-import MyPagination from "@/components/myPagination";
+import EventCardGrid from "@/components/EventCardGrid";
 import SidePaper from "@/components/SidePaper";
-import Filter from "@/components/Filter";
 
-const categories = [
-  { label: "展覽" },
-  { label: "表演" },
-  { label: "課程" },
-  { label: "導覽" },
-  { label: "工作坊" },
-  { label: "黑客松" },
-  { label: "座談" },
-  { label: "親子" },
-  { label: "節祭／展會／市集" },
-  { label: "分享會／同好會／見面會" },
-];
+export default function Events({ events }) {
+  // Filter only published events
+  const publishedEvents =
+    events?.data?.filter((event) => event.status === "published") || [];
 
-const tags = [
-  { main: "視覺", sub: "繪畫" },
-  { main: "視覺", sub: "裝置" },
-  { main: "視覺", sub: "工藝" },
-  { main: "視覺", sub: "雕塑" },
-  { main: "視覺", sub: "攝影" },
-  { main: "視覺", sub: "影像" },
-  { main: "表演", sub: "馬戲" },
-  { main: "表演", sub: "音樂劇（親子、百老匯）" },
-  { main: "表演", sub: "戲曲（歌仔戲、南管、京劇）" },
-  { main: "表演", sub: "現代戲劇" },
-  { main: "表演", sub: "讀劇" },
-  { main: "表演", sub: "音樂（搖滾、古典、電子、音像）" },
-  { main: "表演", sub: "說唱（漫才、相聲、站立喜劇）" },
-  { main: "表演", sub: "舞蹈（現代舞、舞踏、民俗）" },
-  { main: "設計", sub: "平面" },
-  { main: "設計", sub: "互動 ／媒體" },
-  { main: "設計", sub: "時尚" },
-  { main: "設計", sub: "建築" },
-  { main: "設計", sub: "工業／商品" },
-  { main: "電影", sub: "紀錄片" },
-  { main: "電影", sub: "劇情片" },
-  { main: "科技", sub: "區塊鏈" },
-  { main: "科技", sub: "AI" },
-  { main: "科技", sub: "VR／AR／MR" },
-  { main: "書籍", sub: "小說" },
-  { main: "書籍", sub: "詩歌" },
-  { main: "書籍", sub: "散文" },
-  { main: "書籍", sub: "漫畫" },
-  { main: "文化", sub: "公益（社會運動、地方創生、慈善捐贈）" },
-  { main: "文化", sub: "性別" },
-  { main: "文化", sub: "語言" },
-  { main: "文化", sub: "歷史" },
-  { main: "文化", sub: "環境" },
-  { main: "文化", sub: "動物" },
-  { main: "科學", sub: "社會科學（經濟、政治、國際關係）" },
-  { main: "科學", sub: "自然科學（天文、地理）" },
-];
+  // Function to get event status based on start_time and end_time
+  const getEventStatus = (start_time, end_time) => {
+    const now = new Date();
+    const startDate = start_time ? new Date(start_time) : null;
+    const endDate = end_time ? new Date(end_time) : null;
 
-export default function Events({ data }) {
-  // console.log("data", data);
-  // Search Filter(works but not used)
-  // const handleFilter = (event) => {
-  //   if (event === null) return;
-  //   // const value = event.main || event.sub || event.label || event;
-  //   const value = event.target.value;
-  //   console.log("event", value);
-  //   if (!event) {
-  //     setFilteredData(data);
-  //     return;
-  //   } else {
-  //     const filterdByCat = data.filter(
-  //       (c) =>
-  //         c.metadata.tags.find((tag) => tag.includes(value)) ||
-  //         c.metadata.category.includes(value)
-  //     );
-  //     setFilteredData(filterdByCat);
-  //   }
-  // };
+    if (!startDate) return "upcoming";
 
-  const [catValue, setCatValue] = useState("");
-  const [tagValue, setTagValue] = useState("");
-  const [filteredData, setFilteredData] = useState(data);
+    if (now < startDate) {
+      return "upcoming";
+    } else if (endDate && now > endDate) {
+      return "archived";
+    } else {
+      return "current";
+    }
+  };
+
+  // Add status to each event
+  const eventsWithStatus = publishedEvents.map((event) => ({
+    ...event,
+    status: getEventStatus(event.start_time, event.end_time),
+  }));
+
+  // get all statuses from events
+  const statuses = ["upcoming", "current", "archived"];
+
+  const [statusValue, setStatusValue] = useState("");
+  const [sortOrder, setSortOrder] = useState("newest"); // "newest" or "oldest"
+  const [filteredData, setFilteredData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const loaderRef = useRef(null);
   const observerRef = useRef(null);
+
+  // Function to sort events by start_time
+  const sortEvents = (events, order) => {
+    return [...events].sort((a, b) => {
+      const dateA = a.start_time ? new Date(a.start_time) : new Date(0);
+      const dateB = b.start_time ? new Date(b.start_time) : new Date(0);
+
+      if (order === "newest") {
+        return dateB - dateA; // Newest first
+      } else {
+        return dateA - dateB; // Oldest first
+      }
+    });
+  };
+
+  // Function to apply filters and sorting
+  const applyFiltersAndSort = () => {
+    let filtered = eventsWithStatus;
+
+    // Apply status filter
+    if (statusValue) {
+      filtered = filtered.filter((event) => event.status === statusValue);
+    }
+
+    // Apply sorting
+    filtered = sortEvents(filtered, sortOrder);
+
+    return filtered;
+  };
 
   const handleFilter = () => {
     window.scrollTo({
@@ -109,13 +101,16 @@ export default function Events({ data }) {
       behavior: "smooth",
     });
 
-    const filterdByCat = data.filter(
-      (c) =>
-        (!catValue || c.metadata.category.includes(catValue)) &&
-        (!tagValue || c.metadata.tags.some((tag) => tag.includes(tagValue)))
-    );
+    const filteredEvents = applyFiltersAndSort();
     changePage(1);
-    setFilteredData(filterdByCat);
+    setFilteredData(filteredEvents);
+  };
+
+  const handleSortChange = (newSortOrder) => {
+    setSortOrder(newSortOrder);
+    const filteredEvents = applyFiltersAndSort();
+    changePage(1);
+    setFilteredData(filteredEvents);
   };
 
   /* Pagination */
@@ -127,29 +122,29 @@ export default function Events({ data }) {
 
   /* Router */
   const router = useRouter();
-  const catState = router.query.cat ? router.query.cat : "";
-  const tagState = router.query.tag ? router.query.tag : "";
+  const statusState = router.query.status ? router.query.status : "";
 
   // Custom hook to conditionally use useLayoutEffect on the client side
   const useIsomorphicLayoutEffect =
     typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
+  // Initialize from router query only once
   useEffect(() => {
-    if (catState || tagState) {
-      setCatValue(catState);
-      setTagValue(tagState);
-      const filterdByCat = data.filter(
-        (c) =>
-          (!catState || c.metadata.category.includes(catState)) &&
-          (!tagState || c.metadata.tags.some((tag) => tag.includes(tagState)))
-      );
-      setFilteredData(filterdByCat);
-    } else {
-      setCatValue("");
-      setTagValue("");
-      setFilteredData(data);
+    if (!isInitialized && statusState) {
+      setStatusValue(statusState);
+      setIsInitialized(true);
+    } else if (!isInitialized) {
+      setIsInitialized(true);
     }
-  }, [catState, tagState, data]);
+  }, [statusState, isInitialized]);
+
+  // Apply filters and sorting when dependencies change
+  useEffect(() => {
+    if (isInitialized) {
+      const filteredEvents = applyFiltersAndSort();
+      setFilteredData(filteredEvents);
+    }
+  }, [statusValue, sortOrder, eventsWithStatus, isInitialized]);
 
   useIsomorphicLayoutEffect(() => {
     if (observerRef.current) {
@@ -184,50 +179,48 @@ export default function Events({ data }) {
     <TwoColumnLayout>
       <Side sticky>
         <SidePaper>
-          {/* <input type="text" onChange={handleFilter} /> */}
           <Box component="form">
-            <Box>
+            <Box mb={2}>
               <Autocomplete
-                id="category"
-                options={categories}
-                getOptionLabel={(option) => option.label}
-                isOptionEqualToValue={(option, value) =>
-                  option.label === value.label
+                id="status"
+                options={statuses}
+                getOptionLabel={(option) => {
+                  switch (option) {
+                    case "upcoming":
+                      return "即將舉行";
+                    case "current":
+                      return "進行中";
+                    case "archived":
+                      return "已結束";
+                    default:
+                      return option;
+                  }
+                }}
+                isOptionEqualToValue={(option, value) => option === value}
+                value={
+                  statuses.find((status) => status === statusValue) || null
                 }
-                value={categories.find((cat) => cat.label === catValue) || null}
                 onChange={(event, newValue) => {
-                  // handleFilter(newValue);
-                  setCatValue(newValue ? newValue.label : "");
+                  setStatusValue(newValue ? newValue : "");
                 }}
                 renderInput={(params) => (
-                  <TextField {...params} label="Category" variant="standard" />
+                  <TextField {...params} label="活動狀態" variant="standard" />
                 )}
               />
             </Box>
-            <Box>
-              <Autocomplete
-                id="tag"
-                options={tags}
-                groupBy={(option) => option.main}
-                getOptionLabel={(option) => option.sub}
-                value={
-                  tags.find(
-                    (tag) =>
-                      tag.main === tagValue.split(":")[0] &&
-                      tag.sub === tagValue.split(":")[1]
-                  ) || null
-                }
-                // isOptionEqualToValue={(option, value) =>
-                //   option.label === value.label
-                // }
-                onChange={(event, newValue) => {
-                  // handleFilter(newValue);
-                  setTagValue(newValue ? newValue.sub : "");
-                }}
-                renderInput={(params) => (
-                  <TextField {...params} label="Tag" variant="standard" />
-                )}
-              />
+            <Box mb={2}>
+              <FormControl fullWidth variant="standard">
+                <InputLabel id="sort-label">排序方式</InputLabel>
+                <Select
+                  labelId="sort-label"
+                  value={sortOrder}
+                  onChange={(e) => handleSortChange(e.target.value)}
+                  label="排序方式"
+                >
+                  <MenuItem value="newest">最新優先</MenuItem>
+                  <MenuItem value="oldest">最舊優先</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
           </Box>
           <Box mt={4}>
@@ -244,7 +237,7 @@ export default function Events({ data }) {
       </Side>
       <Main>
         <Box>{filteredData.length == 0 ? "no data" : ""}</Box>
-        <GeneralTokenCardGrid
+        <EventCardGrid
           data={paginateAppend(filteredData, currentPage, pageSize)}
         />
         {filteredData.length > 0 && (
@@ -257,7 +250,7 @@ export default function Events({ data }) {
               color: "text.secondary",
             }}
           >
-            {hasMore ? "Loading..." : "No more data"}
+            {hasMore ? "Loading..." : ""}
           </Box>
         )}
       </Main>
@@ -265,37 +258,13 @@ export default function Events({ data }) {
   );
 }
 
-const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
-const targetContractAddress = "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW";
-
 export async function getStaticProps() {
-  // Fetch burned tokens data
-  const burnedData = await TZKT_API(
-    `/v1/tokens/transfers?to.eq=tz1burnburnburnburnburnburnburjAYjjX&token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
-  );
-
-  // Extract burned tokenIds and join them into a comma-separated string
-  const burned_tokenIds = burnedData.map((item) => item.token.tokenId).join(",");
-
-  // Fetch tokens data excluding burned tokens
-  const data = await TZKT_API(
-    `/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.ni=${burned_tokenIds}&sort.desc=tokenId`
-  );
-
-  // Check if tokens are claimable and add claimable status and poolID
-  const claimableData = await Promise.all(
-    data.map(async (item) => {
-      const data_from_pool = await GetClaimablePoolID(contractAddress, targetContractAddress, item.tokenId);
-      return {
-        ...item,
-        claimable: !!data_from_pool,
-        poolID: data_from_pool ? data_from_pool[0].key : null,
-      };
-    })
-  );
+  const events = await FetchDirectusData(`/events`);
 
   return {
-    props: { data: claimableData },
-    revalidate: 10, // In seconds
+    props: {
+      events: events,
+    },
+    revalidate: 1, // In seconds
   };
 }

@@ -10,9 +10,18 @@ export default class Shape {
     this.nextToken = this.s.tokens[this.index + 1];
     this.distanceToNext = this.getDistanceToNext();
 
-    this.type = shapeMap[this.token.categoryId].type;
-    this.sides = shapeMap[this.token.categoryId].sides;
-    this.isStripped = shapeMap[this.token.categoryId].strip;
+    // checking undefined categoryId
+    if (!shapeMap[this.token.categoryId]) {
+      console.warn(`Shape map not found for category ID: ${this.token.categoryId}`);
+      // Use default shape properties
+      this.type = 'polygon';
+      this.sides = 4; // square
+      this.isStripped = false;
+    } else {
+      this.type = shapeMap[this.token.categoryId].type;
+      this.sides = shapeMap[this.token.categoryId].sides;
+      this.isStripped = shapeMap[this.token.categoryId].strip;
+    }
 
     this.hue = this.getHue();
     this.radius = this.s.random(25, 50);
@@ -38,7 +47,14 @@ export default class Shape {
     if (this.hueIndex == null) {
       this.hueIndex = 0;
     }
-    const randomTag = this.token.tags[this.hueIndex % this.token.tags.length];
+    // checking undefined tags
+    let randomTag;
+    if (Array.isArray(this.token.tags) && this.token.tags.length > 0) {
+      randomTag = this.token.tags[this.hueIndex % this.token.tags.length];
+    } else {
+      // fallback to a default tag or value if tags is undefined or empty
+      randomTag = Object.keys(hueMap)[0];
+    }
     return hueMap[randomTag];
   }
 
@@ -66,8 +82,8 @@ export default class Shape {
   getDistanceToNext() {
     if (!this.nextToken) return 0;
 
-    const {lat, lan} = this.token;
-    const {lat: nextLat, lan: nextLan} = this.nextToken;
+    const { lat, lan } = this.token;
+    const { lat: nextLat, lan: nextLan } = this.nextToken;
     const s = this.s;
     let dist = s.dist(lat, lan, nextLat, nextLan);
 
@@ -175,8 +191,8 @@ export default class Shape {
     endY = g.lerp(endY, targetY, (this.frameCount % this.framesForOneSide) / this.framesForOneSide);
 
     g.push();
-      g.translate(g.width / 2, g.height / 2);
-      this.drawLine(startX, startY, endX, endY);
+    g.translate(g.width / 2, g.height / 2);
+    this.drawLine(startX, startY, endX, endY);
     g.pop();
   }
 
@@ -186,7 +202,7 @@ export default class Shape {
 
     const alphaBase = s.map(s.noise(this.frameCount * .01), 0, 1, 1, 1.5);
 
-    for(let i = 0; i < 100; i+=.7) {
+    for (let i = 0; i < 100; i += .7) {
       let progress = i / 100;
       let isLast = i >= 99;
       let size = 2;
@@ -231,10 +247,10 @@ export default class Shape {
     const radius = this.distanceToNext;
 
     s.push();
-      s.stroke(this.hue, 1, .8, .05);
-      s.fill(this.hue, 1, .3, .01);
-      s.translate(this.position.x, this.position.y);
-      s.circle(0, 0, radius * 2);
+    s.stroke(this.hue, 1, .8, .05);
+    s.fill(this.hue, 1, .3, .01);
+    s.translate(this.position.x, this.position.y);
+    s.circle(0, 0, radius * 2);
     s.pop();
   }
 
@@ -288,11 +304,11 @@ export default class Shape {
     const g = this.s.lineLayer;
 
     g.push();
-      g.translate(this.position.x, this.position.y);
-      g.stroke(0);
-      g.textSize(13);
-      g.text(this.index + 1, 10, 10);
-      g.text(this.index + 1, 10, 10);
+    g.translate(this.position.x, this.position.y);
+    g.stroke(0);
+    g.textSize(13);
+    g.text(this.index + 1, 10, 10);
+    g.text(this.index + 1, 10, 10);
     g.pop();
   }
 

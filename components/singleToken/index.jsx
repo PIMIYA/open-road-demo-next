@@ -19,8 +19,13 @@ import TokenCollectors from "./TokenCollectors";
 import TokenClaimedProgress from "./TokenClaimedProgress";
 import RenderMedia from "@/components/render-media";
 
-import { getAkaswapAssetUrl } from "@/lib/stringUtils";
+import { formatDateRange, getAkaswapAssetUrl } from "@/lib/stringUtils";
 import { encrypt } from "@/lib/dummy";
+
+import Organizer from "@/components/Organizer";
+import TokenComments from "./TokenComments";
+
+import { useEffect, useMemo, useState } from "react";
 
 /* stack Item setting */
 const Item = styled(Paper)(({ theme }) => ({
@@ -28,13 +33,19 @@ const Item = styled(Paper)(({ theme }) => ({
   boxShadow: "none",
 }));
 
-export default function SingleToken({ ownersData, data }) {
+export default function SingleToken({
+  ownersData,
+  data,
+  organizers,
+  artists,
+  comments,
+}) {
   const router = useRouter();
   const theme = useTheme();
   const tokenImageUrl = getAkaswapAssetUrl(data.metadata.displayUri);
-  const total = ownersData.amount;
-  const collected = ownersData ? Object.keys(ownersData.owners).length - 2 : 0;
-  const ownerAddresses = ownersData ? Object.keys(ownersData.owners) : 0;
+  const total = ownersData?.amount;
+  const collected = ownersData ? Object.keys(ownersData?.owners).length - 2 : 0;
+  const ownerAddresses = ownersData ? Object.keys(ownersData?.owners) : 0;
 
   const url = `${router.query.contract}/${router.query.tokenId}`;
   const hash = encrypt(url);
@@ -46,7 +57,16 @@ export default function SingleToken({ ownersData, data }) {
   const poolId = data.poolId;
   const duration = data.duration;
   // console.log(mimeType);
-  // console.log(duration);
+  // console.log(ownersData);
+
+  /* Tab: Collectors and Comments */
+  const [value, setValue] = useState(0);
+  const handleCollectors = async () => {
+    setValue(0);
+  };
+  const handleComments = async () => {
+    setValue(1);
+  };
 
   return (
     <>
@@ -122,15 +142,29 @@ export default function SingleToken({ ownersData, data }) {
                     <Typography variant="h4" component="h1">
                       {data.metadata.name}
                     </Typography>
+                    <Typography variant="h6" component="div" mb={2} mt={1}>
+                      <Link
+                        href="/events/[id]"
+                        as={`/events/${data.metadata.projectId}`}
+                      >
+                        {data.metadata.projectName}
+                      </Link>
+                    </Typography>
+
                     <Typography variant="h6" component="div" mb={2}>
-                      {data.creator}
+                      <Organizer
+                        organizer={data.creator}
+                        artists={artists}
+                        organizers={organizers}
+                      />
                     </Typography>
 
                     <Typography variant="body2">
-                      {data.start_time
-                        ? new Date(data.start_time).toLocaleDateString() +
-                          " - " +
-                          new Date(data.end_time).toLocaleDateString()
+                      {data.metadata.start_time
+                        ? formatDateRange(
+                            data.metadata.start_time,
+                            data.metadata.end_time
+                          )
                         : eventDate}
                     </Typography>
                     <Typography mb={2}>{data.eventPlace}</Typography>
@@ -167,13 +201,53 @@ export default function SingleToken({ ownersData, data }) {
           </Box>
         </Container>
       </Box>
-      {ownerAddresses === 0 ? null : (
-        <TokenCollectors
-          owners={ownersData.owners}
-          ownerAddresses={ownerAddresses}
-          ownerAliases={ownersData.ownerAliases}
-        />
-      )}
+
+      <Box sx={{ textAlign: "center", paddingTop: 6 }}>
+        <Button
+          variant={value === 0 ? "contained" : "outlined"}
+          size="small"
+          onClick={handleCollectors}
+          disabled={
+            !ownersData ||
+            ownersData.owners === null ||
+            ownersData.owners.length === 0
+          }
+          sx={{ mr: 1 }}
+        >
+          Collectors
+        </Button>
+
+        <Button
+          variant={value === 1 ? "contained" : "outlined"}
+          size="small"
+          onClick={handleComments}
+          disabled={
+            !comments || comments.data === null || comments.data.length === 0
+          }
+          sx={{ ml: 1 }}
+        >
+          Comments
+        </Button>
+      </Box>
+      <Box sx={{ display: value === 0 ? "block" : "none" }}>
+        {ownerAddresses === 0 ? null : (
+          <TokenCollectors
+            owners={ownersData.owners}
+            ownerAddresses={ownerAddresses}
+            ownerAliases={ownersData.ownerAliases}
+          />
+        )}
+      </Box>
+      <Box sx={{ display: value === 1 ? "block" : "none" }}>
+        {ownerAddresses === 0 ? null : (
+          <TokenComments
+            owners={ownersData.owners}
+            ownerAddresses={ownerAddresses}
+            ownerAliases={ownersData.ownerAliases}
+            comments={comments}
+          />
+        )}
+      </Box>
     </>
   );
 }

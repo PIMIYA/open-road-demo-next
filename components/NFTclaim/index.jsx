@@ -19,7 +19,7 @@ import TokenCollectors from "../singleToken/TokenCollectors";
 import TokenClaimedProgress from "../singleToken/TokenClaimedProgress";
 import RenderMedia from "@/components/render-media";
 
-import { getAkaswapAssetUrl } from "@/lib/stringUtils";
+import { formatDateRange, getAkaswapAssetUrl } from "@/lib/stringUtils";
 import { encrypt } from "@/lib/dummy";
 
 /* stack Item setting */
@@ -103,10 +103,11 @@ export default function NFTclaim({ ownersData, data }) {
                     </Typography>
 
                     <Typography variant="body2">
-                      {data.start_time
-                        ? new Date(data.start_time).toLocaleDateString() +
-                          " - " +
-                          new Date(data.end_time).toLocaleDateString()
+                      {data.metadata.start_time
+                        ? formatDateRange(
+                            data.metadata.start_time,
+                            data.metadata.end_time
+                          )
                         : eventDate}
                     </Typography>
                     <Typography mb={2}>{data.eventPlace}</Typography>

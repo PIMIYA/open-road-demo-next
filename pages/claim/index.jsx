@@ -72,6 +72,8 @@ export default function NFTPage({
   tokenId,
   error,
 }) {
+  console.log("============tokenId : ", tokenId);
+  console.log("============data : ", data);
   const router = useRouter();
   const [claimStatus, setClaimStatus] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -248,14 +250,22 @@ export default function NFTPage({
 
       if (claimResult.isInvalid) {
         setClaimStatus(`Claim Status: Invalid address or pool`);
+        // 存儲錯誤狀態
+        localStorage.setItem("claimStatus", "invalid");
       } else if (!claimResult.isEnrolled && claimResult.isSoldOut) {
         setClaimStatus(`Claim Status: Sold out`);
+        // 存儲錯誤狀態
+        localStorage.setItem("claimStatus", "soldOut");
       } else if (!claimResult.isEnrolled && !claimResult.isSoldOut) {
         setClaimStatus(`Claim Status: Already claimed`);
+        // 存儲已領取狀態
+        localStorage.setItem("claimStatus", "alreadyClaimed");
       } else if (claimResult.isEnrolled && !claimResult.isSoldOut) {
-        console.log(`Claim successful: ${JSON.stringify(claimResult)}`);
         setClaimStatus(`Claim successful`);
+        // 存儲成功狀態
+        localStorage.setItem("claimStatus", "success");
 
+        // 原有的 addUserWallet 邏輯...
         // Add user wallet to the database
         try {
           const addUserWalletResponse = await fetch(`/api/addUserWallet`, {
@@ -282,12 +292,10 @@ export default function NFTPage({
           // 不拋出錯誤，繼續執行
         }
 
-        // 無論 addUserWallet 是否成功，都繼續執行後續邏輯
-        // Store user data for success page
+        // 無論什麼情況，都存儲基本信息並跳轉到 claim-success
         const tokenId = data[0].tokenId.toString();
         const targetContract = data[0].contract;
 
-        // Store in localStorage for success page
         localStorage.setItem("userWalletAddress", address);
         localStorage.setItem("claimedTokenId", tokenId);
         localStorage.setItem("claimedContract", targetContract);
@@ -304,13 +312,8 @@ export default function NFTPage({
         await embedRef.current.logout();
         setIsLoggedIn(false);
         console.log("Logged out successfully");
-        console.log("Redirect to user Wallet page");
-        setClaimStatus(`Redirect to user Wallet page`);
-        // redirect to NFtoken page
-        // router.push(`/claimsToken/KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW/${tokenId}`);
-        //redirect to the endUser wallet page
-        router.push(`/wallet/${address}`);
       }
+      // 移除這裡的跳轉邏輯，因為已經在上面處理了
     }
   };
 

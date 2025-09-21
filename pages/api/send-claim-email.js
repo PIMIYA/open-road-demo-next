@@ -1,32 +1,33 @@
 import nodemailer from 'nodemailer';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { 
-    email, 
-    userAddress, 
-    tokenId, 
-    contractAddress, 
+  const {
+    email,
+    userAddress,
+    tokenId,
+    contractAddress,
     claimStatus,
     nftName,
     nftDescription,
-    nftImageUrl 
+    nftImageUrl,
   } = req.body;
 
   // 驗證必要參數
   if (!email || !userAddress) {
-    return res.status(400).json({ error: 'Missing required fields: email and userAddress' });
+    return res
+      .status(400)
+      .json({ error: "Missing required fields: email and userAddress" });
   }
 
   try {
-    // 創建郵件傳輸器
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT,
-      secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+      secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -42,7 +43,7 @@ export default async function handler(req, res) {
       claimStatus,
       nftName,
       nftDescription,
-      nftImageUrl
+      nftImageUrl,
     });
 
     // 發送郵件
@@ -54,32 +55,31 @@ export default async function handler(req, res) {
       text: emailContent.text,
     });
 
-    console.log('Email sent successfully:', info.messageId);
-    
-    return res.status(200).json({ 
-      success: true, 
-      messageId: info.messageId,
-      message: 'Email sent successfully' 
-    });
+    console.log("Email sent successfully:", info.messageId);
 
+    return res.status(200).json({
+      success: true,
+      messageId: info.messageId,
+      message: "Email sent successfully",
+    });
   } catch (error) {
-    console.error('Error sending email:', error);
-    return res.status(500).json({ 
-      error: 'Failed to send email',
-      details: error.message 
+    console.error("Error sending email:", error);
+    return res.status(500).json({
+      error: "Failed to send email",
+      details: error.message,
     });
   }
 }
 
-function generateEmailContent({ 
-  email, 
-  userAddress, 
-  tokenId, 
-  contractAddress, 
+function generateEmailContent({
+  email,
+  userAddress,
+  tokenId,
+  contractAddress,
   claimStatus,
   nftName,
   nftDescription,
-  nftImageUrl 
+  nftImageUrl,
 }) {
   const getStatusMessage = () => {
     switch (claimStatus) {
@@ -98,13 +98,14 @@ function generateEmailContent({
     }
   };
 
-  const nftViewUrl = tokenId && contractAddress 
-    ? `${process.env.NEXT_PUBLIC_BASE_URL}/claimsToken/${contractAddress}/${tokenId}`
-    : null;
-  
+  const nftViewUrl =
+    tokenId && contractAddress
+      ? `${process.env.NEXT_PUBLIC_BASE_URL}/claimsToken/${contractAddress}/${tokenId}`
+      : null;
+
   const walletViewUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/wallet/${userAddress}`;
 
-  const subject = `NFT 領取完成 - ${nftName || '您的 NFT'}`;
+  const subject = `NFT 領取完成 - ${nftName || "您的 NFT"}`;
 
   const html = `
     <!DOCTYPE html>
@@ -221,25 +222,51 @@ function generateEmailContent({
           <div class="subtitle">${getStatusMessage()}</div>
         </div>
 
-        ${nftName ? `
+        ${
+          nftName
+            ? `
         <div class="nft-info">
-          ${nftImageUrl ? `<img src="${nftImageUrl}" alt="${nftName}" class="nft-image">` : ''}
+          ${
+            nftImageUrl
+              ? `<img src="${nftImageUrl}" alt="${nftName}" class="nft-image">`
+              : ""
+          }
           <div class="nft-name">${nftName}</div>
-          ${nftDescription ? `<div class="nft-description">${nftDescription}</div>` : ''}
+          ${
+            nftDescription
+              ? `<div class="nft-description">${nftDescription}</div>`
+              : ""
+          }
         </div>
-        ` : ''}
+        `
+            : ""
+        }
 
         <div class="buttons">
-          ${nftViewUrl ? `<a href="${nftViewUrl}" class="button">看看 NFT</a>` : ''}
+          ${
+            nftViewUrl
+              ? `<a href="${nftViewUrl}" class="button">看看 NFT</a>`
+              : ""
+          }
           <a href="${walletViewUrl}" class="button secondary">看看自己錢包</a>
         </div>
 
         <div class="info-section">
           <h3>領取詳情</h3>
           <div class="info-item"><strong>錢包地址:</strong> ${userAddress}</div>
-          ${tokenId ? `<div class="info-item"><strong>Token ID:</strong> ${tokenId}</div>` : ''}
-          ${contractAddress ? `<div class="info-item"><strong>合約地址:</strong> ${contractAddress}</div>` : ''}
-          <div class="info-item"><strong>領取狀態:</strong> ${claimStatus || "未獲取"}</div>
+          ${
+            tokenId
+              ? `<div class="info-item"><strong>Token ID:</strong> ${tokenId}</div>`
+              : ""
+          }
+          ${
+            contractAddress
+              ? `<div class="info-item"><strong>合約地址:</strong> ${contractAddress}</div>`
+              : ""
+          }
+          <div class="info-item"><strong>領取狀態:</strong> ${
+            claimStatus || "未獲取"
+          }</div>
         </div>
 
         <div class="footer">
@@ -252,22 +279,22 @@ function generateEmailContent({
   `;
 
   const text = `
-      領取完成！
+領取完成！
 
-      ${getStatusMessage()}
+${getStatusMessage()}
 
-      ${nftName ? `NFT 名稱: ${nftName}` : ''}
-      ${nftDescription ? `描述: ${nftDescription}` : ''}
+${nftName ? `NFT 名稱: ${nftName}` : ""}
+${nftDescription ? `描述: ${nftDescription}` : ""}
 
-      錢包地址: ${userAddress}
-      ${tokenId ? `Token ID: ${tokenId}` : ''}
-      ${contractAddress ? `合約地址: ${contractAddress}` : ''}
-      領取狀態: ${claimStatus || "未獲取"}
+錢包地址: ${userAddress}
+${tokenId ? `Token ID: ${tokenId}` : ""}
+${contractAddress ? `合約地址: ${contractAddress}` : ""}
+領取狀態: ${claimStatus || "未獲取"}
 
-      ${nftViewUrl ? `查看 NFT: ${nftViewUrl}` : ''}
-      查看錢包: ${walletViewUrl}
+${nftViewUrl ? `查看 NFT: ${nftViewUrl}` : ""}
+查看錢包: ${walletViewUrl}
 
-      感謝您使用我們的服務
+感謝您使用我們的服務
   `;
 
   return { subject, html, text };

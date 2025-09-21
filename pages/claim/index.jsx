@@ -9,15 +9,6 @@ import {
 import NFTclaim from "@/components/NFTclaim";
 import KukaiEmbedComponent from "../../components/KukaiEmbedComponent";
 
-// Add these imports for the dialog
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 const AkaDropAPI = "https://mars.akaswap.com/drop/api/pools";
 
@@ -60,116 +51,24 @@ export async function getServerSideProps(context) {
   ]);
 
   return {
-    props: { ownersData, data, data_from_pool, nftData, tokenId },
+    props: { ownersData, data, data_from_pool, nftData },
   };
 }
 
-export default function NFTPage({
-  ownersData,
-  data,
-  data_from_pool,
-  nftData,
-  tokenId,
-  error,
-}) {
-  console.log("============tokenId : ", tokenId);
+export default function NFTPage({ ownersData, data, data_from_pool, nftData, error }) {
+  console.log("============ownersData : ", ownersData);
   console.log("============data : ", data);
-  const router = useRouter();
+  console.log("============data_from_pool : ", data_from_pool);
+  console.log("============nftData : ", nftData);
   const [claimStatus, setClaimStatus] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const embedRef = useRef(null);
-
-  // Add states for the dialog
-  const [openDialog, setOpenDialog] = useState(false);
-  const [userMessage, setUserMessage] = useState("");
-  const [tokenID, setTokenID] = useState("");
-  const [userAddress, setUserAddress] = useState("");
-
-  // Handle dialog close
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    // Redirect to success page when user skips the message
-    setTimeout(() => {
-      window.location.href = "/claim-success";
-    }, 500);
-  };
-
-  // Handle message submission
-  const handleSubmitMessage = async () => {
-    try {
-      const response = await fetch("/api/post-comment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          tokenID: tokenID,
-          walletAddress: userAddress,
-          message: userMessage,
-        }),
-      });
-
-      // Handle different status codes
-      let statusMessage = "";
-
-      switch (response.status) {
-        case 200:
-          statusMessage = "200 OK: The message was received successfully.";
-          break;
-        case 201:
-          statusMessage = "201 Created: Your message was successfully created.";
-          break;
-        case 400:
-          statusMessage =
-            "400 Bad Request: Invalid message format or missing required information.";
-          break;
-        case 403:
-          statusMessage =
-            "403 Forbidden: You don't have permission to leave a message.";
-          break;
-        case 500:
-          statusMessage =
-            "500 Internal Server Error: An error occurred on the server.";
-          break;
-        default:
-          statusMessage = `Unexpected status code: ${response.status}`;
-      }
-
-      if (!response.ok) {
-        throw new Error(`${statusMessage}`);
-      }
-
-      const result = await response.json();
-      console.log("Message submission result:", result);
-      setClaimStatus((prevStatus) => prevStatus + " • " + statusMessage);
-
-      // Redirect to success page after successful message submission
-      setTimeout(() => {
-        window.location.href = "/claim-success";
-      }, 1000);
-    } catch (error) {
-      console.error("Error submitting message:", error);
-      setClaimStatus((prevStatus) => prevStatus + " • Error: " + error.message);
-    } finally {
-      setOpenDialog(false);
-    }
-  };
-
-  //add test for dry testing comment dialogbox
-  // Add this function to your component
-  // const openTestDialog = () => {
-  //   // Set sample values for testing
-  //   setTokenID("123");
-  //   setUserAddress("tz1testAddress123456789");
-  //   setOpenDialog(true);
-  // };
 
   const handleClaim = async (userInfo) => {
     const {
       pkh: address,
       userData: { email },
     } = userInfo;
-    // console.log(`userInfo is : ${JSON.stringify(userInfo)}`);
+
     console.log(`address is : ${address}`);
     console.log(`email is : ${email}`);
 
@@ -195,19 +94,11 @@ export default function NFTPage({
 
       const lookupResult = await lookupResponse.json();
       const lookup_address = lookupResult.address;
-      // console.log(`lookupResult wallet address is : ${lookupResult.address}`);
 
       if (lookupResult.isInvalid) {
         setClaimStatus("Invalid address.");
         return;
       }
-
-      //check if the wallet address from kukai is the same as the one from the lookup
-      //uncomment the following line to enable the check when switch to mainnet
-      // if (lookupResult.address !== address) {
-      //   setClaimStatus("addressess do not match.");
-      //   return;
-      // }
 
       // Claim NFT
       const claimData = {
@@ -227,12 +118,6 @@ export default function NFTPage({
         body: JSON.stringify(claimData),
       });
 
-      console.log("Claim response status:", claimResponse.status);
-      console.log(
-        "Claim response headers:",
-        JSON.stringify([...claimResponse.headers])
-      );
-
       if (!claimResponse.ok) {
         const errorData = await claimResponse.json();
         console.log("Claim error response:", errorData);
@@ -243,30 +128,30 @@ export default function NFTPage({
 
       const claimResult = await claimResponse.json();
       console.log("Claim result:", claimResult);
-      console.log(
-        "========= Full claim result structure:",
-        JSON.stringify(claimResult, null, 2)
-      );
 
+      // 存儲基本信息
+      const tokenId = data[0].tokenId.toString();
+      const targetContract = data[0].contract;
+
+      localStorage.setItem("userWalletAddress", address);
+      localStorage.setItem("claimedTokenId", tokenId);
+      localStorage.setItem("claimedContract", targetContract);
+
+      // 根據不同的 claim 結果設置狀態
       if (claimResult.isInvalid) {
         setClaimStatus(`Claim Status: Invalid address or pool`);
-        // 存儲錯誤狀態
         localStorage.setItem("claimStatus", "invalid");
       } else if (!claimResult.isEnrolled && claimResult.isSoldOut) {
         setClaimStatus(`Claim Status: Sold out`);
-        // 存儲錯誤狀態
         localStorage.setItem("claimStatus", "soldOut");
       } else if (!claimResult.isEnrolled && !claimResult.isSoldOut) {
         setClaimStatus(`Claim Status: Already claimed`);
-        // 存儲已領取狀態
         localStorage.setItem("claimStatus", "alreadyClaimed");
       } else if (claimResult.isEnrolled && !claimResult.isSoldOut) {
         setClaimStatus(`Claim successful`);
-        // 存儲成功狀態
         localStorage.setItem("claimStatus", "success");
 
-        // 原有的 addUserWallet 邏輯...
-        // Add user wallet to the database
+        // 只有成功領取時才嘗試添加到數據庫
         try {
           const addUserWalletResponse = await fetch(`/api/addUserWallet`, {
             method: "POST",
@@ -282,30 +167,23 @@ export default function NFTPage({
 
           if (!addUserWalletResponse.ok) {
             console.error("addUserWallet failed, but NFT claim was successful");
-            // 不拋出錯誤，繼續執行
           } else {
             const addUserWalletResult = await addUserWalletResponse.json();
             console.log("addUserWalletResult:", addUserWalletResult);
           }
         } catch (error) {
           console.error("addUserWallet error:", error);
-          // 不拋出錯誤，繼續執行
         }
-
-        // 無論什麼情況，都存儲基本信息並跳轉到 claim-success
-        const tokenId = data[0].tokenId.toString();
-        const targetContract = data[0].contract;
-
-        localStorage.setItem("userWalletAddress", address);
-        localStorage.setItem("claimedTokenId", tokenId);
-        localStorage.setItem("claimedContract", targetContract);
-
-        // 跳轉到成功頁面
-        window.location.href = "/claim-success";
       }
+
+      // 無論什麼情況，都跳轉到 claim-success 頁面
+      window.location.href = "/claim-success";
     } catch (error) {
       console.error("Error claiming NFT:", error);
       setClaimStatus(`Error claiming NFT: ${error.message}`);
+      localStorage.setItem("claimStatus", "error");
+      // 即使出錯也跳轉到 claim-success 頁面
+      window.location.href = "/claim-success";
     } finally {
       // Logout from Kukai wallet after processing claim result
       if (embedRef.current) {
@@ -313,7 +191,6 @@ export default function NFTPage({
         setIsLoggedIn(false);
         console.log("Logged out successfully");
       }
-      // 移除這裡的跳轉邏輯，因為已經在上面處理了
     }
   };
 
@@ -342,25 +219,12 @@ export default function NFTPage({
         d.poolId = null;
         d.duration = null;
       }
-
       return d;
     });
   }
 
   return (
     <div>
-      {/* Test button - remove this in production */}
-      {/* <div style={{ margin: "20px 0", textAlign: "center" }}>
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={openTestDialog}
-          style={{ marginBottom: "20px" }}
-        >
-          Test Message Dialog
-        </Button>
-      </div> */}
-
       {data &&
         data.map((d, index) => (
           <div key={index}>
@@ -371,42 +235,6 @@ export default function NFTPage({
       <div style={{ display: "flex", justifyContent: "center", margin: "5px" }}>
         {claimStatus && <div>{claimStatus}</div>}
       </div>
-
-      {/* Message Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Leave a Message</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Congratulations on your successful claim! Would you like to leave a
-            message for Artist or Publisher?
-          </DialogContentText>
-          <TextField
-            autoFocus
-            margin="dense"
-            id="message"
-            label="Your Message"
-            type="text"
-            fullWidth
-            multiline
-            rows={4}
-            variant="outlined"
-            value={userMessage}
-            onChange={(e) => setUserMessage(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
-            Skip
-          </Button>
-          <Button
-            onClick={handleSubmitMessage}
-            color="primary"
-            disabled={!userMessage.trim()}
-          >
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
     </div>
   );
 }

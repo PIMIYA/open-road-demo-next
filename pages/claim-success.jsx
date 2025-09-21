@@ -7,18 +7,11 @@ import {
   Typography,
   Stack,
   Paper,
-  TextField,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import MessageIcon from "@mui/icons-material/Message";
 
 const Item = styled(Paper)(({ theme }) => ({
   textAlign: "center",
@@ -34,11 +27,6 @@ export default function ClaimSuccess() {
     "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW"
   );
   const [claimStatus, setClaimStatus] = useState("");
-  
-  // 留言相關狀態
-  const [openDialog, setOpenDialog] = useState(false);
-  const [userMessage, setUserMessage] = useState("");
-  const [messageStatus, setMessageStatus] = useState("");
 
   useEffect(() => {
     // 從 URL 參數或 localStorage 獲取用戶地址和 tokenId
@@ -129,74 +117,6 @@ export default function ClaimSuccess() {
     }
   };
 
-  const handleOpenMessageDialog = () => {
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setUserMessage("");
-    setMessageStatus("");
-  };
-
-  const handleSubmitMessage = async () => {
-    if (!userMessage.trim()) {
-      setMessageStatus("請輸入留言內容");
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/post-comment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          tokenID: tokenId,
-          walletAddress: userAddress,
-          message: userMessage,
-        }),
-      });
-
-      let statusMessage = "";
-      switch (response.status) {
-        case 200:
-          statusMessage = "留言提交成功！";
-          break;
-        case 201:
-          statusMessage = "留言創建成功！";
-          break;
-        case 400:
-          statusMessage = "留言格式無效，請檢查輸入內容。";
-          break;
-        case 403:
-          statusMessage = "您沒有權限提交留言。";
-          break;
-        case 500:
-          statusMessage = "服務器錯誤，請稍後再試。";
-          break;
-        default:
-          statusMessage = `未知錯誤: ${response.status}`;
-      }
-
-      if (!response.ok) {
-        throw new Error(statusMessage);
-      }
-
-      const result = await response.json();
-      console.log("Message submission result:", result);
-      setMessageStatus("留言提交成功！");
-
-      // 延遲關閉對話框
-      setTimeout(() => {
-        handleCloseDialog();
-      }, 1500);
-    } catch (error) {
-      console.error("Error submitting message:", error);
-      setMessageStatus(`提交失敗: ${error.message}`);
-    }
-  };
-
   return (
     <Box sx={{ background: "#f5f5f5", minHeight: "100vh" }}>
       <Container maxWidth="md">
@@ -279,29 +199,6 @@ export default function ClaimSuccess() {
                 >
                   看看自己錢包
                 </Button>
-
-                {/* 留言按鈕 - 只有成功領取時才顯示 */}
-                {claimStatus === "success" && (
-                  <Button
-                    variant="outlined"
-                    size="large"
-                    fullWidth
-                    startIcon={<MessageIcon />}
-                    onClick={handleOpenMessageDialog}
-                    sx={{
-                      py: 2,
-                      fontSize: "1.1rem",
-                      borderColor: "#ff9800",
-                      color: "#ff9800",
-                      "&:hover": {
-                        borderColor: "#f57c00",
-                        backgroundColor: "rgba(255, 152, 0, 0.04)",
-                      },
-                    }}
-                  >
-                    給藝術家留言
-                  </Button>
-                )}
               </Stack>
             </Item>
 
@@ -351,64 +248,6 @@ export default function ClaimSuccess() {
           </Stack>
         </Box>
       </Container>
-
-      {/* 留言對話框 */}
-      <Dialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-          },
-        }}
-      >
-        <DialogTitle>給藝術家留言</DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ mb: 2 }}>
-            恭喜您成功領取了 NFT！您想給藝術家或發布者留言嗎？
-          </DialogContentText>
-          <TextField
-            autoFocus
-            margin="dense"
-            id="message"
-            label="您的留言"
-            type="text"
-            fullWidth
-            multiline
-            rows={4}
-            variant="outlined"
-            value={userMessage}
-            onChange={(e) => setUserMessage(e.target.value)}
-            sx={{ mt: 1 }}
-          />
-          {messageStatus && (
-            <Typography
-              variant="body2"
-              color={
-                messageStatus.includes("成功") ? "success.main" : "error.main"
-              }
-              sx={{ mt: 1 }}
-            >
-              {messageStatus}
-            </Typography>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={handleCloseDialog} color="primary">
-            跳過
-          </Button>
-          <Button
-            onClick={handleSubmitMessage}
-            color="primary"
-            disabled={!userMessage.trim()}
-            variant="contained"
-          >
-            提交
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }

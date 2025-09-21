@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/router";
 import {
   TZKT_API,
   MainnetAPI,
@@ -256,27 +256,32 @@ export default function NFTPage({
         setClaimStatus(`Claim successful`);
 
         // Add user wallet to the database
-        const addUserWalletResponse = await fetch(`/api/addUserWallet`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email,
-            address: address,
-            poolID: data_from_pool[0].key,
-          }),
-        });
+        try {
+          const addUserWalletResponse = await fetch(`/api/addUserWallet`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: email,
+              address: address,
+              poolID: data_from_pool[0].key,
+            }),
+          });
 
-        if (!addUserWalletResponse.ok) {
-          throw new Error(
-            `HTTP error during checkWalletExist! status: ${addUserWalletResponse.status}`
-          );
+          if (!addUserWalletResponse.ok) {
+            console.error("addUserWallet failed, but NFT claim was successful");
+            // 不拋出錯誤，繼續執行
+          } else {
+            const addUserWalletResult = await addUserWalletResponse.json();
+            console.log("addUserWalletResult:", addUserWalletResult);
+          }
+        } catch (error) {
+          console.error("addUserWallet error:", error);
+          // 不拋出錯誤，繼續執行
         }
 
-        const addUserWalletResult = await addUserWalletResponse.json();
-        console.log("addUserWalletResult:", addUserWalletResult);
-
+        // 無論 addUserWallet 是否成功，都繼續執行後續邏輯
         // Store user data for success page
         const tokenId = data[0].tokenId.toString();
         const targetContract = data[0].contract;
@@ -286,10 +291,8 @@ export default function NFTPage({
         localStorage.setItem("claimedTokenId", tokenId);
         localStorage.setItem("claimedContract", targetContract);
 
-        // lauch dialog to let user able to leave the one time message
-        setTokenID(tokenId);
-        setUserAddress(address);
-        setOpenDialog(true);
+        // 跳轉到成功頁面
+        window.location.href = "/claim-success";
       }
     } catch (error) {
       console.error("Error claiming NFT:", error);

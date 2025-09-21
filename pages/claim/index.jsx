@@ -83,6 +83,10 @@ export default function NFTPage({
   // Handle dialog close
   const handleCloseDialog = () => {
     setOpenDialog(false);
+    // Redirect to success page when user skips the message
+    setTimeout(() => {
+      window.location.href = "/claim-success";
+    }, 500);
   };
 
   // Handle message submission
@@ -133,6 +137,11 @@ export default function NFTPage({
       const result = await response.json();
       console.log("Message submission result:", result);
       setClaimStatus((prevStatus) => prevStatus + " • " + statusMessage);
+
+      // Redirect to success page after successful message submission
+      setTimeout(() => {
+        window.location.href = "/claim-success";
+      }, 1000);
     } catch (error) {
       console.error("Error submitting message:", error);
       setClaimStatus((prevStatus) => prevStatus + " • Error: " + error.message);
@@ -229,6 +238,10 @@ export default function NFTPage({
 
       const claimResult = await claimResponse.json();
       console.log("Claim result:", claimResult);
+      console.log(
+        "========= Full claim result structure:",
+        JSON.stringify(claimResult, null, 2)
+      );
 
       if (claimResult.isInvalid) {
         setClaimStatus(`Claim failed: Invalid address or pool`);
@@ -261,8 +274,17 @@ export default function NFTPage({
         const addUserWalletResult = await addUserWalletResponse.json();
         console.log("addUserWalletResult:", addUserWalletResult);
 
+        // Store user data for success page
+        const tokenId = data[0].tokenId.toString();
+        const targetContract = data[0].contract;
+
+        // Store in localStorage for success page
+        localStorage.setItem("userWalletAddress", address);
+        localStorage.setItem("claimedTokenId", tokenId);
+        localStorage.setItem("claimedContract", targetContract);
+
         // lauch dialog to let user able to leave the one time message
-        setTokenID(data[0].tokenId.toString());
+        setTokenID(tokenId);
         setUserAddress(address);
         setOpenDialog(true);
       }
@@ -333,6 +355,57 @@ export default function NFTPage({
       <div style={{ display: "flex", justifyContent: "center", margin: "5px" }}>
         {claimStatus && <div>{claimStatus}</div>}
       </div>
+
+      {/* 調試信息 - 正式環境時可以移除 */}
+      {data && data.length > 0 && (
+        <div
+          style={{
+            margin: "20px",
+            padding: "15px",
+            border: "1px solid #ccc",
+            borderRadius: "5px",
+            backgroundColor: "#f9f9f9",
+            fontFamily: "monospace",
+            fontSize: "0.8rem",
+          }}
+        >
+          <h4>調試信息 (Debug Info)</h4>
+          <p>
+            <strong>Pool ID:</strong> {data_from_pool?.[0]?.key || "未獲取"}
+          </p>
+          <p>
+            <strong>NFT Token ID:</strong> {data[0]?.tokenId || "未獲取"}
+          </p>
+          <p>
+            <strong>NFT 合約地址:</strong> {data[0]?.contract || "未獲取"}
+          </p>
+          <p>
+            <strong>NFT 名稱:</strong> {data[0]?.metadata?.name || "未獲取"}
+          </p>
+          <p>
+            <strong>NFT 描述:</strong>{" "}
+            {data[0]?.metadata?.description || "未獲取"}
+          </p>
+          <p>
+            <strong>NFT 圖片:</strong>{" "}
+            {data[0]?.metadata?.displayUri || "未獲取"}
+          </p>
+          <p>
+            <strong>開始時間:</strong>{" "}
+            {data[0]?.metadata?.start_time || "未獲取"}
+          </p>
+          <p>
+            <strong>結束時間:</strong> {data[0]?.metadata?.end_time || "未獲取"}
+          </p>
+          <p>
+            <strong>活動地點:</strong>{" "}
+            {data[0]?.metadata?.event_location || "未獲取"}
+          </p>
+          <p>
+            <strong>組織者:</strong> {data[0]?.metadata?.organizer || "未獲取"}
+          </p>
+        </div>
+      )}
       {/* Message Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>Leave a Message</DialogTitle>

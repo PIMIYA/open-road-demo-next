@@ -1,3 +1,4 @@
+// components/KukaiEmbedComponent.jsx
 import {
   useEffect,
   useRef,
@@ -8,168 +9,156 @@ import {
 import { KukaiEmbed, Networks } from "kukai-embed";
 import { Button } from "@mui/material";
 
+/**（可選）在模組層做單例，避免多次掛載頁面時重複 new */
+let singletonEmbed = null;
+let singletonInitPromise = null;
+
 const KukaiEmbedComponent = forwardRef(({ onLoginSuccess }, ref) => {
-  const embedRef = useRef(null);
-  const [isEmbedOpen, setIsEmbedOpen] = useState(false);
+  const containerRef = useRef(null); // 直接抓 DOM，不用靠 id 查
+  const embedRef = useRef(null); // 保存 KukaiEmbed 實例
+  const initPromiseRef = useRef(null); // 保存 init() 的 Promise，避免並發
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   useImperativeHandle(ref, () => ({
+    /** 給父層呼叫的安全登出 */
     logout: async () => {
-      if (embedRef.current) {
-        try {
-          await embedRef.current.logout();
+      try {
+        const embed = embedRef.current || singletonEmbed;
+        if (embed) {
+          await embed.logout();
           setIsLoggedIn(false);
-          console.log("Logged out successfully");
-        } catch (error) {
-          console.error("Error during logout:", error);
         }
+      } catch (e) {
+        console.error("Error during logout:", e);
       }
     },
   }));
 
+  /** 懶初始化：需要時才做，且一定等到 container 存在 */
+  const ensureInitialized = async () => {
+    if (typeof window === "undefined") return null;
 
-  const initializeEmbed = () => {
-    if (typeof window !== "undefined" && typeof document !== "undefined") {
-      if (embedRef.current) {
-        console.log("Kukai-Embed already initialized");
-        return;
-      }
+    // 若已有單例與初始化承諾，直接沿用
+    if (singletonEmbed && singletonInitPromise) {
+      await singletonInitPromise;
+      embedRef.current = singletonEmbed;
+      return singletonEmbed;
+    }
+
+    // 若尚未 new，這裡 new；一定要確保 containerRef.current 存在
+    if (!embedRef.current) {
+      const el = containerRef.current;
+      if (!el) throw new Error("Kukai container not mounted yet.");
+
       const embed = new KukaiEmbed({
         net: Networks.mainnet,
-        element: document.getElementById("kukai-container"),
+        element: el,
+        // 其他可選參數…例如 theme、locale 等（依官方文件）
       });
 
-      embed
+      embedRef.current = embed;
+      singletonEmbed = embed;
+
+      const p = embed
         .init()
         .then(() => {
-          if (embed.user) {
-            console.log("Already logged in", embed.user);
-            setIsLoggedIn(true);
-          }
-
-        //   // Inject CSS into the iframe, if needed , this is optional and test it after KUKAI add kairos to whitelist
-
-        //   const iframe = document.getElementById("kukai-iframe");
-        //   if (iframe) {
-        //       const injectCSS = () => {
-        //           try {
-        //               const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
-        //               const css = `
-        //                   .flex-row.header .abort {
-        //                       display: none !important;
-        //                   }
-        //                   .flex-row.header .back {
-        //                       display: none !important;
-        //                   }
-        //                   .footer {
-        //                       display: none !important;
-        //                   }
-        //                   body {
-        //                       background-color: red !important;
-        //                   }
-        //               `;
-        //               const style = iframeDocument.createElement("style");
-        //               style.appendChild(iframeDocument.createTextNode(css));
-        //               iframeDocument.head.appendChild(style);
-        //           } catch (error) {
-        //               console.error("Error injecting CSS:", error);
-        //           }
-        //       };
-  
-        //       if (iframe.contentDocument.readyState === "complete") {
-        //           injectCSS();
-        //       } else {
-        //           iframe.onload = injectCSS;
-        //       }
-        //     }
+          // 若已登入（回流/快取），同步 flag
+          if (embed.user) setIsLoggedIn(true);
         })
-        .catch((error) => {
-          console.error("Error during initialization:", error);
+        .catch((err) => {
+          console.error("Error during initialization:", err);
+          throw err;
         });
 
-      embedRef.current = embed;
+      initPromiseRef.current = p;
+      singletonInitPromise = p;
     }
+
+    await (initPromiseRef.current || singletonInitPromise);
+    return embedRef.current;
   };
 
-  useEffect(() => {
-    initializeEmbed();
-  }, []);
-
+  /** login flow：嚴格保證 init 完成再 login */
   const handleLogin = async () => {
-    if (embedRef.current) {
-      try {
-        const userInfo = await embedRef.current.login({
-          loginOptions: ["google"],
-          wideButtons: [true],
-          showBackButton: [true],
-        });
+    if (busy) return;
+    setBusy(true);
+    try {
+      const embed = await ensureInitialized(); // 等待 init 完成
+      if (!embed) throw new Error("Embed not available");
 
-        if (userInfo) {
-          // console.log(`userInfo is : ${JSON.stringify(userInfo)}`);
-          setIsLoggedIn(true);
-          onLoginSuccess(userInfo);
-        }
-      } catch (error) {
-        console.error("Error during login:", error);
+      const userInfo = await embed.login({
+        loginOptions: ["google"],
+        wideButtons: [true],
+        showBackButton: [true],
+      });
+
+      if (userInfo) {
+        setIsLoggedIn(true);
+        onLoginSuccess?.(userInfo);
       }
+    } catch (error) {
+      console.error("Error during login:", error);
+      // 這裡可往上拋或顯示 UI 錯誤訊息
+    } finally {
+      setBusy(false);
     }
-    setIsEmbedOpen(true);
   };
 
-  // const handleLogout = async () => {
-  //     if (embedRef.current) {
-  //         try {
-  //             await embedRef.current.logout();
-  //             setIsLoggedIn(false);
-  //             console.log('Logged out successfully');
-  //         } catch (error) {
-  //             console.error('Error during logout:', error);
-  //         }
+  /** 清理：離開頁面時銷毀或登出 */
+  // useEffect(() => {
+  //   return () => {
+  // 要不要在 unmount 時自動 logout/destroy
+  // 如果不同頁面之間要共用登入狀態，就不要 destroy。
+  // 如果想完全乾淨，打開下面這段：
+  // (async () => {
+  //   try {
+  //     const embed = embedRef.current;
+  //     if (embed) {
+  //       await embed.logout();
+  //       // 沒有官方 destroy 也 OK，讓 iframe 留著也不影響
   //     }
-  // };
+  //   } catch {}
+  // })();
+  //   };
+  // }, []);
 
   return (
     <div
       style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        // marginBottom: "16px",
-        marginTop: "16px",
+        display: "grid",
+        placeItems: "center",
+        marginTop: 16,
+        gap: 8,
       }}
     >
-      {isLoggedIn ? (
-        <Button
-          onClick={() => ref.current.logout()}
-          sx={{
-            backgroundColor: "#007bff",
-            color: "#fff",
-            padding: "8px 16px",
-            borderRadius: "4px",
-            "&:hover": {
-              backgroundColor: "#0056b3",
-            },
-          }}
-        >
-          Logout
-        </Button>
-      ) : (
-        <Button
-          onClick={handleLogin}
-          sx={{
-            backgroundColor: "#007bff",
-            color: "#fff",
-            padding: "8px 16px",
-            borderRadius: "4px",
-            "&:hover": {
-              backgroundColor: "#0056b3",
-            },
-          }}
-        >
-          click to claim NFT
-        </Button>
-      )}
-      {isEmbedOpen && <div id="kukai-container"></div>}
+      <div style={{ minHeight: 1 }} />
+      <Button
+        onClick={isLoggedIn ? ref?.current?.logout : handleLogin}
+        disabled={busy}
+        sx={{
+          backgroundColor: "#007bff",
+          color: "#fff",
+          px: 2,
+          py: 1,
+          borderRadius: "4px",
+          "&:hover": { backgroundColor: "#0056b3" },
+        }}
+      >
+        {isLoggedIn ? "Logout" : busy ? "Connecting..." : "click to claim NFT"}
+      </Button>
+
+      {/* 關鍵：容器永遠存在（但不一定要可見） */}
+      <div
+        ref={containerRef}
+        id="kukai-container"
+        style={{
+          // 你可以保持隱藏或縮到 0；Kukai 內部會把 iframe 掛到這裡
+          width: 0,
+          height: 0,
+          overflow: "hidden",
+        }}
+      />
     </div>
   );
 });

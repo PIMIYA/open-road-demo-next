@@ -80,8 +80,8 @@ export const connectBeacon: ConnectFn = async (isNew) => {
     throw new Error("Tried to connect on the server");
   }
 
+  // 移除 network 屬性，因為它已經在創建 BeaconWallet 時設置了
   const response = await beaconWallet.client.requestPermissions({
-    network: { type: "mainnet" },
     scopes: [PermissionScope.OPERATION_REQUEST],
   });
 
@@ -182,19 +182,34 @@ export const callContractBeaconFn =
       const minterContractAddress: string =
         "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
       const minter = await tezosToolkit.wallet.at(minterContractAddress);
-      // console.log("Calling contract function");
-      // console.log("contractId:", contractId);
-      // console.log("tokenQty:", tokenQty);
-      // console.log("token:", stringToBytes(tokens[0]));
-      // console.log("creators:", creators[0]);
 
-      const op = await minter.methods
-        .mint_artist(
-          contractId,
-          tokenQty,
-          stringToBytes(tokens[0]),
-          creators[0]
-        )
+      // const op = await minter.methods
+      //   .mint_artist(
+      //     contractId,
+      //     tokenQty,
+      //     stringToBytes(tokens[0]),
+      //     creators[0]
+      //   )
+      //   .send({ storageLimit: 350 });
+
+      const collectionId = 92340;
+      const editions = 1;
+      const cidBytes = stringToBytes(tokens[0]);
+      const recipient = creators[0];
+      console.log("=== Contract Call Parameters ===");
+      console.table({
+        collectionId,
+        editions,
+        cidBytes,
+        recipient,
+      });
+      const op = await minter.methodsObject
+        .mint_artist({
+          collection_id: collectionId,
+          editions,
+          metadata_cid: cidBytes,
+          target: recipient,
+        })
         .send({ storageLimit: 350 });
 
       console.log("Op hash:", op.opHash);
@@ -202,7 +217,11 @@ export const callContractBeaconFn =
       console.log("Confirmation:", confirmation);
       return op.opHash;
     } catch (error) {
-      console.error("Error calling contract function:", error);
+      console.error(
+        "Error calling contract function:",
+        JSON.stringify(error, null, 2)
+      );
+
       throw error;
     }
   };

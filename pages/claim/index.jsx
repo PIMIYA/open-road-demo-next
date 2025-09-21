@@ -55,12 +55,16 @@ export async function getServerSideProps(context) {
   };
 }
 
-export default function NFTPage({ ownersData, data, data_from_pool, nftData, error }) {
-  console.log("============ownersData : ", ownersData);
-  console.log("============data : ", data);
-  console.log("============data_from_pool : ", data_from_pool);
-  console.log("============nftData : ", nftData);
+export default function NFTPage({
+  ownersData,
+  data,
+  data_from_pool,
+  nftData,
+  error,
+}) {
+  const router = useRouter();
   const [claimStatus, setClaimStatus] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const embedRef = useRef(null);
 
   const handleClaim = async (userInfo) => {
@@ -131,7 +135,7 @@ export default function NFTPage({ ownersData, data, data_from_pool, nftData, err
 
       // 存儲基本信息
       const tokenId = data[0].tokenId.toString();
-      const targetContract = data[0].contract.address;
+      const targetContract = data[0].contract.address || data[0].contract;
 
       localStorage.setItem("userWalletAddress", address);
       localStorage.setItem("claimedTokenId", tokenId);
@@ -147,6 +151,36 @@ export default function NFTPage({ ownersData, data, data_from_pool, nftData, err
       } else if (!claimResult.isEnrolled && !claimResult.isSoldOut) {
         setClaimStatus(`Claim Status: Already claimed`);
         localStorage.setItem("claimStatus", "alreadyClaimed");
+
+        // 發送確認郵件
+        try {
+          const emailData = {
+            email: email,
+            userAddress: address,
+            tokenId: tokenId,
+            contractAddress: targetContract,
+            claimStatus: "success",
+            nftName: data[0].metadata?.name || "NFT",
+            nftDescription: data[0].metadata?.description || "",
+            nftImageUrl: data[0].metadata?.displayUri || "",
+          };
+
+          const emailResponse = await fetch(`/api/send-claim-email`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(emailData),
+          });
+
+          if (emailResponse.ok) {
+            console.log("Confirmation email sent successfully");
+          } else {
+            console.error("Failed to send confirmation email");
+          }
+        } catch (error) {
+          console.error("Error sending confirmation email:", error);
+        }
       } else if (claimResult.isEnrolled && !claimResult.isSoldOut) {
         setClaimStatus(`Claim successful`);
         localStorage.setItem("claimStatus", "success");
@@ -173,6 +207,36 @@ export default function NFTPage({ ownersData, data, data_from_pool, nftData, err
           }
         } catch (error) {
           console.error("addUserWallet error:", error);
+        }
+
+        // 發送確認郵件
+        try {
+          const emailData = {
+            email: email,
+            userAddress: address,
+            tokenId: tokenId,
+            contractAddress: targetContract,
+            claimStatus: "success",
+            nftName: data[0].metadata?.name || "NFT",
+            nftDescription: data[0].metadata?.description || "",
+            nftImageUrl: data[0].metadata?.displayUri || "",
+          };
+
+          const emailResponse = await fetch(`/api/send-claim-email`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(emailData),
+          });
+
+          if (emailResponse.ok) {
+            console.log("Confirmation email sent successfully");
+          } else {
+            console.error("Failed to send confirmation email");
+          }
+        } catch (error) {
+          console.error("Error sending confirmation email:", error);
         }
       }
 

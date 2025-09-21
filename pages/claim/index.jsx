@@ -356,56 +356,6 @@ export default function NFTPage({
         {claimStatus && <div>{claimStatus}</div>}
       </div>
 
-      {/* 調試信息 - 正式環境時可以移除 */}
-      {data && data.length > 0 && (
-        <div
-          style={{
-            margin: "20px",
-            padding: "15px",
-            border: "1px solid #ccc",
-            borderRadius: "5px",
-            backgroundColor: "#f9f9f9",
-            fontFamily: "monospace",
-            fontSize: "0.8rem",
-          }}
-        >
-          <h4>調試信息 (Debug Info)</h4>
-          <p>
-            <strong>Pool ID:</strong> {data_from_pool?.[0]?.key || "未獲取"}
-          </p>
-          <p>
-            <strong>NFT Token ID:</strong> {data[0]?.tokenId || "未獲取"}
-          </p>
-          <p>
-            <strong>NFT 合約地址:</strong> {data[0]?.contract || "未獲取"}
-          </p>
-          <p>
-            <strong>NFT 名稱:</strong> {data[0]?.metadata?.name || "未獲取"}
-          </p>
-          <p>
-            <strong>NFT 描述:</strong>{" "}
-            {data[0]?.metadata?.description || "未獲取"}
-          </p>
-          <p>
-            <strong>NFT 圖片:</strong>{" "}
-            {data[0]?.metadata?.displayUri || "未獲取"}
-          </p>
-          <p>
-            <strong>開始時間:</strong>{" "}
-            {data[0]?.metadata?.start_time || "未獲取"}
-          </p>
-          <p>
-            <strong>結束時間:</strong> {data[0]?.metadata?.end_time || "未獲取"}
-          </p>
-          <p>
-            <strong>活動地點:</strong>{" "}
-            {data[0]?.metadata?.event_location || "未獲取"}
-          </p>
-          <p>
-            <strong>組織者:</strong> {data[0]?.metadata?.organizer || "未獲取"}
-          </p>
-        </div>
-      )}
       {/* Message Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>Leave a Message</DialogTitle>

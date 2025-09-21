@@ -131,7 +131,7 @@ export default function NFTPage({ ownersData, data, data_from_pool, nftData, err
 
       // 存儲基本信息
       const tokenId = data[0].tokenId.toString();
-      const targetContract = data[0].contract;
+      const targetContract = data[0].contract.address;
 
       localStorage.setItem("userWalletAddress", address);
       localStorage.setItem("claimedTokenId", tokenId);

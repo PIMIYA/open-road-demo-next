@@ -34,7 +34,7 @@ export default function ClaimSuccess() {
     "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW"
   );
   const [claimStatus, setClaimStatus] = useState("");
-
+  
   // 留言相關狀態
   const [openDialog, setOpenDialog] = useState(false);
   const [userMessage, setUserMessage] = useState("");
@@ -67,7 +67,13 @@ export default function ClaimSuccess() {
     } else {
       const storedContract = localStorage.getItem("claimedContract");
       if (storedContract) {
-        setContractAddress(storedContract);
+        // 處理可能的 [object Object] 情況
+        try {
+          const parsedContract = JSON.parse(storedContract);
+          setContractAddress(parsedContract.address || parsedContract);
+        } catch (e) {
+          setContractAddress(storedContract);
+        }
       }
     }
 
@@ -352,10 +358,15 @@ export default function ClaimSuccess() {
         onClose={handleCloseDialog}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+          },
+        }}
       >
         <DialogTitle>給藝術家留言</DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText sx={{ mb: 2 }}>
             恭喜您成功領取了 NFT！您想給藝術家或發布者留言嗎？
           </DialogContentText>
           <TextField
@@ -370,7 +381,7 @@ export default function ClaimSuccess() {
             variant="outlined"
             value={userMessage}
             onChange={(e) => setUserMessage(e.target.value)}
-            sx={{ mt: 2 }}
+            sx={{ mt: 1 }}
           />
           {messageStatus && (
             <Typography
@@ -384,7 +395,7 @@ export default function ClaimSuccess() {
             </Typography>
           )}
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ p: 2 }}>
           <Button onClick={handleCloseDialog} color="primary">
             跳過
           </Button>
@@ -392,6 +403,7 @@ export default function ClaimSuccess() {
             onClick={handleSubmitMessage}
             color="primary"
             disabled={!userMessage.trim()}
+            variant="contained"
           >
             提交
           </Button>

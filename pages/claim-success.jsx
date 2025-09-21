@@ -64,8 +64,7 @@ export default function ClaimSuccess() {
     if (tokenId && contractAddress) {
       router.push(`/claimsToken/${contractAddress}/${tokenId}`);
     } else {
-      // 如果沒有 tokenId，使用默認值
-      router.push(`/claimsToken/${contractAddress}/0`);
+      alert("無法獲取 NFT Token ID，請確保您已經成功領取了 NFT");
     }
   };
 

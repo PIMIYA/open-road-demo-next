@@ -9,7 +9,7 @@ import {
 import { MichelCodecPacker, TezosToolkit, OpKind } from "@taquito/taquito";
 import { stringToBytes } from "@taquito/utils";
 import { ConnectFn, ContractCallDetails } from "./types";
-import { BeaconEvent } from "@airgap/beacon-sdk";
+// import { BeaconEvent } from "@airgap/beacon-sdk";
 import { InMemorySigner } from "@taquito/signer";
 
 const createBeaconWallet = () => {
@@ -47,15 +47,13 @@ export const connectBeacon: ConnectFn = async (isNew) => {
   if (!isNew) {
     const existingWallet = createBeaconWallet();
 
-    // Subscribe to events to get notified when the active account changes
+    // // Subscribe to events to get notified when the active account changes
     // existingWallet?.client.subscribeToEvent(
     //   BeaconEvent.ACTIVE_ACCOUNT_SET as BeaconEvent, // Change the argument type to BeaconEvent
     //   (data) => {
     //     console.log("Active account has been set: ", data);
     //   }
     // );
-
-    
     const acc = await existingWallet?.client.getActiveAccount();
 
     if (!existingWallet || !acc) {
@@ -159,10 +157,10 @@ if (typeof window !== "undefined") {
 export const callContractBeaconFn =
   (beaconWallet: BeaconWallet) =>
   async ({
-    collection_id,
-    editions,
-    metadata_cid,
-    target,
+    contractId,
+    tokenQty,
+    creators,
+    tokens,
   }: ContractCallDetails): Promise<string | undefined> => {
     try {
       await beaconWallet?.requestPermissions({

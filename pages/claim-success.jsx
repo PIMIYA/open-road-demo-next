@@ -239,12 +239,6 @@ export default function ClaimSuccess() {
               </Box>
             </Item>
 
-            {/* 額外信息 */}
-            <Box textAlign="center" mt={4}>
-              <Typography variant="body2" color="text.secondary">
-                感謝您使用我們的服務
-              </Typography>
-            </Box>
           </Stack>
         </Box>
       </Container>

@@ -32,26 +32,17 @@ export default async function handler(req, res) {
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
+      secure: process.env.SMTP_SECURE === "true",
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
-      // 增加超時設置
-      connectionTimeout: 30000, // 30 seconds
-      greetingTimeout: 15000, // 15 seconds
-      socketTimeout: 30000, // 30 seconds
-      // 添加 TLS 選項
+      connectionTimeout: 15000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
       tls: {
         rejectUnauthorized: false,
-        ciphers: "SSLv3",
       },
-      // 添加重試機制
-      pool: true,
-      maxConnections: 1,
-      maxMessages: 3,
-      rateDelta: 20000,
-      rateLimit: 5,
     });
 
     // 生成郵件內容
@@ -65,45 +56,21 @@ export default async function handler(req, res) {
       nftImageUrl,
     });
 
+    console.log("Verifying SMTP connection...");
+    await transporter.verify();
+    console.log("✅ SMTP connection verified successfully!");
+
     console.log("Sending email to:", email);
+    // 發送郵件
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: email,
+      subject: emailContent.subject,
+      html: emailContent.html,
+      text: emailContent.text,
+    });
 
-    // 嘗試發送郵件，帶重試機制
-    let retryCount = 0;
-    const maxRetries = 3;
-    let info;
-
-    while (retryCount < maxRetries) {
-      try {
-        console.log(`Attempt ${retryCount + 1} to send email...`);
-
-        // 發送郵件
-        info = await transporter.sendMail({
-          from: process.env.SMTP_FROM || process.env.SMTP_USER,
-          to: email,
-          subject: emailContent.subject,
-          html: emailContent.html,
-          text: emailContent.text,
-        });
-
-        console.log("Email sent successfully:", info.messageId);
-        break; // 成功發送，跳出重試循環
-      } catch (sendError) {
-        retryCount++;
-        console.error(
-          `Email send attempt ${retryCount} failed:`,
-          sendError.message
-        );
-
-        if (retryCount >= maxRetries) {
-          throw sendError; // 達到最大重試次數，拋出錯誤
-        }
-
-        // 等待一段時間後重試
-        const waitTime = retryCount * 2000; // 2秒, 4秒, 6秒
-        console.log(`Waiting ${waitTime}ms before retry...`);
-        await new Promise((resolve) => setTimeout(resolve, waitTime));
-      }
-    }
+    console.log("✅ Email sent successfully:", info.messageId);
 
     return res.status(200).json({
       success: true,

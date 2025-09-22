@@ -6,9 +6,9 @@ import {
   GetClaimablePoolID,
   postClaimData,
 } from "@/lib/api";
+import { getRandomPlace, getRandomCreator } from "@/lib/dummy";
 import NFTclaim from "@/components/NFTclaim";
 import KukaiEmbedComponent from "../../components/KukaiEmbedComponent";
-import { getRandomCreator, getRandomPlace } from "@/lib/dummy";
 
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 const AkaDropAPI = "https://mars.akaswap.com/drop/api/pools";

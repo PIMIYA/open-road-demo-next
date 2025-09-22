@@ -133,6 +133,8 @@ export default function ClaimSuccess() {
       nftImageUrl: nftImageUrl || "",
     };
 
+    console.log("emailData is : ", emailData);
+
     // 在背景發送郵件
     sendEmailInBackground(emailData);
 

@@ -27,8 +27,62 @@ export default function ClaimSuccess() {
     "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW"
   );
   const [claimStatus, setClaimStatus] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  // 背景寄信函數
+  const sendEmailInBackground = async (emailData) => {
+    try {
+      console.log("📧 Sending email in background...");
+      fetch(`/api/send-claim-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emailData),
+      })
+        .then((response) => {
+          if (response.ok) {
+            console.log("✅ Background email sent successfully");
+            setEmailSent(true);
+          } else {
+            console.error("❌ Background email failed:", response.status);
+          }
+        })
+        .catch((error) => {
+          console.error("❌ Background email error:", error);
+        });
+    } catch (error) {
+      console.error("❌ Background email setup error:", error);
+    }
+  };
 
   useEffect(() => {
+    // 檢查訪問權限
+    const status = localStorage.getItem("claimStatus");
+    const userEmail = localStorage.getItem("userEmail");
+    const userWalletAddress = localStorage.getItem("userWalletAddress");
+
+    // 只有成功領取或已領取過的人才能訪問
+    if (
+      !status ||
+      (!status.includes("success") && !status.includes("alreadyClaimed"))
+    ) {
+      console.log("❌ Unauthorized access to claim-success page");
+      router.push("/");
+      return;
+    }
+
+    // 如果沒有必要的用戶信息，也重定向
+    if (!userEmail || !userWalletAddress) {
+      console.log("❌ Missing user information");
+      router.push("/");
+      return;
+    }
+
+    setIsAuthorized(true);
+    setClaimStatus(status);
+
     // 從 URL 參數或 localStorage 獲取用戶地址和 tokenId
     const { address, tokenId: urlTokenId, contract } = router.query;
 
@@ -65,13 +119,36 @@ export default function ClaimSuccess() {
       }
     }
 
-    // 獲取 claim 狀態
-    const status = localStorage.getItem("claimStatus");
-    setClaimStatus(status);
+    // 準備郵件數據並發送（只有成功領取時才發送）
+    const nftName = localStorage.getItem("nftName");
+    const nftDescription = localStorage.getItem("nftDescription");
+    const nftImageUrl = localStorage.getItem("nftImageUrl");
 
-    // 清除狀態
+    if (status === "success" && userEmail && userWalletAddress) {
+      const emailData = {
+        email: userEmail,
+        userAddress: userWalletAddress,
+        tokenId: tokenId,
+        contractAddress: contractAddress,
+        claimStatus: status,
+        nftName: nftName || "NFT",
+        nftDescription: nftDescription || "",
+        nftImageUrl: nftImageUrl || "",
+      };
+
+      // 在背景發送郵件
+      sendEmailInBackground(emailData);
+
+      // 清除郵件相關的 localStorage
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("nftName");
+      localStorage.removeItem("nftDescription");
+      localStorage.removeItem("nftImageUrl");
+    }
+
+    // 清除 claim 狀態
     localStorage.removeItem("claimStatus");
-  }, [router.query]);
+  }, [router.query, userAddress, tokenId, contractAddress]);
 
   const getStatusMessage = () => {
     switch (claimStatus) {
@@ -79,12 +156,6 @@ export default function ClaimSuccess() {
         return "恭喜您成功領取了 NFT！";
       case "alreadyClaimed":
         return "您已經領取過這個 NFT 了！";
-      case "soldOut":
-        return "抱歉，這個 NFT 已經售罄了！";
-      case "invalid":
-        return "領取失敗：無效的地址或池子！";
-      case "error":
-        return "領取過程中發生錯誤！";
       default:
         return "領取處理完成！";
     }
@@ -116,6 +187,23 @@ export default function ClaimSuccess() {
       alert("無法獲取錢包地址");
     }
   };
+
+  // 如果未授權，顯示載入中或重定向
+  if (!isAuthorized) {
+    return (
+      <Box
+        sx={{
+          background: "#f5f5f5",
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Typography variant="h6">載入中...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ background: "#f5f5f5", minHeight: "100vh" }}>
@@ -150,6 +238,13 @@ export default function ClaimSuccess() {
             >
               {getStatusMessage()}
             </Typography>
+
+            {/* 郵件狀態提示 - 只有成功領取時才顯示 */}
+            {claimStatus === "success" && emailSent && (
+              <Typography variant="body2" color="success.main" sx={{ mb: 2 }}>
+                📧 確認郵件已發送到您的信箱
+              </Typography>
+            )}
 
             {/* 按鈕容器 */}
             <Item sx={{ width: "100%", maxWidth: 400 }}>
@@ -236,9 +331,20 @@ export default function ClaimSuccess() {
                   <strong>錢包查看連結:</strong>{" "}
                   {userAddress ? `/wallet/${userAddress}` : "無法生成"}
                 </Typography>
+                <Typography variant="body2">
+                  <strong>郵件狀態:</strong>{" "}
+                  {claimStatus === "success"
+                    ? emailSent
+                      ? "已發送"
+                      : "發送中..."
+                    : "不發送"}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>訪問權限:</strong>{" "}
+                  {isAuthorized ? "已授權" : "未授權"}
+                </Typography>
               </Box>
             </Item>
-
           </Stack>
         </Box>
       </Container>

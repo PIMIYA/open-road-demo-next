@@ -23,35 +23,57 @@ export default async function handler(req, res) {
       .json({ error: "Missing required fields: email and userAddress" });
   }
 
+  // 立即返回成功響應，不等待寄信完成
+  res.status(200).json({
+    success: true,
+    message: "Email queued for background processing",
+  });
+
+  // 在背景處理寄信（不阻塞響應）
+  processEmailInBackground({
+    email,
+    userAddress,
+    tokenId,
+    contractAddress,
+    claimStatus,
+    nftName,
+    nftDescription,
+    nftImageUrl,
+  }).catch(error => {
+    console.error("Background email processing failed:", error);
+  });
+}
+
+async function processEmailInBackground({
+  email,
+  userAddress,
+  tokenId,
+  contractAddress,
+  claimStatus,
+  nftName,
+  nftDescription,
+  nftImageUrl,
+}) {
   try {
-    console.log("Creating SMTP transporter...");
-    console.log("SMTP_HOST:", process.env.SMTP_HOST);
-    console.log("SMTP_PORT:", process.env.SMTP_PORT);
-    console.log("SMTP_USER:", process.env.SMTP_USER);
+    console.log("🔄 Processing email in background for:", email);
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
+      secure: process.env.SMTP_SECURE === "true",
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
-      // 添加超時設置
-      connectionTimeout: 15000, // 15 seconds
-      greetingTimeout: 10000, // 10 seconds
-      socketTimeout: 15000, // 15 seconds
-      // 添加 TLS 選項
+      connectionTimeout: 15000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
       tls: {
         rejectUnauthorized: false,
       },
     });
 
-    console.log("Verifying SMTP connection...");
-    await transporter.verify();
-    console.log("SMTP connection verified successfully!");
-
-    // 生成郵件內容
+    console.log("📧 Sending background email...");
     const emailContent = generateEmailContent({
       email,
       userAddress,
@@ -63,8 +85,6 @@ export default async function handler(req, res) {
       nftImageUrl,
     });
 
-    console.log("Sending email to:", email);
-    // 發送郵件
     const info = await transporter.sendMail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
       to: email,
@@ -73,20 +93,9 @@ export default async function handler(req, res) {
       text: emailContent.text,
     });
 
-    console.log("Email sent successfully:", info.messageId);
-
-    return res.status(200).json({
-      success: true,
-      messageId: info.messageId,
-      message: "Email sent successfully",
-    });
+    console.log("✅ Background email sent successfully:", info.messageId);
   } catch (error) {
-    console.error("Error sending email:", error);
-    return res.status(500).json({
-      error: "Failed to send email",
-      details: error.message,
-      code: error.code,
-    });
+    console.error("❌ Background email failed:", error);
   }
 }
 
@@ -106,6 +115,12 @@ function generateEmailContent({
         return "恭喜您成功領取了 NFT！";
       case "alreadyClaimed":
         return "您已經領取過這個 NFT 了！";
+      case "soldOut":
+        return "抱歉，這個 NFT 已經售罄了！";
+      case "invalid":
+        return "領取失敗：無效的地址或池子！";
+      case "error":
+        return "領取過程中發生錯誤！";
       default:
         return "領取處理完成！";
     }
@@ -118,7 +133,6 @@ function generateEmailContent({
 
   const walletViewUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/wallet/${userAddress}`;
 
-  // 郵件標題包含 NFT 名稱
   const subject = `NFT 領取完成 - ${nftName || "您的 NFT"}`;
 
   const html = `
@@ -163,6 +177,27 @@ function generateEmailContent({
           color: #666;
           margin-bottom: 30px;
         }
+        .nft-info {
+          background-color: #f9f9f9;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 20px 0;
+        }
+        .nft-image {
+          max-width: 100%;
+          height: auto;
+          border-radius: 8px;
+          margin-bottom: 15px;
+        }
+        .nft-name {
+          font-size: 20px;
+          font-weight: bold;
+          margin-bottom: 10px;
+        }
+        .nft-description {
+          color: #666;
+          margin-bottom: 15px;
+        }
         .buttons {
           text-align: center;
           margin: 30px 0;
@@ -188,6 +223,17 @@ function generateEmailContent({
         .button.secondary:hover {
           background-color: rgba(25, 118, 210, 0.04);
         }
+        .info-section {
+          background-color: #f0f8ff;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 20px 0;
+        }
+        .info-item {
+          margin: 10px 0;
+          font-family: monospace;
+          font-size: 14px;
+        }
         .footer {
           text-align: center;
           margin-top: 30px;
@@ -204,6 +250,26 @@ function generateEmailContent({
           <div class="subtitle">${getStatusMessage()}</div>
         </div>
 
+        ${
+          nftName
+            ? `
+        <div class="nft-info">
+          ${
+            nftImageUrl
+              ? `<img src="${nftImageUrl}" alt="${nftName}" class="nft-image">`
+              : ""
+          }
+          <div class="nft-name">${nftName}</div>
+          ${
+            nftDescription
+              ? `<div class="nft-description">${nftDescription}</div>`
+              : ""
+          }
+        </div>
+        `
+            : ""
+        }
+
         <div class="buttons">
           ${
             nftViewUrl
@@ -211,6 +277,24 @@ function generateEmailContent({
               : ""
           }
           <a href="${walletViewUrl}" class="button secondary">看看自己錢包</a>
+        </div>
+
+        <div class="info-section">
+          <h3>領取詳情</h3>
+          <div class="info-item"><strong>錢包地址:</strong> ${userAddress}</div>
+          ${
+            tokenId
+              ? `<div class="info-item"><strong>Token ID:</strong> ${tokenId}</div>`
+              : ""
+          }
+          ${
+            contractAddress
+              ? `<div class="info-item"><strong>合約地址:</strong> ${contractAddress}</div>`
+              : ""
+          }
+          <div class="info-item"><strong>領取狀態:</strong> ${
+            claimStatus || "未獲取"
+          }</div>
         </div>
 
         <div class="footer">
@@ -226,6 +310,14 @@ function generateEmailContent({
 領取完成！
 
 ${getStatusMessage()}
+
+${nftName ? `NFT 名稱: ${nftName}` : ""}
+${nftDescription ? `描述: ${nftDescription}` : ""}
+
+錢包地址: ${userAddress}
+${tokenId ? `Token ID: ${tokenId}` : ""}
+${contractAddress ? `合約地址: ${contractAddress}` : ""}
+領取狀態: ${claimStatus || "未獲取"}
 
 ${nftViewUrl ? `查看 NFT: ${nftViewUrl}` : ""}
 查看錢包: ${walletViewUrl}

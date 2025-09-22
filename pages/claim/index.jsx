@@ -140,47 +140,29 @@ export default function NFTPage({
       localStorage.setItem("userWalletAddress", address);
       localStorage.setItem("claimedTokenId", tokenId);
       localStorage.setItem("claimedContract", targetContract);
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("nftName", data[0].metadata?.name || "NFT");
+      localStorage.setItem(
+        "nftDescription",
+        data[0].metadata?.description || ""
+      );
+      localStorage.setItem("nftImageUrl", data[0].metadata?.displayUri || "");
 
       // 根據不同的 claim 結果設置狀態
       if (claimResult.isInvalid) {
         setClaimStatus(`Claim Status: Invalid address or pool`);
         localStorage.setItem("claimStatus", "invalid");
+        // 不跳轉，顯示錯誤信息
       } else if (!claimResult.isEnrolled && claimResult.isSoldOut) {
         setClaimStatus(`Claim Status: Sold out`);
         localStorage.setItem("claimStatus", "soldOut");
+        // 不跳轉，顯示錯誤信息
       } else if (!claimResult.isEnrolled && !claimResult.isSoldOut) {
         setClaimStatus(`Claim Status: Already claimed`);
         localStorage.setItem("claimStatus", "alreadyClaimed");
-
-        // 發送確認郵件
-        try {
-          const emailData = {
-            email: email,
-            userAddress: address,
-            tokenId: tokenId,
-            contractAddress: targetContract,
-            claimStatus: "success",
-            nftName: data[0].metadata?.name || "NFT",
-            nftDescription: data[0].metadata?.description || "",
-            nftImageUrl: data[0].metadata?.displayUri || "",
-          };
-
-          const emailResponse = await fetch(`/api/send-claim-email`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(emailData),
-          });
-
-          if (emailResponse.ok) {
-            console.log("Confirmation email sent successfully");
-          } else {
-            console.error("Failed to send confirmation email");
-          }
-        } catch (error) {
-          console.error("Error sending confirmation email:", error);
-        }
+        // 已領取過，跳轉到成功頁面
+        console.log("🚀 Redirecting to claim-success page (already claimed)");
+        window.location.href = "/claim-success";
       } else if (claimResult.isEnrolled && !claimResult.isSoldOut) {
         setClaimStatus(`Claim successful`);
         localStorage.setItem("claimStatus", "success");
@@ -209,45 +191,16 @@ export default function NFTPage({
           console.error("addUserWallet error:", error);
         }
 
-        // 發送確認郵件
-        try {
-          const emailData = {
-            email: email,
-            userAddress: address,
-            tokenId: tokenId,
-            contractAddress: targetContract,
-            claimStatus: "success",
-            nftName: data[0].metadata?.name || "NFT",
-            nftDescription: data[0].metadata?.description || "",
-            nftImageUrl: data[0].metadata?.displayUri || "",
-          };
-
-          const emailResponse = await fetch(`/api/send-claim-email`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(emailData),
-          });
-
-          if (emailResponse.ok) {
-            console.log("Confirmation email sent successfully");
-          } else {
-            console.error("Failed to send confirmation email");
-          }
-        } catch (error) {
-          console.error("Error sending confirmation email:", error);
-        }
+        // 成功領取，跳轉到成功頁面
+        console.log("🚀 Redirecting to claim-success page (success)");
+        window.location.href = "/claim-success";
       }
 
-      // 無論什麼情況，都跳轉到 claim-success 頁面
-      window.location.href = "/claim-success";
     } catch (error) {
       console.error("Error claiming NFT:", error);
       setClaimStatus(`Error claiming NFT: ${error.message}`);
       localStorage.setItem("claimStatus", "error");
-      // 即使出錯也跳轉到 claim-success 頁面
-      window.location.href = "/claim-success";
+      // 不跳轉，顯示錯誤信息
     } finally {
       // Logout from Kukai wallet after processing claim result
       if (embedRef.current) {

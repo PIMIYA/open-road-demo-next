@@ -53,7 +53,6 @@ export default async function handler(req, res) {
 
     // 生成郵件內容
     const emailContent = generateEmailContent({
-      email,
       userAddress,
       tokenId,
       contractAddress,
@@ -91,14 +90,11 @@ export default async function handler(req, res) {
 }
 
 function generateEmailContent({
-  email,
   userAddress,
   tokenId,
   contractAddress,
   claimStatus,
   nftName,
-  nftDescription,
-  nftImageUrl,
 }) {
   const getStatusMessage = () => {
     switch (claimStatus) {

@@ -8,6 +8,7 @@ import {
 } from "@/lib/api";
 import NFTclaim from "@/components/NFTclaim";
 import KukaiEmbedComponent from "../../components/KukaiEmbedComponent";
+import { getRandomCreator, getRandomPlace } from "@/lib/dummy";
 
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 const AkaDropAPI = "https://mars.akaswap.com/drop/api/pools";
@@ -55,16 +56,8 @@ export async function getServerSideProps(context) {
   };
 }
 
-export default function NFTPage({
-  ownersData,
-  data,
-  data_from_pool,
-  nftData,
-  error,
-}) {
-  const router = useRouter();
+export default function NFTPage({ ownersData, data, data_from_pool, nftData, error }) {
   const [claimStatus, setClaimStatus] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const embedRef = useRef(null);
 
   const handleClaim = async (userInfo) => {
@@ -195,7 +188,6 @@ export default function NFTPage({
         console.log("🚀 Redirecting to claim-success page (success)");
         window.location.href = "/claim-success";
       }
-
     } catch (error) {
       console.error("Error claiming NFT:", error);
       setClaimStatus(`Error claiming NFT: ${error.message}`);
@@ -205,7 +197,6 @@ export default function NFTPage({
       // Logout from Kukai wallet after processing claim result
       if (embedRef.current) {
         await embedRef.current.logout();
-        setIsLoggedIn(false);
         console.log("Logged out successfully");
       }
     }

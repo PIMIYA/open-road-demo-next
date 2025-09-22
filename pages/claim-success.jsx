@@ -73,12 +73,9 @@ export default function ClaimSuccess() {
       return;
     }
 
-    // 如果沒有必要的用戶信息，也重定向
-    if (!userEmail || !userWalletAddress) {
-      console.log("❌ Missing user information");
-      router.push("/");
-      return;
-    }
+    console.log("status is : ", status);
+    console.log("userEmail is : ", userEmail);
+    console.log("userWalletAddress is : ", userWalletAddress);
 
     setIsAuthorized(true);
     setClaimStatus(status);
@@ -124,27 +121,27 @@ export default function ClaimSuccess() {
     const nftDescription = localStorage.getItem("nftDescription");
     const nftImageUrl = localStorage.getItem("nftImageUrl");
 
-    if (status === "success" && userEmail && userWalletAddress) {
-      const emailData = {
-        email: userEmail,
-        userAddress: userWalletAddress,
-        tokenId: tokenId,
-        contractAddress: contractAddress,
-        claimStatus: status,
-        nftName: nftName || "NFT",
-        nftDescription: nftDescription || "",
-        nftImageUrl: nftImageUrl || "",
-      };
+    // if (status === "success" && userEmail && userWalletAddress) {
+    const emailData = {
+      email: userEmail,
+      userAddress: userWalletAddress,
+      tokenId: tokenId,
+      contractAddress: contractAddress,
+      claimStatus: status,
+      nftName: nftName || "NFT",
+      nftDescription: nftDescription || "",
+      nftImageUrl: nftImageUrl || "",
+    };
 
-      // 在背景發送郵件
-      sendEmailInBackground(emailData);
+    // 在背景發送郵件
+    sendEmailInBackground(emailData);
 
-      // 清除郵件相關的 localStorage
-      localStorage.removeItem("userEmail");
-      localStorage.removeItem("nftName");
-      localStorage.removeItem("nftDescription");
-      localStorage.removeItem("nftImageUrl");
-    }
+    // 清除郵件相關的 localStorage
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("nftName");
+    localStorage.removeItem("nftDescription");
+    localStorage.removeItem("nftImageUrl");
+    // }
 
     // 清除 claim 狀態
     localStorage.removeItem("claimStatus");

@@ -64,14 +64,13 @@ export default function ClaimSuccess() {
     const userWalletAddress = localStorage.getItem("userWalletAddress");
 
     // 只有成功領取或已領取過的人才能訪問
-    if (
-      !status ||
-      (!status.includes("success") && !status.includes("alreadyClaimed"))
-    ) {
-      console.log("❌ Unauthorized access to claim-success page");
-      router.push("/");
-      return;
-    }
+    // if (
+    //   !status ||
+    //   (!status.includes("success") && !status.includes("alreadyClaimed"))
+    // ) {
+    //   console.log("❌ Unauthorized access to claim-success page");
+    //   return;
+    // }
 
     console.log("status is : ", status);
     console.log("userEmail is : ", userEmail);

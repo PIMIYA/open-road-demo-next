@@ -359,80 +359,14 @@ function generateEmailContent({
               }
             </div>
 
-            ${
-              nftName
-                ? `
-            <div class="nft-info">
-              ${
-                nftImageUrl
-                  ? `<img src="${nftImageUrl}" alt="${nftName}" class="nft-image">`
-                  : ""
-              }
-              <div class="nft-name">${nftName}</div>
-              ${
-                nftDescription
-                  ? `<div class="nft-description">${nftDescription}</div>`
-                  : ""
-              }
-            </div>
-            `
-                : ""
-            }
-
             <div class="button-container">
               <div class="button-stack">
                 ${
-                  nftViewUrl
+                  tokenId && contractAddress
                     ? `<a href="${nftViewUrl}" class="button">${getButtonText()}</a>`
                     : ""
                 }
                 <a href="${walletViewUrl}" class="button secondary">看看自己錢包</a>
-              </div>
-            </div>
-
-            <div class="info-section">
-              <h3>領取詳情</h3>
-              <div class="info-item"><strong>錢包地址:</strong> ${userAddress}</div>
-              ${
-                tokenId
-                  ? `<div class="info-item"><strong>Token ID:</strong> ${tokenId}</div>`
-                  : ""
-              }
-              ${
-                contractAddress
-                  ? `<div class="info-item"><strong>合約地址:</strong> ${contractAddress}</div>`
-                  : ""
-              }
-              <div class="info-item"><strong>領取狀態:</strong> ${
-                claimStatus || "未獲取"
-              }</div>
-            </div>
-
-            <div class="debug-info">
-              <h3>調試信息 (Debug Info)</h3>
-              <div class="debug-content">
-                <div><strong>Claim 狀態:</strong> ${
-                  claimStatus || "未獲取"
-                }</div>
-                <div><strong>用戶錢包地址:</strong> ${
-                  userAddress || "未獲取"
-                }</div>
-                <div><strong>NFT Token ID:</strong> ${tokenId || "未獲取"}</div>
-                <div><strong>NFT 合約地址:</strong> ${
-                  contractAddress || "未獲取"
-                }</div>
-                <div><strong>NFT 查看連結:</strong> ${
-                  tokenId && contractAddress
-                    ? `/claimsToken/${contractAddress}/${tokenId}`
-                    : "無法生成"
-                }</div>
-                <div><strong>錢包查看連結:</strong> ${
-                  userAddress ? `/wallet/${userAddress}` : "無法生成"
-                }</div>
-                <div><strong>郵件狀態:</strong> ${
-                  claimStatus === "success" ? "已發送" : "不發送"
-                }</div>
-                <div><strong>訪問權限:</strong> 已授權</div>
               </div>
             </div>
 

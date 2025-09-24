@@ -32,6 +32,7 @@ export default function ClaimSuccess() {
 
   // 背景寄信函數
   const sendEmailInBackground = async (emailData) => {
+    console.log("emailData is : ", emailData);
     try {
       console.log("📧 Sending email in background...");
       fetch(`/api/send-claim-email-http-background`, {

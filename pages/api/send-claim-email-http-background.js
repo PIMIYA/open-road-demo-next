@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     nftDescription,
     nftImageUrl,
   } = req.body;
-
+  console.log("=========tokenId is : ", tokenId);
   // 驗證必要參數
   if (!email || !userAddress) {
     return res

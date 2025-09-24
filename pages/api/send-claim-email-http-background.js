@@ -23,6 +23,8 @@ export default async function handler(req, res) {
 
   // 立即返回成功響應，不等待寄信完成
   res.status(200).json({
+    tokenId,
+    contractAddress,
     success: true,
     message: "Email queued for background processing via HTTP API",
   });
@@ -37,7 +39,7 @@ export default async function handler(req, res) {
     nftName,
     nftDescription,
     nftImageUrl,
-  }).catch(error => {
+  }).catch((error) => {
     console.error("Background email processing failed:", error);
   });
 }
@@ -67,36 +69,44 @@ async function processEmailInBackground({
       nftImageUrl,
     });
 
-    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-      method: 'POST',
+    const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        personalizations: [{
-          to: [{ email: email }],
-          subject: emailContent.subject
-        }],
-        from: { email: process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM },
+        personalizations: [
+          {
+            to: [{ email: email }],
+            subject: emailContent.subject,
+          },
+        ],
+        from: {
+          email: process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM,
+        },
         content: [
           {
-            type: 'text/plain',
-            value: emailContent.text
+            type: "text/plain",
+            value: emailContent.text,
           },
           {
-            type: 'text/html',
-            value: emailContent.html
-          }
-        ]
-      })
+            type: "text/html",
+            value: emailContent.html,
+          },
+        ],
+      }),
     });
 
     if (response.ok) {
       console.log("✅ Background email sent successfully via HTTP API");
     } else {
       const errorText = await response.text();
-      console.error("❌ Background email failed via HTTP API:", response.status, errorText);
+      console.error(
+        "❌ Background email failed via HTTP API:",
+        response.status,
+        errorText
+      );
     }
   } catch (error) {
     console.error("❌ Background email failed:", error);
@@ -104,14 +114,12 @@ async function processEmailInBackground({
 }
 
 function generateEmailContent({
-  email,
   userAddress,
   tokenId,
   contractAddress,
   claimStatus,
   nftName,
   nftDescription,
-  nftImageUrl,
 }) {
   const getStatusMessage = () => {
     switch (claimStatus) {
@@ -141,12 +149,31 @@ function generateEmailContent({
     }
   };
 
+  console.log("🔍 Debug button display:");
+  console.log("  - tokenId:", tokenId, "(type:", typeof tokenId, ")");
+  console.log(
+    "  - contractAddress:",
+    contractAddress,
+    "(type:",
+    typeof contractAddress,
+    ")"
+  );
+  console.log("  - SERVER_URL:", process.env.SERVER_URL);
+
+  const baseUrl = process.env.SERVER_URL || "http://localhost:3000";
+
   const nftViewUrl =
-    tokenId && contractAddress
-      ? `${process.env.NEXT_PUBLIC_BASE_URL}/claimsToken/${contractAddress}/${tokenId}`
+    tokenId && contractAddress && tokenId !== "" && contractAddress !== ""
+      ? `${baseUrl}/claimsToken/${contractAddress}/${tokenId}`
       : null;
 
-  const walletViewUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/wallet/${userAddress}`;
+  console.log("  - nftViewUrl:", nftViewUrl);
+  console.log(
+    "  - Button will show:",
+    !!(tokenId && contractAddress && tokenId !== "" && contractAddress !== "")
+  );
+
+  const walletViewUrl = `${baseUrl}/wallet/${userAddress}`;
 
   const subject = `NFT 領取完成 - ${nftName || "您的 NFT"}`;
 
@@ -362,7 +389,10 @@ function generateEmailContent({
             <div class="button-container">
               <div class="button-stack">
                 ${
-                  tokenId && contractAddress
+                  tokenId &&
+                  contractAddress &&
+                  tokenId !== "" &&
+                  contractAddress !== ""
                     ? `<a href="${nftViewUrl}" class="button">${getButtonText()}</a>`
                     : ""
                 }
@@ -382,22 +412,22 @@ function generateEmailContent({
   `;
 
   const text = `
-領取完成！
+    領取完成！
 
-${getStatusMessage()}
+    ${getStatusMessage()}
 
-${nftName ? `NFT 名稱: ${nftName}` : ""}
-${nftDescription ? `描述: ${nftDescription}` : ""}
+    ${nftName ? `NFT 名稱: ${nftName}` : ""}
+    ${nftDescription ? `描述: ${nftDescription}` : ""}
 
-錢包地址: ${userAddress}
-${tokenId ? `Token ID: ${tokenId}` : ""}
-${contractAddress ? `合約地址: ${contractAddress}` : ""}
-領取狀態: ${claimStatus || "未獲取"}
+    錢包地址: ${userAddress}
+    ${tokenId ? `Token ID: ${tokenId}` : ""}
+    ${contractAddress ? `合約地址: ${contractAddress}` : ""}
+    領取狀態: ${claimStatus || "未獲取"}
 
-${nftViewUrl ? `查看 NFT: ${nftViewUrl}` : ""}
-查看錢包: ${walletViewUrl}
+    ${nftViewUrl ? `查看 NFT: ${nftViewUrl}` : ""}
+    查看錢包: ${walletViewUrl}
 
-感謝您使用我們的服務
+    感謝您使用我們的服務
   `;
 
   return { subject, html, text };

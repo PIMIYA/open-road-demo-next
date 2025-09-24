@@ -162,18 +162,8 @@ function generateEmailContent({
     }
   };
 
-  console.log("🔍 Debug button display:");
-  console.log("  - tokenId:", tokenId, "(type:", typeof tokenId, ")");
-  console.log(
-    "  - contractAddress:",
-    contractAddress,
-    "(type:",
-    typeof contractAddress,
-    ")"
-  );
-  console.log("  - SERVER_URL:", process.env.SERVER_URL);
 
-  const baseUrl = process.env.SERVER_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
   const nftViewUrl =
     tokenId && contractAddress && tokenId !== "" && contractAddress !== ""

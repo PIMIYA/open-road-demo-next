@@ -25,6 +25,14 @@ export default async function handler(req, res) {
         user: "apikey", // 這裡固定填 'apikey'
         pass: process.env.SENDGRID_API_KEY, // 這裡填 API key
       },
+      // 增加超時設置
+      connectionTimeout: 30000, // 30 seconds
+      greetingTimeout: 15000, // 15 seconds
+      socketTimeout: 30000, // 30 seconds
+      // 添加 TLS 選項
+      tls: {
+        rejectUnauthorized: false,
+      },
     });
 
     console.log("Verifying SendGrid connection...");

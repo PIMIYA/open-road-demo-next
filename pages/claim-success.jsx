@@ -34,7 +34,7 @@ export default function ClaimSuccess() {
   const sendEmailInBackground = async (emailData) => {
     try {
       console.log("📧 Sending email in background...");
-      fetch(`/api/send-claim-email-background`, {
+      fetch(`/api/send-claim-email-http-background`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

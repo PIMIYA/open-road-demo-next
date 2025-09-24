@@ -1,5 +1,3 @@
-import nodemailer from 'nodemailer';
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -26,7 +24,7 @@ export default async function handler(req, res) {
   // 立即返回成功響應，不等待寄信完成
   res.status(200).json({
     success: true,
-    message: "Email queued for background processing",
+    message: "Email queued for background processing via HTTP API",
   });
 
   // 在背景處理寄信（不阻塞響應）
@@ -55,25 +53,9 @@ async function processEmailInBackground({
   nftImageUrl,
 }) {
   try {
-    console.log("🔄 Processing email in background for:", email);
+    console.log("🔄 Processing email in background via HTTP API for:", email);
 
-    const transporter = nodemailer.createTransport({
-      service: "SendGrid",
-      auth: {
-        user: "apikey", // 這裡固定填 'apikey'
-        pass: process.env.SENDGRID_API_KEY, // 這裡填 API key
-      },
-      // 增加超時設置
-      connectionTimeout: 30000, // 30 seconds
-      greetingTimeout: 15000, // 15 seconds
-      socketTimeout: 30000, // 30 seconds
-      // 添加 TLS 選項
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
-
-    console.log("📧 Sending background email...");
+    // 生成郵件內容
     const emailContent = generateEmailContent({
       email,
       userAddress,
@@ -85,15 +67,37 @@ async function processEmailInBackground({
       nftImageUrl,
     });
 
-    const info = await transporter.sendMail({
-      from: process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM,
-      to: email,
-      subject: emailContent.subject,
-      html: emailContent.html,
-      text: emailContent.text,
+    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        personalizations: [{
+          to: [{ email: email }],
+          subject: emailContent.subject
+        }],
+        from: { email: process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM },
+        content: [
+          {
+            type: 'text/plain',
+            value: emailContent.text
+          },
+          {
+            type: 'text/html',
+            value: emailContent.html
+          }
+        ]
+      })
     });
 
-    console.log("✅ Background email sent successfully:", info.messageId);
+    if (response.ok) {
+      console.log("✅ Background email sent successfully via HTTP API");
+    } else {
+      const errorText = await response.text();
+      console.error("❌ Background email failed via HTTP API:", response.status, errorText);
+    }
   } catch (error) {
     console.error("❌ Background email failed:", error);
   }

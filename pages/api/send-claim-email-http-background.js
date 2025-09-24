@@ -13,7 +13,20 @@ export default async function handler(req, res) {
     nftDescription,
     nftImageUrl,
   } = req.body;
-  console.log("=========tokenId is : ", tokenId);
+  console.log("=========API 接收到的數據 =========");
+  console.log("tokenId:", tokenId, "(type:", typeof tokenId, ")");
+  console.log(
+    "contractAddress:",
+    contractAddress,
+    "(type:",
+    typeof contractAddress,
+    ")"
+  );
+  console.log("email:", email);
+  console.log("userAddress:", userAddress);
+  console.log("claimStatus:", claimStatus);
+  console.log("=====================================");
+  
   // 驗證必要參數
   if (!email || !userAddress) {
     return res

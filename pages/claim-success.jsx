@@ -80,60 +80,63 @@ export default function ClaimSuccess() {
     setIsAuthorized(true);
     setClaimStatus(status);
 
-    // 從 URL 參數或 localStorage 獲取用戶地址和 tokenId
-    const { address, tokenId: urlTokenId, contract } = router.query;
+    // 直接從 localStorage 獲取所有數據（tokenId 只在 claim 時設置）
+    const storedAddress = localStorage.getItem("userWalletAddress");
+    const storedTokenId = localStorage.getItem("claimedTokenId");
+    const storedContract = localStorage.getItem("claimedContract");
 
-    if (address) {
-      setUserAddress(address);
-    } else {
-      const storedAddress = localStorage.getItem("userWalletAddress");
-      if (storedAddress) {
-        setUserAddress(storedAddress);
+    if (storedAddress) {
+      setUserAddress(storedAddress);
+    }
+
+    if (storedTokenId) {
+      setTokenId(storedTokenId);
+    }
+
+    if (storedContract) {
+      // 處理可能的 [object Object] 情況
+      try {
+        const parsedContract = JSON.parse(storedContract);
+        setContractAddress(parsedContract.address || parsedContract);
+      } catch (e) {
+        setContractAddress(storedContract);
       }
     }
 
-    if (urlTokenId) {
-      setTokenId(urlTokenId);
-    } else {
-      const storedTokenId = localStorage.getItem("claimedTokenId");
-      if (storedTokenId) {
-        setTokenId(storedTokenId);
-      }
-    }
-
-    if (contract) {
-      setContractAddress(contract);
-    } else {
-      const storedContract = localStorage.getItem("claimedContract");
-      if (storedContract) {
-        // 處理可能的 [object Object] 情況
-        try {
-          const parsedContract = JSON.parse(storedContract);
-          setContractAddress(parsedContract.address || parsedContract);
-        } catch (e) {
-          setContractAddress(storedContract);
-        }
-      }
-    }
-
-    // 準備郵件數據並發送（只有成功領取時才發送）
+    // 準備郵件數據並發送（直接使用 localStorage 中的數據）
     const nftName = localStorage.getItem("nftName");
     const nftDescription = localStorage.getItem("nftDescription");
     const nftImageUrl = localStorage.getItem("nftImageUrl");
+
+    // 處理 contract 的 [object Object] 情況
+    let finalContractAddress = storedContract;
+    if (storedContract) {
+      try {
+        const parsedContract = JSON.parse(storedContract);
+        finalContractAddress = parsedContract.address || parsedContract;
+      } catch (e) {
+        finalContractAddress = storedContract;
+      }
+    }
 
     // if (status === "success" && userEmail && userWalletAddress) {
     const emailData = {
       email: userEmail,
       userAddress: userWalletAddress,
-      tokenId: tokenId,
-      contractAddress: contractAddress,
+      tokenId: storedTokenId, // 直接使用 localStorage 中的 tokenId
+      contractAddress: finalContractAddress,
       claimStatus: status,
       nftName: nftName || "NFT",
       nftDescription: nftDescription || "",
       nftImageUrl: nftImageUrl || "",
     };
 
-    console.log("emailData is : ", emailData);
+    console.log("========= 郵件數據準備 =========");
+    console.log("storedTokenId:", storedTokenId);
+    console.log("storedContract:", storedContract);
+    console.log("finalContractAddress:", finalContractAddress);
+    console.log("emailData:", emailData);
+    console.log("=================================");
 
     // 在背景發送郵件
     sendEmailInBackground(emailData);

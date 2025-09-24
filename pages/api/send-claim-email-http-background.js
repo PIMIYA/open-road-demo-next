@@ -275,6 +275,7 @@ function generateEmailContent({
         .button {
           display: inline-block;
           padding: 16px 32px;
+          margin: 16px;
           color: white;
           text-decoration: none;
           border-radius: 20px;
@@ -282,7 +283,6 @@ function generateEmailContent({
           font-size: 18px;
           min-width: 200px;
           text-align: center;
-          border: none;
           cursor: pointer;
           transition: background-color 0.2s;
         }
@@ -295,6 +295,7 @@ function generateEmailContent({
           background-color: transparent;
           color: #1976d2;
           border: 2px solid #1976d2;
+          margin: 16px;
         }
         .button.secondary:hover {
           background-color: rgba(25, 118, 210, 0.04);

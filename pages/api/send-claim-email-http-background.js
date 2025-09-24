@@ -270,7 +270,7 @@ function generateEmailContent({
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 20px;
+          gap: 16px;
         }
         .button {
           display: inline-block;
@@ -282,6 +282,8 @@ function generateEmailContent({
           font-weight: 500;
           font-size: 18px;
           min-width: 200px;
+          width: 100%;
+          max-width: 280px;
           text-align: center;
           border: none;
           cursor: pointer;
@@ -294,12 +296,14 @@ function generateEmailContent({
         }
         .button.secondary {
           background-color: transparent;
-          color: #1976d2;
-          border: 2px solid #1976d2;
+          color: white;
+          border: 2px solid white;
+          width: 100%;
+          max-width: 280px;
         }
         .button.secondary:hover {
-          background-color: rgba(25, 118, 210, 0.04);
-          color: #1976d2;
+          background-color: rgba(255, 255, 255, 0.1);
+          color: white;
         }
         .button:disabled {
           background-color: #ccc;

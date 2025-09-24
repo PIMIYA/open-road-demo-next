@@ -12,49 +12,43 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('=== SMTP Configuration Test ===');
-    console.log('SMTP_HOST:', process.env.SMTP_HOST);
-    console.log('SMTP_PORT:', process.env.SMTP_PORT);
-    console.log('SMTP_SECURE:', process.env.SMTP_SECURE);
-    console.log('SMTP_USER:', process.env.SMTP_USER);
-    console.log('SMTP_PASS:', process.env.SMTP_PASS ? '***' : 'NOT SET');
-    console.log('SMTP_FROM:', process.env.SMTP_FROM);
+    console.log("=== SendGrid Configuration Test ===");
+    console.log(
+      "SENDGRID_API_KEY:",
+      process.env.SENDGRID_API_KEY ? "Set" : "NOT SET"
+    );
+    console.log("SENDGRID_FROM_EMAIL:", process.env.SENDGRID_FROM_EMAIL);
 
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === 'true',
+      service: "SendGrid",
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-      connectionTimeout: 15000,
-      greetingTimeout: 10000,
-      socketTimeout: 15000,
-      tls: {
-        rejectUnauthorized: false,
+        user: "apikey", // 這裡固定填 'apikey'
+        pass: process.env.SENDGRID_API_KEY, // 這裡填 API key
       },
     });
 
-    console.log('Verifying SMTP connection...');
+    console.log("Verifying SendGrid connection...");
     await transporter.verify();
-    console.log('✅ SMTP connection verified successfully!');
+    console.log("✅ SendGrid connection verified successfully!");
 
     // 發送測試郵件
     const testEmailContent = {
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      from: process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM,
       to: testEmail,
-      subject: '🧪 NFT Claim Email Test',
+      subject: "🧪 NFT Claim Email Test",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #4caf50;">✅ 測試郵件發送成功！</h2>
           <p>這是一封測試郵件，用於驗證 NFT 領取確認郵件功能。</p>
           <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h3>測試信息：</h3>
-            <p><strong>發送時間：</strong> ${new Date().toLocaleString('zh-TW')}</p>
-            <p><strong>SMTP 主機：</strong> ${process.env.SMTP_HOST}</p>
-            <p><strong>SMTP 端口：</strong> ${process.env.SMTP_PORT}</p>
-            <p><strong>發送者：</strong> ${process.env.SMTP_USER}</p>
+            <p><strong>發送時間：</strong> ${new Date().toLocaleString(
+              "zh-TW"
+            )}</p>
+            <p><strong>服務提供商：</strong> SendGrid</p>
+            <p><strong>發送者：</strong> ${
+              process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM
+            }</p>
           </div>
           <p>如果你收到這封郵件，說明寄信功能已經正常工作了！</p>
         </div>
@@ -65,45 +59,38 @@ export default async function handler(req, res) {
         這是一封測試郵件，用於驗證 NFT 領取確認郵件功能。
 
         測試信息：
-        - 發送時間：${new Date().toLocaleString('zh-TW')}
-        - SMTP 主機：${process.env.SMTP_HOST}
-        - SMTP 端口：${process.env.SMTP_PORT}
-        - 發送者：${process.env.SMTP_USER}
+        - 發送時間：${new Date().toLocaleString("zh-TW")}
+        - 服務提供商：SendGrid
+        - 發送者：${process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM}
 
         如果你收到這封郵件，說明寄信功能已經正常工作了！
-      `
+      `,
     };
 
-    console.log('Sending test email to:', testEmail);
+    console.log("Sending test email to:", testEmail);
     const info = await transporter.sendMail(testEmailContent);
-    console.log('✅ Test email sent successfully:', info.messageId);
+    console.log("✅ Test email sent successfully:", info.messageId);
 
     return res.status(200).json({
       success: true,
-      message: 'Test email sent successfully',
+      message: "Test email sent successfully",
       messageId: info.messageId,
       config: {
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        secure: process.env.SMTP_SECURE,
-        user: process.env.SMTP_USER,
-        from: process.env.SMTP_FROM,
-      }
+        service: "SendGrid",
+        from: process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM,
+      },
     });
 
   } catch (error) {
     console.error('❌ Test email failed:', error);
     return res.status(500).json({
-      error: 'Test email failed',
+      error: "Test email failed",
       details: error.message,
       code: error.code,
       config: {
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        secure: process.env.SMTP_SECURE,
-        user: process.env.SMTP_USER,
-        from: process.env.SMTP_FROM,
-      }
+        service: "SendGrid",
+        from: process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM,
+      },
     });
   }
 }

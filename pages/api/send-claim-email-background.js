@@ -58,18 +58,10 @@ async function processEmailInBackground({
     console.log("🔄 Processing email in background for:", email);
 
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === "true",
+      service: "SendGrid",
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-      connectionTimeout: 15000,
-      greetingTimeout: 10000,
-      socketTimeout: 15000,
-      tls: {
-        rejectUnauthorized: false,
+        user: "apikey", // 這裡固定填 'apikey'
+        pass: process.env.SENDGRID_API_KEY, // 這裡填 API key
       },
     });
 
@@ -86,7 +78,7 @@ async function processEmailInBackground({
     });
 
     const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      from: process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM,
       to: email,
       subject: emailContent.subject,
       html: emailContent.html,

@@ -130,6 +130,17 @@ function generateEmailContent({
     }
   };
 
+  const getButtonText = () => {
+    switch (claimStatus) {
+      case "success":
+        return "看看 NFT";
+      case "alreadyClaimed":
+        return "查看我的 NFT";
+      default:
+        return "看看 NFT";
+    }
+  };
+
   const nftViewUrl =
     tokenId && contractAddress
       ? `${process.env.NEXT_PUBLIC_BASE_URL}/claimsToken/${contractAddress}/${tokenId}`
@@ -148,38 +159,56 @@ function generateEmailContent({
       <title>NFT 領取完成</title>
       <style>
         body {
-          font-family: Arial, sans-serif;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
           line-height: 1.6;
           color: #333;
-          max-width: 600px;
-          margin: 0 auto;
-          padding: 20px;
+          margin: 0;
+          padding: 0;
           background-color: #f5f5f5;
         }
-        .container {
+        .email-container {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+        }
+        .main-container {
+          max-width: 600px;
+          width: 100%;
           background-color: white;
-          padding: 30px;
-          border-radius: 10px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          overflow: hidden;
+        }
+        .content-wrapper {
+          padding: 32px;
         }
         .header {
           text-align: center;
-          margin-bottom: 30px;
+          margin-bottom: 32px;
         }
         .success-icon {
-          font-size: 60px;
+          font-size: 80px;
           color: #4caf50;
-          margin-bottom: 20px;
+          margin-bottom: 16px;
+          display: block;
         }
         .title {
-          font-size: 28px;
-          font-weight: bold;
-          margin-bottom: 10px;
+          font-size: 48px;
+          font-weight: 400;
+          margin-bottom: 8px;
+          color: #333;
         }
         .subtitle {
-          font-size: 18px;
-          color: #666;
-          margin-bottom: 30px;
+          font-size: 20px;
+          color: rgba(0, 0, 0, 0.6);
+          margin-bottom: 32px;
+        }
+        .email-status {
+          color: #4caf50;
+          font-size: 14px;
+          margin-top: 8px;
         }
         .nft-info {
           background-color: #f9f9f9;
@@ -195,29 +224,43 @@ function generateEmailContent({
         }
         .nft-name {
           font-size: 20px;
-          font-weight: bold;
+          font-weight: 500;
           margin-bottom: 10px;
+          color: #333;
         }
         .nft-description {
-          color: #666;
+          color: rgba(0, 0, 0, 0.6);
           margin-bottom: 15px;
         }
-        .buttons {
+        .button-container {
           text-align: center;
-          margin: 30px 0;
+          margin: 32px 0;
+        }
+        .button-stack {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 20px;
         }
         .button {
           display: inline-block;
-          padding: 12px 24px;
-          margin: 10px;
+          padding: 16px 32px;
           background-color: #1976d2;
           color: white;
           text-decoration: none;
-          border-radius: 5px;
-          font-weight: bold;
+          border-radius: 20px;
+          font-weight: 500;
+          font-size: 18px;
+          min-width: 200px;
+          text-align: center;
+          border: none;
+          cursor: pointer;
+          transition: background-color 0.2s;
         }
         .button:hover {
           background-color: #1565c0;
+          text-decoration: none;
+          color: white;
         }
         .button.secondary {
           background-color: transparent;
@@ -226,6 +269,17 @@ function generateEmailContent({
         }
         .button.secondary:hover {
           background-color: rgba(25, 118, 210, 0.04);
+          color: #1976d2;
+        }
+        .button:disabled {
+          background-color: #ccc;
+          color: #666;
+          cursor: not-allowed;
+        }
+        .button.secondary:disabled {
+          background-color: transparent;
+          color: #ccc;
+          border-color: #ccc;
         }
         .info-section {
           background-color: #f0f8ff;
@@ -233,77 +287,160 @@ function generateEmailContent({
           border-radius: 8px;
           margin: 20px 0;
         }
+        .info-section h3 {
+          margin: 0 0 16px 0;
+          font-size: 18px;
+          font-weight: 500;
+          color: #333;
+        }
         .info-item {
-          margin: 10px 0;
-          font-family: monospace;
+          margin: 8px 0;
+          font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
           font-size: 14px;
+          line-height: 1.5;
+        }
+        .debug-info {
+          background-color: white;
+          padding: 20px;
+          margin: 20px 0;
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+        }
+        .debug-info h3 {
+          font-size: 18px;
+          font-weight: 500;
+          margin: 0 0 16px 0;
+          color: #333;
+        }
+        .debug-content {
+          text-align: left;
+          font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+          font-size: 14px;
+          line-height: 1.6;
         }
         .footer {
           text-align: center;
-          margin-top: 30px;
-          color: #666;
+          margin-top: 32px;
+          color: rgba(0, 0, 0, 0.6);
           font-size: 14px;
+        }
+        .footer p {
+          margin: 8px 0;
+        }
+        @media (max-width: 600px) {
+          .content-wrapper {
+            padding: 20px;
+          }
+          .title {
+            font-size: 36px;
+          }
+          .subtitle {
+            font-size: 18px;
+          }
+          .button {
+            min-width: 180px;
+            font-size: 16px;
+          }
         }
       </style>
     </head>
     <body>
-      <div class="container">
-        <div class="header">
-          <div class="success-icon">✓</div>
-          <div class="title">領取完成！</div>
-          <div class="subtitle">${getStatusMessage()}</div>
-        </div>
+      <div class="email-container">
+        <div class="main-container">
+          <div class="content-wrapper">
+            <div class="header">
+              <div class="success-icon">✓</div>
+              <div class="title">領取完成！</div>
+              <div class="subtitle">${getStatusMessage()}</div>
+              ${
+                claimStatus === "success"
+                  ? `<div class="email-status">📧 確認郵件已發送到您的信箱</div>`
+                  : ""
+              }
+            </div>
 
-        ${
-          nftName
-            ? `
-        <div class="nft-info">
-          ${
-            nftImageUrl
-              ? `<img src="${nftImageUrl}" alt="${nftName}" class="nft-image">`
-              : ""
-          }
-          <div class="nft-name">${nftName}</div>
-          ${
-            nftDescription
-              ? `<div class="nft-description">${nftDescription}</div>`
-              : ""
-          }
-        </div>
-        `
-            : ""
-        }
+            ${
+              nftName
+                ? `
+            <div class="nft-info">
+              ${
+                nftImageUrl
+                  ? `<img src="${nftImageUrl}" alt="${nftName}" class="nft-image">`
+                  : ""
+              }
+              <div class="nft-name">${nftName}</div>
+              ${
+                nftDescription
+                  ? `<div class="nft-description">${nftDescription}</div>`
+                  : ""
+              }
+            </div>
+            `
+                : ""
+            }
 
-        <div class="buttons">
-          ${
-            nftViewUrl
-              ? `<a href="${nftViewUrl}" class="button">看看 NFT</a>`
-              : ""
-          }
-          <a href="${walletViewUrl}" class="button secondary">看看自己錢包</a>
-        </div>
+            <div class="button-container">
+              <div class="button-stack">
+                ${
+                  nftViewUrl
+                    ? `<a href="${nftViewUrl}" class="button">${getButtonText()}</a>`
+                    : ""
+                }
+                <a href="${walletViewUrl}" class="button secondary">看看自己錢包</a>
+              </div>
+            </div>
 
-        <div class="info-section">
-          <h3>領取詳情</h3>
-          <div class="info-item"><strong>錢包地址:</strong> ${userAddress}</div>
-          ${
-            tokenId
-              ? `<div class="info-item"><strong>Token ID:</strong> ${tokenId}</div>`
-              : ""
-          }
-          ${
-            contractAddress
-              ? `<div class="info-item"><strong>合約地址:</strong> ${contractAddress}</div>`
-              : ""
-          }
-          <div class="info-item"><strong>領取狀態:</strong> ${
-            claimStatus || "未獲取"
-          }</div>
-        </div>
+            <div class="info-section">
+              <h3>領取詳情</h3>
+              <div class="info-item"><strong>錢包地址:</strong> ${userAddress}</div>
+              ${
+                tokenId
+                  ? `<div class="info-item"><strong>Token ID:</strong> ${tokenId}</div>`
+                  : ""
+              }
+              ${
+                contractAddress
+                  ? `<div class="info-item"><strong>合約地址:</strong> ${contractAddress}</div>`
+                  : ""
+              }
+              <div class="info-item"><strong>領取狀態:</strong> ${
+                claimStatus || "未獲取"
+              }</div>
+            </div>
 
-        <div class="footer">
-          <p>感謝您使用我們的服務</p>
-          <p>如有任何問題，請聯繫我們的客服團隊</p>
+            <div class="debug-info">
+              <h3>調試信息 (Debug Info)</h3>
+              <div class="debug-content">
+                <div><strong>Claim 狀態:</strong> ${
+                  claimStatus || "未獲取"
+                }</div>
+                <div><strong>用戶錢包地址:</strong> ${
+                  userAddress || "未獲取"
+                }</div>
+                <div><strong>NFT Token ID:</strong> ${tokenId || "未獲取"}</div>
+                <div><strong>NFT 合約地址:</strong> ${
+                  contractAddress || "未獲取"
+                }</div>
+                <div><strong>NFT 查看連結:</strong> ${
+                  tokenId && contractAddress
+                    ? `/claimsToken/${contractAddress}/${tokenId}`
+                    : "無法生成"
+                }</div>
+                <div><strong>錢包查看連結:</strong> ${
+                  userAddress ? `/wallet/${userAddress}` : "無法生成"
+                }</div>
+                <div><strong>郵件狀態:</strong> ${
+                  claimStatus === "success" ? "已發送" : "不發送"
+                }</div>
+                <div><strong>訪問權限:</strong> 已授權</div>
+              </div>
+            </div>
+
+            <div class="footer">
+              <p>感謝您使用我們的服務</p>
+              <p>如有任何問題，請聯繫我們的客服團隊</p>
+            </div>
+          </div>
         </div>
       </div>
     </body>

@@ -97,16 +97,16 @@ export default function TestRenderIndex() {
       <Grid container spacing={3}>
         {availableFiles.map((file) => (
           <Grid item xs={12} sm={6} md={4} key={file.name}>
-            <Card 
-              sx={{ 
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                opacity: file.available ? 1 : 0.6
+            <Card
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                opacity: file.available ? 1 : 0.6,
               }}
             >
               <CardContent sx={{ flexGrow: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                   <Typography variant="h6" component="span" sx={{ mr: 1 }}>
                     {getTypeIcon(file.type)}
                   </Typography>
@@ -114,20 +114,20 @@ export default function TestRenderIndex() {
                     {file.name}
                   </Typography>
                 </Box>
-                
+
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   {file.description}
                 </Typography>
-                
+
                 <Box sx={{ mt: 2 }}>
-                  <Chip 
-                    label={file.type.toUpperCase()} 
+                  <Chip
+                    label={file.type.toUpperCase()}
                     color={getTypeColor(file.type)}
                     size="small"
                   />
                   {!file.available && (
-                    <Chip 
-                      label="NOT FOUND" 
+                    <Chip
+                      label="NOT FOUND"
                       color="error"
                       size="small"
                       sx={{ ml: 1 }}
@@ -135,10 +135,10 @@ export default function TestRenderIndex() {
                   )}
                 </Box>
               </CardContent>
-              
+
               <CardActions>
                 {file.available ? (
-                  <Button 
+                  <Button
                     component={Link}
                     href={`/test_render/${file.name}`}
                     variant="contained"
@@ -147,10 +147,7 @@ export default function TestRenderIndex() {
                     Test Render
                   </Button>
                 ) : (
-                  <Button 
-                    disabled
-                    fullWidth
-                  >
+                  <Button disabled fullWidth>
                     File Not Found
                   </Button>
                 )}
@@ -160,15 +157,15 @@ export default function TestRenderIndex() {
         ))}
       </Grid>
 
-      <Box sx={{ mt: 4, p: 3, backgroundColor: '#f5f5f5', borderRadius: 2 }}>
+      <Box sx={{ mt: 4, p: 3, borderRadius: 2 }}>
         <Typography variant="h6" gutterBottom>
           📁 測試檔案位置
         </Typography>
         <Typography variant="body2" color="text.secondary">
           請確保以下檔案存在於 <code>/public/test/</code> 目錄中：
         </Typography>
-        <Box component="pre" sx={{ mt: 2, fontSize: '0.875rem' }}>
-          {testFiles.map(file => `- ${file.name}`).join('\n')}
+        <Box component="pre" sx={{ mt: 2, fontSize: "0.875rem" }}>
+          {testFiles.map((file) => `- ${file.name}`).join("\n")}
         </Box>
       </Box>
     </Container>

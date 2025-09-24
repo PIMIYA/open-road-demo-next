@@ -132,36 +132,50 @@ export default function TestRender() {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" gutterBottom>Test Render: {fileData.name}</Typography>
-        <Typography variant="body1" color="text.secondary" gutterBottom>MIME Type: {mimeType}</Typography>
-        <Button variant="outlined" onClick={handleBack} sx={{ mt: 2 }}>Back to Test List</Button>
+        <Typography variant="h4" gutterBottom>
+          Test Render: {fileData.name}
+        </Typography>
+        <Typography variant="body1" color="text.secondary" gutterBottom>
+          MIME Type: {mimeType}
+        </Typography>
+        <Button variant="outlined" onClick={handleBack} sx={{ mt: 2 }}>
+          Back to Test List
+        </Button>
       </Box>
 
       <Box
         sx={{
-          border: '2px dashed #ccc',
+          border: "2px dashed #ccc",
           borderRadius: 2,
           p: 2,
-          minHeight: '400px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          minHeight: "400px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
         {/* 直接把 blob 與 url 傳給子元件 */}
-        <TestRenderMedia mimeType={mimeType} src={{ url: fileData.url, blob: fileData.blob, name: fileData.name }} />
+        <TestRenderMedia
+          mimeType={mimeType}
+          src={{ url: fileData.url, blob: fileData.blob, name: fileData.name }}
+        />
       </Box>
 
       <Box sx={{ mt: 3 }}>
-        <Typography variant="h6" gutterBottom>Debug Info:</Typography>
-        <Box component="pre" sx={{ backgroundColor: '#f5f5f5', p: 2, borderRadius: 1, overflow: 'auto', fontSize: '0.875rem' }}>
+        <Typography variant="h6" gutterBottom>
+          Debug Info:
+        </Typography>
+        <Box
+          component="pre"
+          sx={{ p: 2, borderRadius: 1, overflow: "auto", fontSize: "0.875rem" }}
+        >
           {JSON.stringify(
             {
               fileName: fileData.name,
               mimeType,
               size: fileData.blob.size,
               type: fileData.blob.type,
-              isBlobUrl: String(fileData.url).startsWith('blob:'),
+              isBlobUrl: String(fileData.url).startsWith("blob:"),
             },
             null,
             2

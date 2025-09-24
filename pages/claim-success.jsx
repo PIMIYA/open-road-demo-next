@@ -191,7 +191,6 @@ export default function ClaimSuccess() {
     return (
       <Box
         sx={{
-          background: "#f5f5f5",
           minHeight: "100vh",
           display: "flex",
           alignItems: "center",
@@ -204,7 +203,7 @@ export default function ClaimSuccess() {
   }
 
   return (
-    <Box sx={{ background: "#f5f5f5", minHeight: "100vh" }}>
+    <Box sx={{ minHeight: "100vh" }}>
       <Container maxWidth="md">
         <Box py={8}>
           <Stack direction="column" spacing={4} alignItems="center">

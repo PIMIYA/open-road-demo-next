@@ -57,7 +57,7 @@ async function processTestEmailInBackground(testEmail) {
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
               <h2 style="color: #4caf50;">✅ 測試郵件發送成功！</h2>
               <p>這是一封通過 SendGrid HTTP API 發送的測試郵件。</p>
-              <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <div style="padding: 15px; border-radius: 5px; margin: 20px 0;">
                 <h3>測試信息：</h3>
                 <p><strong>發送時間：</strong> ${new Date().toLocaleString(
                   "zh-TW"

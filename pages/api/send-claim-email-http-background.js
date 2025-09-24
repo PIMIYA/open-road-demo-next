@@ -267,23 +267,20 @@ function generateEmailContent({
           margin: 32px 0;
         }
         .button-stack {
-          display: flex;
+          display: inline-flex;
           flex-direction: column;
           align-items: center;
-          gap: 16px;
+          gap: 20px;
         }
         .button {
           display: inline-block;
           padding: 16px 32px;
-          background-color: #1976d2;
           color: white;
           text-decoration: none;
           border-radius: 20px;
           font-weight: 500;
           font-size: 18px;
           min-width: 200px;
-          width: 100%;
-          max-width: 280px;
           text-align: center;
           border: none;
           cursor: pointer;
@@ -296,14 +293,12 @@ function generateEmailContent({
         }
         .button.secondary {
           background-color: transparent;
-          color: white;
-          border: 2px solid white;
-          width: 100%;
-          max-width: 280px;
+          color: #1976d2;
+          border: 2px solid #1976d2;
         }
         .button.secondary:hover {
-          background-color: rgba(255, 255, 255, 0.1);
-          color: white;
+          background-color: rgba(25, 118, 210, 0.04);
+          color: #1976d2;
         }
         .button:disabled {
           background-color: #ccc;

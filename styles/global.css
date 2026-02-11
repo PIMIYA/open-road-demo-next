@@ -1,4 +1,32 @@
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/utilities" layer(utilities);
+
+/* Brand CSS variables */
+:root {
+  --brand-primary: #2483ff;
+  --brand-secondary: #ed5024;
+  --brand-bg: #f9f3e6;
+  --brand-muted: #D8D4CC;
+}
+
 a {
   text-decoration: none;
-  color: black
+  color: black;
+}
+
+/* Custom utility classes for safe areas on mobile */
+.safe-top-5 {
+  padding-top: max(1.25rem, env(safe-area-inset-top));
+}
+
+.safe-bottom-5 {
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
+
+.safe-left-5 {
+  padding-left: max(1.25rem, env(safe-area-inset-left));
+}
+
+.safe-right-5 {
+  padding-right: max(1.25rem, env(safe-area-inset-right));
 }

@@ -4,6 +4,7 @@ import Head from "next/head";
 /* Providers */
 import { ConnectionProvider } from "@/packages/providers";
 import { GlobalProvider } from "@/contexts/GlobalContext";
+import { UIEnvironmentProvider } from "@/contexts/UIEnvironmentContext";
 /* MUI */
 import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 /* Styles */
@@ -38,14 +39,20 @@ export default function App({ Component, pageProps }: AppProps) {
       </Head>
       <ConnectionProvider>
         <GlobalProvider>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            {!isMinimal && <NavBar />}
-            <Box sx={{ minHeight: "calc(100vh - 200px)" }}>
-              <Component {...pageProps} />
-            </Box>
-            {!isMinimal && <Footer />}
-          </ThemeProvider>
+          <UIEnvironmentProvider>
+            <ThemeProvider theme={theme}>
+              <CssBaseline />
+              {!isMinimal && <NavBar />}
+              {isMinimal ? (
+                <Component {...pageProps} />
+              ) : (
+                <Box sx={{ minHeight: "calc(100vh - 200px)" }}>
+                  <Component {...pageProps} />
+                </Box>
+              )}
+              {!isMinimal && <Footer />}
+            </ThemeProvider>
+          </UIEnvironmentProvider>
         </GlobalProvider>
       </ConnectionProvider>
     </>

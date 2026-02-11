@@ -138,7 +138,7 @@ export default function DemoPage() {
           </Typography>
           <Divider sx={{ mb: 6 }} />
 
-          <Stack spacing: 6>
+          <Stack spacing={6}>
             <Box>
               <Typography variant="overline" sx={{ opacity: 0.6, mb: 3, display: 'block' }}>CONTAINED</Typography>
               <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap>

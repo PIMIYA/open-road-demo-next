@@ -92,6 +92,8 @@ export default function WalletCanvas({ canvasData, address }) {
           mb: 4,
           borderRadius: 2,
           overflow: "hidden",
+          border: "1px solid",
+          borderColor: "primary.main",
           lineHeight: 0,
           "&:hover": {
             ".info-sketch-wrapper, .info-chip": {

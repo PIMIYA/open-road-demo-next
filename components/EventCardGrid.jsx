@@ -37,7 +37,7 @@ export default function EventCardGrid(props) {
 
   return (
     <>
-      <Grid container spacing={4} columns={columnSettings.grid}>
+      <Grid container spacing={12} columns={columnSettings.grid} sx={{ my: '2rem' }}>
         {!data &&
           Array.from(new Array(pageSize)).map((_, index) => (
             <Grid xs={columnSettings.item.xs} key={index}>
@@ -70,9 +70,7 @@ export default function EventCardGrid(props) {
                   <Link href="/events/[id]" as={`/events/${id}`}>
                     <Box
                       sx={{
-                        bgcolor: "white",
                         height: 200,
-                        padding: 3,
                         mb: 1.5,
                       }}
                     >

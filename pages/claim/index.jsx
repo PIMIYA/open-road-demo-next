@@ -236,13 +236,12 @@ export default function NFTPage({ ownersData, data, data_from_pool, nftData, err
       {data &&
         data.map((d, index) => (
           <div key={index}>
-            <NFTclaim data={d} ownersData={ownersData} />
+            <NFTclaim data={d} ownersData={ownersData}>
+              <KukaiEmbedComponent ref={embedRef} onLoginSuccess={handleClaim} />
+              {claimStatus && <div>{claimStatus}</div>}
+            </NFTclaim>
           </div>
         ))}
-      <KukaiEmbedComponent ref={embedRef} onLoginSuccess={handleClaim} />
-      <div style={{ display: "flex", justifyContent: "center", margin: "5px" }}>
-        {claimStatus && <div>{claimStatus}</div>}
-      </div>
     </div>
   );
 }

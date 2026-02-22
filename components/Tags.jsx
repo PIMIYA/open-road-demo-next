@@ -10,6 +10,7 @@ export default function ({ tags }) {
           <Chip
             key={index}
             label={tag}
+            variant="outlined"
             size="small"
             sx={{
               mr: 1,

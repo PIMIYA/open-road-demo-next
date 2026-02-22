@@ -37,10 +37,12 @@ const WebsiteIcon = () => (
 export default function WalletProfile({ address, walletInfo }) {
   const [alias, setAlias] = useState(null);
   const [avatarText, setAvatarText] = useState(null);
+  const [avatarSrc, setAvatarSrc] = useState(null);
 
   useEffect(() => {
     setAlias(truncateAddress(address));
     setAvatarText(address.substring(address.length - 4));
+    setAvatarSrc(`https://services.tzkt.io/v1/avatars/${address}`);
 
     async function getAlias() {
       const account = await TZKT_API(`/v1/accounts/${address}`);
@@ -78,20 +80,23 @@ export default function WalletProfile({ address, walletInfo }) {
   const hasSocialMedia = instagram || x || website || twitter || discord;
 
   return (
-    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 8, flexDirection: { xs: 'column', sm: 'row' } }}>
       {/* Left side - Avatar */}
       <Avatar
+        variant="rounded"
+        src={avatarSrc}
         sx={{
-          width: 80,
-          height: 80,
+          width: 120,
+          height: 120,
           flexShrink: 0,
+          '& img': { objectFit: 'contain', p: 1 },
         }}
       >
         {avatarText}
       </Avatar>
 
       {/* Right side - Information */}
-      <Stack spacing={1} sx={{ flex: 1, minWidth: 0 }}>
+      <Stack spacing={1} sx={{ flex: 1, minWidth: 0 , maxWidth: '65ch' }}>
         {/* Alias */}
         <Typography
           variant="h6"

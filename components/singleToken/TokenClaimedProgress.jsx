@@ -1,19 +1,21 @@
-import { Box } from "@mui/material";
+import { LinearProgress, Typography } from "@mui/material";
 
 export default function TokenClaimedProgress({ collected, total }) {
   const collectedPercentage = Math.round((collected / total) * 100);
-  // console.log("collected", collected);
-  // console.log("total", total);
   return (
     <>
-      <Box bgcolor="#eee">
-        <Box
-          height={6}
-          width={`$collectedPercentage%`}
-          bgcolor="secondary.main"
-        ></Box>
-      </Box>
-      {collected} / {total} collected
+      <LinearProgress
+        variant="determinate"
+        value={collectedPercentage}
+        sx={{
+          "& .MuiLinearProgress-bar": {
+            bgcolor: "secondary.main",
+          },
+        }}
+      />
+      <Typography variant="body2" sx={{ mt: 1 }}>
+        {collected} / {total} collected
+      </Typography>
     </>
   );
 }

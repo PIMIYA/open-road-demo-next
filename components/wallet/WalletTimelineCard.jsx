@@ -199,9 +199,8 @@ export default function WalletTimelineCard({
             >
               <Box
                 sx={{
-                  bgcolor: "white",
-                  height: 400,
-                  padding: 3,
+                  bgcolor: "transparent",
+                  height: 280,
                   mb: 1.5,
                 }}
               >
@@ -219,7 +218,7 @@ export default function WalletTimelineCard({
               </Box>
             </Link>
           </Box>
-          <Box mt={1} mb={2}>
+          <Box mt={1} mb={2} sx={{ maxWidth: '65ch' }}>
             <Typography variant="h6">
               <Link
                 href={{
@@ -275,7 +274,24 @@ export default function WalletTimelineCard({
           )}
 
           {/* Message Dialog */}
-          <Dialog open={openDialog} onClose={handleCloseDialog}>
+          <Dialog
+            open={openDialog}
+            onClose={handleCloseDialog}
+            slotProps={{
+              backdrop: {
+                sx: {
+                  backgroundColor: "rgba(255, 255, 255, 0.3)",
+                  backdropFilter: "blur(2px)",
+                },
+              },
+            }}
+            PaperProps={{
+              sx: {
+                bgcolor: "#fff",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
+              },
+            }}
+          >
             <DialogTitle>Leave a Message</DialogTitle>
             <DialogContent>
               <DialogContentText>
@@ -297,12 +313,12 @@ export default function WalletTimelineCard({
               />
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleCloseDialog} color="primary">
+              <Button variant="outlined" onClick={handleCloseDialog}>
                 Skip
               </Button>
               <Button
+                variant="contained"
                 onClick={handleSubmitMessage}
-                color="primary"
                 disabled={!userMessage.trim()}
               >
                 Submit

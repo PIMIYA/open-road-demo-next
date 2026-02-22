@@ -5,7 +5,7 @@ import { TypographyOptions } from '@mui/material/styles/createTypography';
 const brandColors = {
   primary: '#2483ff',
   secondary: '#ed5024',
-  background: '#f9f3e6',
+  background: '#f5f5f5',
   muted: '#D8D4CC',
   success: '#25e56b',
   warning: '#ffd447',
@@ -108,6 +108,21 @@ const theme = createTheme({
           boxShadow: 'none',
           border: `1px solid ${brandColors.primary}${borderOpacity.light}`,
           borderRadius: 0,
+          backgroundColor: '#ffffff',
+        },
+      },
+    },
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: '#ffffff',
+        },
+      },
+    },
+    MuiAutocomplete: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: '#ffffff',
         },
       },
     },
@@ -115,6 +130,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundImage: 'none',
+          backgroundColor: 'transparent',
         },
         outlined: {
           borderColor: `${brandColors.primary}${borderOpacity.light}`,
@@ -353,7 +369,7 @@ const theme = createTheme({
           borderRadius: 0,
           border: `1px solid ${brandColors.primary}${borderOpacity.light}`,
           boxShadow: 'none',
-          backgroundColor: brandColors.background,
+          backgroundColor: 'transparent',
           transition: 'border-color 0.15s ease',
           '&:hover': {
             borderColor: `${brandColors.primary}${borderOpacity.medium}`,

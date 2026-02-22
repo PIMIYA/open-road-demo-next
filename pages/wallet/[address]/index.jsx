@@ -9,9 +9,6 @@ import { useConnection } from "@/packages/providers";
 import {
   Box,
   Stack,
-  Autocomplete,
-  TextField,
-  Button,
   Tabs,
   Tab,
 } from "@mui/material";
@@ -30,7 +27,7 @@ import {
 import WalletProfile from "@/components/wallet/WalletProfile";
 import WalletTimeline from "@/components/wallet/WalletTimeline";
 import WalletCanvas from "@/components/wallet/WalletCanvas";
-import Card from "@/components/Card";
+import CustomSelect from "@/components/CustomSelect";
 
 import { useRouter } from "next/router";
 
@@ -285,30 +282,20 @@ export default function Wallet({
   /* Selection Filter */
   const [catValue, setCatValue] = useState("");
   const [locValue, setLocValue] = useState("");
-  const handleFilter = (event) => {
-    if (event === null) return;
-    if (!event) {
-      setFilteredData(value === 0 ? claimData : createdData);
-      return;
-    } else {
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-      const dataToFilter = value === 0 ? claimData : createdData;
-      {
-        /* 因為一開始metadata沒有event_location */
-      }
-      const filteredByCat = dataToFilter.filter((c) => {
-        const eventLocation = c.metadata.event_location || "";
-        return (
-          eventLocation.includes(locValue) &&
-          c.metadata.category.includes(catValue)
-        );
-      });
-      setFilteredData(filteredByCat);
-    }
-  };
+
+  // Auto-filter when any filter value changes
+  useEffect(() => {
+    const dataToFilter = value === 0 ? claimData : createdData;
+    if (!dataToFilter) return;
+    const filtered = dataToFilter.filter((c) => {
+      const eventLocation = c.metadata.event_location || "";
+      return (
+        (!locValue || eventLocation.includes(locValue)) &&
+        (!catValue || c.metadata.category.includes(catValue))
+      );
+    });
+    setFilteredData(filtered);
+  }, [catValue, locValue, value, claimData, createdData]);
 
   /* API route: Client fetch Comments by WALLET ADDRESS at KairosDrop NFT Comments API */
   useEffect(() => {
@@ -333,81 +320,81 @@ export default function Wallet({
   return (
     <Box sx={{ padding: "2rem 1.5rem" }}>
       {/* Top Section: WalletProfile */}
-      <Box sx={{ mb: 4 }}>
-        <Card>
-          {addressFromURL && (
-            <WalletProfile address={addressFromURL} walletInfo={walletInfo} />
-          )}
-        </Card>
+      <Box sx={{ mb: 4}}>
+        {addressFromURL && (
+          <WalletProfile address={addressFromURL} walletInfo={walletInfo} />
+        )}
       </Box>
 
-      {/* Middle Section: Filter Controls */}
+      {/* Middle Section: Tabs + Filter Controls */}
       <Box sx={{ mb: 4 }}>
-        <Card>
-          <Box sx={{ textAlign: "center" }}>
-            <Button
-              variant={value === 0 ? "contained" : "outlined"}
-              size="small"
-              onClick={handleClaimed}
-              disabled={claimData === null || claimData.length === 0}
-              sx={{ mr: 1 }}
-            >
-              Claimed
-            </Button>
+        <Tabs
+          value={value}
+          onChange={(_, newValue) => {
+            if (newValue === 0) handleClaimed();
+            else handleCreated();
+          }}
+          sx={{
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            mb: 3,
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 400,
+              fontSize: '0.875rem',
+              minWidth: 'auto',
+              px: 2,
+            },
+            '& .Mui-selected': {
+              fontWeight: 500,
+            },
+          }}
+        >
+          <Tab
+            label="Claimed"
+            disabled={claimData === null || claimData.length === 0}
+          />
+          <Tab
+            label="Created"
+            disabled={createdData === null || createdData.length === 0}
+          />
+        </Tabs>
 
-            <Button
-              variant={value === 1 ? "contained" : "outlined"}
-              size="small"
-              onClick={handleCreated}
-              disabled={createdData === null || createdData.length === 0}
-              sx={{ ml: 1 }}
-            >
-              Created
-            </Button>
-          </Box>
-        </Card>
-        <Card>
-          <Box component="form">
-            <Box>
-              <Autocomplete
-                id="location"
-                options={locations}
-                getOptionLabel={(option) => option}
-                isOptionEqualToValue={(option, value) => option === value}
-                onChange={(event, newValue) => {
-                  setLocValue(newValue ? newValue : "");
-                }}
-                renderInput={(params) => (
-                  <TextField {...params} label="Location" variant="standard" />
-                )}
-              />
-            </Box>
-            <Box>
-              <Autocomplete
-                id="category"
-                options={categories}
-                getOptionLabel={(option) => option}
-                isOptionEqualToValue={(option, value) => option === value}
-                onChange={(event, newValue) => {
-                  setCatValue(newValue ? newValue : "");
-                }}
-                renderInput={(params) => (
-                  <TextField {...params} label="Category" variant="standard" />
-                )}
-              />
-            </Box>
-          </Box>
-          <Box mt={4}>
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              onClick={handleFilter}
-            >
-              Apply
-            </Button>
-          </Box>
-        </Card>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: 400 }}>
+          <CustomSelect
+            style={{
+              background: 'transparent',
+              padding: '4px',
+              fontSize: 14,
+              color: 'var(--brand-primary)',
+              width: '100%',
+            }}
+            value={locValue}
+            onChange={(e) => setLocValue(e.target.value)}
+          >
+            <option value="">Location</option>
+            {locations && locations.map((loc) => (
+              <option key={loc} value={loc}>{loc}</option>
+            ))}
+          </CustomSelect>
+
+          <CustomSelect
+            style={{
+              background: 'transparent',
+              padding: '4px',
+              fontSize: 14,
+              color: 'var(--brand-primary)',
+              width: '100%',
+            }}
+            value={catValue}
+            onChange={(e) => setCatValue(e.target.value)}
+          >
+            <option value="">Category</option>
+            {categories && categories.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </CustomSelect>
+        </Box>
       </Box>
 
       {/* Bottom Section: Main Content */}

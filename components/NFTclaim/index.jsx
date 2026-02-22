@@ -28,7 +28,7 @@ const Item = styled(Paper)(({ theme }) => ({
   boxShadow: "none",
 }));
 
-export default function NFTclaim({ ownersData, data }) {
+export default function NFTclaim({ ownersData, data, children }) {
   const router = useRouter();
   const theme = useTheme();
   const tokenImageUrl = getAkaswapAssetUrl(data.metadata.displayUri);
@@ -50,29 +50,29 @@ export default function NFTclaim({ ownersData, data }) {
 
   return (
     <>
-      <Box sx={{ background: "#fff" }} mx={3} borderRadius={2}>
+      <Box mx={3} borderRadius={2}>
         <Container maxWidth="lg">
           <Box py={6}>
-            <Stack direction="column" spacing={8}>
-              <Item
+            <Stack
+              direction={{ xs: "column", lg: "row" }}
+              spacing={8}
+              alignItems={{ xs: "center", lg: "flex-start" }}
+            >
+              <Box
                 sx={{
-                  width: "100%",
+                  width: { xs: "100%", lg: "50%" },
+                  flexShrink: 0,
                   height: "auto",
                 }}
               >
-                <Box
-                  sx={{
-                    width: "100%",
-                    height: "auto",
-                  }}
-                >
-                  <RenderMedia mimeType={mimeType} src={src} />
-                </Box>
-              </Item>
+                <RenderMedia mimeType={mimeType} src={src} />
+              </Box>
               <Item
                 sx={{
                   width: "100%",
                   height: "auto",
+                  maxWidth: "65ch",
+                  background: "transparent",
                 }}
               >
                 <Box
@@ -98,27 +98,47 @@ export default function NFTclaim({ ownersData, data }) {
                     <Typography variant="h4" component="h1">
                       {data.metadata.name}
                     </Typography>
-                    <Typography variant="h6" component="div" mb={2}>
-                      {data.creator}
-                    </Typography>
 
-                    <Typography variant="body2">
-                      {data.metadata.start_time
-                        ? formatDateRange(
-                            data.metadata.start_time,
-                            data.metadata.end_time
-                          )
-                        : eventDate}
-                    </Typography>
-                    <Typography mb={2}>{data.eventPlace}</Typography>
+                    <Box mt={3}>
+                      <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                        主辦方
+                      </Typography>
+                      <Typography variant="h6" component="div">
+                        {data.creator}
+                      </Typography>
+                    </Box>
+
+                    <Box mt={3}>
+                      <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                        時間
+                      </Typography>
+                      <Typography variant="body2">
+                        {data.metadata.start_time
+                          ? formatDateRange(
+                              data.metadata.start_time,
+                              data.metadata.end_time
+                            )
+                          : eventDate}
+                      </Typography>
+                    </Box>
+
+                    <Box mt={3}>
+                      <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                        地點
+                      </Typography>
+                      <Typography>{data.eventPlace}</Typography>
+                    </Box>
 
                     {data.tags && (
-                      <Box mb={8}>
+                      <Box mt={3}>
                         <Tags tags={data.tags} />
                       </Box>
                     )}
 
-                    <Box>
+                    <Box mt={3}>
+                      <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                        活動內容
+                      </Typography>
                       {data.metadata.description
                         .split("\n")
                         .map((paragraph, index) => (
@@ -158,12 +178,12 @@ export default function NFTclaim({ ownersData, data }) {
                           </Box>
                         </>
                       ) : (
-                        <Typography variant="body2">
+                        <Typography variant="body2" color="warning.main">
                           Expired or not able to claim
                         </Typography>
                       )}
                     </Box>
-                    {/*  */}
+                    {children}
                   </Box>
                 </Box>
               </Item>

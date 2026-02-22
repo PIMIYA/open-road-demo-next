@@ -58,8 +58,10 @@ export default function WalletTimeline({
         combinedData.map((card, index) => (
           <TimelineItem key={index}>
             <TimelineSeparator>
-              <TimelineDot color="secondary" />
-              {index !== cardData.length - 1 && <TimelineConnector />}
+              <TimelineDot sx={{ bgcolor: 'var(--brand-secondary)' }} />
+              {index !== cardData.length - 1 && (
+                <TimelineConnector sx={{ bgcolor: 'var(--brand-secondary)', width: .1 }} />
+              )}
             </TimelineSeparator>
             <TimelineContent>
               <WalletTimelineCard

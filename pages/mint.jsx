@@ -1,26 +1,22 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import {
   Box,
+  Chip,
+  Stack,
   TextField,
   Autocomplete,
-  Grid,
   Typography,
   Button,
   Checkbox,
   FormControlLabel,
   Container,
 } from "@mui/material";
-import { debounce } from "@mui/material/utils";
-import { ThemeProvider } from "@mui/material/styles";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
 
-/* MUI + Google Maps Places Autocomplete */
-import parse from "autosuggest-highlight/parse";
-import { getGeocode, getLatLng } from "use-places-autocomplete";
+import { fetchCities, fetchVenues } from "@/lib/map-api";
 
 /* Kairos */
 import { useConnection } from "@/packages/providers";
@@ -34,7 +30,6 @@ import {
   tags,
   licenses,
   VisuallyHiddenInput,
-  theme,
 } from "@/components/mint/const";
 
 import { FetchDirectusData } from "@/lib/api";
@@ -75,46 +70,16 @@ function classifyFile(file) {
 
 /* ------------------------------------------------ */
 
-const GOOGLE_MAPS_API_KEY = `${process.env.GoogleMapsAPIKey}`;
-function loadScript(src, position, id) {
-  if (!position) return;
-  const script = document.createElement("script");
-  script.setAttribute("async", "");
-  script.setAttribute("id", id);
-  script.src = src;
-  position.appendChild(script);
-}
-const autocompleteService = { current: null };
-
-export default function Mint({ organizers, artists }) {
+export default function Mint({ organizers, artists, cities, events }) {
   const router = useRouter();
 
-  const [value, setValue] = useState(null);
-  const [inputValue, setInputValue] = useState("");
-  const [options, setOptions] = useState([]);
-  const loaded = useRef(false);
-  const [lat, setLat] = useState(null);
-  const [lng, setLng] = useState(null);
+  // Event selection
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
-  if (typeof window !== "undefined" && !loaded.current) {
-    if (!document.querySelector("#google-maps")) {
-      loadScript(
-        `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`,
-        document.querySelector("head"),
-        "google-maps"
-      );
-    }
-    loaded.current = true;
-  }
-
-  const fetchPlacePredictions = useMemo(
-    () =>
-      debounce((request, callback) => {
-        if (!autocompleteService.current) return;
-        autocompleteService.current.getPlacePredictions(request, callback);
-      }, 400),
-    []
-  );
+  // Location: city → venue progressive disclosure
+  const [selectedCity, setSelectedCity] = useState(null);
+  const [venues, setVenues] = useState([]);
+  const [selectedVenue, setSelectedVenue] = useState(null);
 
   // Form states
   let pinningMetadata = false;
@@ -164,6 +129,18 @@ export default function Mint({ organizers, artists }) {
   const [roleData, setRoleData] = useState(null);
   const [isLoadingRole, setLoadingRole] = useState(true);
 
+  // Fetch venues when city changes
+  useEffect(() => {
+    if (!selectedCity) {
+      setVenues([]);
+      setSelectedVenue(null);
+      return;
+    }
+    fetchVenues(selectedCity.slug)
+      .then(setVenues)
+      .catch((err) => console.error("Failed to load venues:", err));
+  }, [selectedCity]);
+
   useEffect(() => {
     if (!address) return;
 
@@ -180,31 +157,7 @@ export default function Mint({ organizers, artists }) {
         setRoleData(data);
         setLoadingRole(false);
       });
-
-    // Google autocomplete service
-    let active = true;
-    if (!autocompleteService.current && window.google) {
-      autocompleteService.current =
-        new window.google.maps.places.AutocompleteService();
-    }
-    if (!autocompleteService.current) return;
-
-    if (inputValue === "") {
-      setOptions(value ? [value] : []);
-      return;
-    }
-    fetchPlacePredictions({ input: inputValue }, (results) => {
-      if (!active) return;
-      let newOptions = [];
-      if (value) newOptions = [value];
-      if (results) newOptions = [...newOptions, ...results];
-      setOptions(newOptions);
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [value, inputValue, fetchPlacePredictions, address]);
+  }, [address]);
 
   if (isLoadingRole) return <p>Loading...</p>;
   if (!roleData) return <p>No role data</p>;
@@ -235,10 +188,6 @@ export default function Mint({ organizers, artists }) {
   const upload = async (event) => {
     event.preventDefault();
 
-    if (!autocompleteService.current) {
-      console.error("Google Maps Places library is not loaded yet");
-      return;
-    }
     if (!file) {
       console.error("No primary file selected");
       return;
@@ -254,6 +203,9 @@ export default function Mint({ organizers, artists }) {
       pinningMetadata = true;
       const data = new FormData();
 
+      // Event
+      data.append("event_id", selectedEvent?.id || "");
+
       // Base metadata
       data.append("title", titleRef.current.value || "");
       data.append("description", descriptionRef.current.value || "");
@@ -266,10 +218,19 @@ export default function Mint({ organizers, artists }) {
       const resultTags = (selectedTags || []).map((t) => t.label);
       data.append("tags", JSON.stringify(resultTags));
 
-      data.append("eventPlace", inputValue || "");
-      data.append("geoLocation", JSON.stringify([lat, lng]));
-      data.append("startTime", startTime || "");
-      data.append("endTime", endTime || "");
+      // Location
+      data.append("city_slug", selectedCity?.slug || "");
+      data.append("venue_id", selectedVenue?.id || "");
+      data.append(
+        "geoLocation",
+        selectedVenue
+          ? JSON.stringify([selectedVenue.lat, selectedVenue.lng])
+          : ""
+      );
+
+      // Time (ISO string with timezone; backend converts to UTC)
+      data.append("startTime", startTime ? startTime.toISOString() : "");
+      data.append("endTime", endTime ? endTime.toISOString() : "");
 
       data.append("creator", createrAddress);
       data.append("minter", contractAddress);
@@ -357,247 +318,219 @@ export default function Mint({ organizers, artists }) {
 
   return (
     <>
-      <Container maxWidth="lg">
-        <Box
+      <Container maxWidth="sm" sx={{ py: 6 }}>
+        <Stack
           component="form"
-          sx={{ "& > :not(style)": { m: 1, width: "25ch" } }}
+          spacing={5}
           noValidate
           autoComplete="off"
         >
-          <Box>
-            <TextField
-              inputRef={titleRef}
-              id="title"
-              label="Event name"
-              variant="standard"
-              sx={{ width: 300 }}
-            />
-          </Box>
-          <Box>
-            <TextField
-              id="description"
-              inputRef={descriptionRef}
-              label="Description"
-              multiline
-              maxRows={4}
-              variant="standard"
-              sx={{ width: 300 }}
-            />
-          </Box>
-          <Box>
-            <Autocomplete
-              id="organizer"
-              options={organizers.data.filter((o) => o.status === "published")}
-              getOptionLabel={(o) => o.name}
-              isOptionEqualToValue={(o, v) => o.name === v.name}
-              sx={{ width: 300 }}
-              onChange={(e, v) => setSelectedOrganizer(v)}
-              renderInput={(params) => (
-                <TextField {...params} label="Organizer" variant="standard" />
-              )}
-            />
-          </Box>
-          <Box>
-            <Autocomplete
-              multiple
-              id="artist"
-              options={artists.data.filter((o) => o.status === "published")}
-              getOptionLabel={(o) => o.name}
-              sx={{ width: 300 }}
-              onChange={(e, v) => setSelectedArtists(v)}
-              renderInput={(params) => (
-                <TextField {...params} label="Artists" variant="standard" />
-              )}
-            />
-          </Box>
-          <Box>
-            <Autocomplete
-              id="categoriy"
-              options={categories}
-              getOptionLabel={(o) => o.label}
-              isOptionEqualToValue={(o, v) => o.label === v.label}
-              sx={{ width: 300 }}
-              onChange={(e, v) => setSelectedCategory(v)}
-              renderInput={(params) => (
-                <TextField {...params} label="Category" variant="standard" />
-              )}
-            />
-          </Box>
-          <Box>
-            <Autocomplete
-              multiple
-              id="tag"
-              options={tags}
-              getOptionLabel={(o) => o.label}
-              sx={{ width: 300 }}
-              onChange={(e, v) => setSelectedTags(v)}
-              renderInput={(params) => (
-                <TextField {...params} label="Tag" variant="standard" />
-              )}
-            />
-          </Box>
-          <Box>
-            <Autocomplete
-              id="google-place-geocode"
-              sx={{ width: 300 }}
-              getOptionLabel={(option) =>
-                typeof option === "string"
-                  ? option
-                  : option.structured_formatting.main_text
-              }
-              filterOptions={(x) => x}
-              options={options}
-              autoComplete
-              includeInputInList
-              filterSelectedOptions
-              value={value}
-              noOptionsText="No locations"
-              onChange={(event, newValue) => {
-                setOptions(newValue ? [newValue, ...options] : options);
-                setValue(newValue);
-                if (newValue) {
-                  getGeocode({ address: newValue.description }).then(
-                    (results) => {
-                      const { lat, lng } = getLatLng(results[0]);
-                      setLat(lat);
-                      setLng(lng);
-                    }
-                  );
-                } else if (newValue === null) {
-                  setLat(null);
-                  setLng(null);
-                }
-              }}
-              onInputChange={(event, newInputValue) => {
-                setInputValue(newInputValue);
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Add a location"
-                  fullWidth
-                  variant="standard"
+          <Autocomplete
+            id="event"
+            options={events}
+            getOptionLabel={(o) => o.name || ""}
+            isOptionEqualToValue={(o, v) => o.id === v.id}
+            fullWidth
+            value={selectedEvent}
+            onChange={(e, v) => setSelectedEvent(v)}
+            renderInput={(params) => (
+              <TextField {...params} label="Event" />
+            )}
+          />
+          <TextField
+            inputRef={titleRef}
+            id="title"
+            label="Title"
+            fullWidth
+          />
+          <TextField
+            id="description"
+            inputRef={descriptionRef}
+            label="Description"
+            multiline
+            maxRows={4}
+            fullWidth
+          />
+          <Autocomplete
+            id="organizer"
+            options={organizers.data.filter((o) => o.status === "published")}
+            getOptionLabel={(o) => o.name}
+            isOptionEqualToValue={(o, v) => o.name === v.name}
+            fullWidth
+            onChange={(e, v) => setSelectedOrganizer(v)}
+            renderInput={(params) => (
+              <TextField {...params} label="Organizer" />
+            )}
+          />
+          <Autocomplete
+            multiple
+            id="artist"
+            options={artists.data.filter((o) => o.status === "published")}
+            getOptionLabel={(o) => o.name}
+            fullWidth
+            onChange={(e, v) => setSelectedArtists(v)}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip
+                  variant="outlined"
+                  label={option.name}
+                  {...getTagProps({ index })}
+                  key={option.name}
                 />
-              )}
-              renderOption={(props, option) => {
-                const matches =
-                  option.structured_formatting.main_text_matched_substrings ||
-                  [];
-                const parts = parse(
-                  option.structured_formatting.main_text,
-                  matches.map((m) => [m.offset, m.offset + m.length])
-                );
-                return (
-                  <li {...props}>
-                    <Grid container alignItems="center">
-                      <Grid item sx={{ display: "flex", width: 44 }}>
-                        <LocationOnIcon sx={{ color: "text.secondary" }} />
-                      </Grid>
-                      <Grid
-                        item
-                        sx={{
-                          width: "calc(100% - 44px)",
-                          wordWrap: "break-word",
-                        }}
-                      >
-                        {parts.map((part, index) => (
-                          <Box
-                            key={index}
-                            component="span"
-                            sx={{
-                              fontWeight: part.highlight ? "bold" : "regular",
-                            }}
-                          >
-                            {part.text}
-                          </Box>
-                        ))}
-                        <Typography variant="body2" color="text.secondary">
-                          {option.structured_formatting.secondary_text}
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  </li>
-                );
-              }}
-            />
-          </Box>
+              ))
+            }
+            renderInput={(params) => (
+              <TextField {...params} label="Artists" />
+            )}
+          />
+          <Autocomplete
+            id="categoriy"
+            options={categories}
+            getOptionLabel={(o) => o.label}
+            isOptionEqualToValue={(o, v) => o.label === v.label}
+            fullWidth
+            onChange={(e, v) => setSelectedCategory(v)}
+            renderInput={(params) => (
+              <TextField {...params} label="Category" />
+            )}
+          />
+          <Autocomplete
+            multiple
+            id="tag"
+            options={tags}
+            getOptionLabel={(o) => o.label}
+            fullWidth
+            onChange={(e, v) => setSelectedTags(v)}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip
+                  variant="outlined"
+                  label={option.label}
+                  {...getTagProps({ index })}
+                  key={option.label}
+                />
+              ))
+            }
+            renderInput={(params) => (
+              <TextField {...params} label="Tag" />
+            )}
+          />
+          {/* Location: city → venue progressive disclosure */}
+          <Autocomplete
+            id="city"
+            options={cities}
+            getOptionLabel={(o) =>
+              o.name_zh ? `${o.name_zh} (${o.name_en})` : o.slug
+            }
+            isOptionEqualToValue={(o, v) => o.slug === v.slug}
+            fullWidth
+            value={selectedCity}
+            onChange={(e, v) => {
+              setSelectedCity(v);
+              setSelectedVenue(null);
+            }}
+            renderInput={(params) => (
+              <TextField {...params} label="City" />
+            )}
+          />
+          <Autocomplete
+            id="venue"
+            options={venues}
+            getOptionLabel={(o) => o.name}
+            isOptionEqualToValue={(o, v) => o.id === v.id}
+            fullWidth
+            value={selectedVenue}
+            disabled={!selectedCity}
+            noOptionsText={selectedCity ? "No venues" : "Select a city first"}
+            onChange={(e, v) => setSelectedVenue(v)}
+            renderInput={(params) => (
+              <TextField {...params} label="Venue" />
+            )}
+          />
 
-          {/* lat/lng */}
-          <Box>
-            {lat ? (
-              <Box sx={{ width: 300 }}>
-                <Box component="span">lat:{lat}</Box>
-                <Box component="span" pl={1}>
-                  lng:{lng}
-                </Box>
-              </Box>
-            ) : null}
-          </Box>
+          {/* lat/lng from selected venue */}
+          {selectedVenue ? (
+            <Box>
+              <Typography variant="body2" sx={{ opacity: 0.6 }}>
+                lat: {selectedVenue.lat} &nbsp; lng: {selectedVenue.lng}
+              </Typography>
+            </Box>
+          ) : null}
 
           {/* time */}
-          <Box>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Stack direction="row" spacing={4}>
               <DatePicker
-                label="start time"
-                sx={{ width: 300 }}
+                label="Start time"
+                slotProps={{
+                  textField: { fullWidth: true },
+                  popper: {
+                    sx: {
+                      "& .MuiPaper-root": {
+                        backgroundColor: "rgba(255, 255, 255, 0.85)",
+                        backdropFilter: "blur(8px)",
+                      },
+                    },
+                  },
+                }}
                 value={startTime ?? null}
                 onChange={(v) => setStartTime(v)}
               />
-            </LocalizationProvider>
-          </Box>
-          <Box>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
-                label="end time"
-                sx={{ width: 300 }}
+                label="End time"
+                slotProps={{
+                  textField: { fullWidth: true },
+                  popper: {
+                    sx: {
+                      "& .MuiPaper-root": {
+                        backgroundColor: "rgba(255, 255, 255, 0.85)",
+                        backdropFilter: "blur(8px)",
+                      },
+                    },
+                  },
+                }}
                 value={endTime ?? null}
                 onChange={(v) => setEndTime(v)}
               />
-            </LocalizationProvider>
-          </Box>
+            </Stack>
+          </LocalizationProvider>
 
           {/* license */}
-          <Box>
-            <Autocomplete
-              id="license"
-              options={licenses}
-              getOptionLabel={(o) => o.label}
-              isOptionEqualToValue={(o, v) => o.label === v.label}
-              sx={{ width: 300 }}
-              onChange={(e, v) => setSelectedLicense(v)}
-              renderInput={(params) => (
-                <TextField {...params} label="License" variant="standard" />
-              )}
-            />
-          </Box>
+          <Autocomplete
+            id="license"
+            options={licenses}
+            getOptionLabel={(o) => o.label}
+            isOptionEqualToValue={(o, v) => o.label === v.label}
+            fullWidth
+            onChange={(e, v) => setSelectedLicense(v)}
+            renderInput={(params) => (
+              <TextField {...params} label="License" />
+            )}
+          />
 
           {/* editions / royalty */}
-          <Box>
+          <Stack direction="row" spacing={4}>
             <TextField
               id="mintingTokenQty"
               label="Editions"
               type="number"
-              sx={{ width: 300 }}
+              fullWidth
               InputLabelProps={{ shrink: true }}
-              variant="standard"
               inputProps={{ min: 1 }}
               value={mintingTokenQty}
               onChange={(e) => setMintingTokenQty(Number(e.target.value))}
             />
-          </Box>
-          <Box>
             <TextField
               id="royalty"
-              label="Royalty(10-25%)"
+              label="Royalty (10-25%)"
               type="number"
-              sx={{ width: 300 }}
+              fullWidth
               InputLabelProps={{ shrink: true }}
-              variant="standard"
               inputProps={{ min: 10, max: 25 }}
               value={royaltyPercentage}
               onChange={(e) => setRoyaltyPercentage(Number(e.target.value))}
             />
-          </Box>
+          </Stack>
 
           {/* royalty sharing */}
           <Box>
@@ -629,48 +562,40 @@ export default function Mint({ organizers, artists }) {
           )}
 
           {/* wallet */}
-          <Box>
-            <Box>
-              <TextField
-                inputRef={walletRef}
-                id="walletAddress"
-                label="walletAddress"
-                variant="standard"
-                sx={{ width: 300 }}
-                value={address}
-              />
-            </Box>
-          </Box>
+          <TextField
+            inputRef={walletRef}
+            id="walletAddress"
+            label="Wallet Address"
+            fullWidth
+            value={address}
+          />
 
           {/* file + display + x-directory */}
           <Box>
-            <ThemeProvider theme={theme}>
-              <Button
-                id="myfile"
-                component="label"
-                variant="outlined"
-                tabIndex={-1}
-              >
-                Upload file
-                <VisuallyHiddenInput
-                  type="file"
-                  accept={ACCEPT_EXTS}
-                  onChange={handleFileUpload}
-                />
-              </Button>
-            </ThemeProvider>
+            <Button
+              id="myfile"
+              component="label"
+              variant="outlined"
+              tabIndex={-1}
+            >
+              Upload file
+              <VisuallyHiddenInput
+                type="file"
+                accept={ACCEPT_EXTS}
+                onChange={handleFileUpload}
+              />
+            </Button>
 
-            <Box>
-              {file ? (
-                <Box sx={{ width: 300 }}>
-                  <Box component="span">{file.name}</Box>
-                </Box>
-              ) : null}
-            </Box>
+            {file && (
+              <Typography variant="body2" sx={{ mt: 2, opacity: 0.6 }}>
+                {file.name}
+              </Typography>
+            )}
 
             {/* ZIP → 顯示 x-directory 切換 */}
             {fileKind?.isZip && (
               <FormControlLabel
+                sx={{ mt: 2, display: "block" }}
                 control={
                   <Checkbox
                     checked={isXDirectory}
@@ -683,62 +608,60 @@ export default function Mint({ organizers, artists }) {
 
             {/* 非圖片 → 要求縮圖 */}
             {file && !fileKind?.isImage && (
-              <Box mt={1}>
-                <ThemeProvider theme={theme}>
-                  <Button
-                    id="display"
-                    component="label"
-                    role={undefined}
-                    variant="outlined"
-                    tabIndex={-1}
-                  >
-                    Upload display
-                    <VisuallyHiddenInput
-                      type="file"
-                      accept=".png,.jpg,.jpeg,.webp"
-                      onChange={handleDisplayChange}
-                    />
-                  </Button>
-                </ThemeProvider>
-                <Box>
-                  {display ? (
-                    <Box sx={{ width: 300 }}>
-                      <Box component="span">{display.name}</Box>
-                    </Box>
-                  ) : null}
-                </Box>
+              <Box mt={3}>
+                <Button
+                  id="display"
+                  component="label"
+                  variant="outlined"
+                  tabIndex={-1}
+                >
+                  Upload display
+                  <VisuallyHiddenInput
+                    type="file"
+                    accept=".png,.jpg,.jpeg,.webp"
+                    onChange={handleDisplayChange}
+                  />
+                </Button>
+                {display && (
+                  <Typography variant="body2" sx={{ mt: 2, opacity: 0.6 }}>
+                    {display.name}
+                  </Typography>
+                )}
               </Box>
             )}
           </Box>
 
           {/* submit */}
-          <Box pt={6}>
-            <ThemeProvider theme={theme}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={upload}
-                disabled={
-                  !file || (!!file && !classifyFile(file).isImage && !display)
-                }
-              >
-                Mint
-              </Button>
-              <div>
-                {miningInProgress ? <p>Mining in progress...</p> : null}
-              </div>
-            </ThemeProvider>
+          <Box pt={4}>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={upload}
+              disabled={
+                !file || (!!file && !classifyFile(file).isImage && !display)
+              }
+            >
+              Mint
+            </Button>
+            {miningInProgress && (
+              <Typography variant="body2" sx={{ mt: 2 }}>
+                Mining in progress...
+              </Typography>
+            )}
           </Box>
-        </Box>
+        </Stack>
       </Container>
     </>
   );
 }
 
 export async function getServerSideProps() {
-  const [organizers, artists] = await Promise.all([
-    await FetchDirectusData(`/organizers`),
-    await FetchDirectusData(`/artists`),
+  const [organizers, artists, cities, eventsRes] = await Promise.all([
+    FetchDirectusData(`/organizers`),
+    FetchDirectusData(`/artists`),
+    fetchCities().catch(() => []),
+    FetchDirectusData(`/events`),
   ]);
-  return { props: { organizers, artists } };
+  const events = eventsRes?.data?.filter((e) => e.status === "published") || [];
+  return { props: { organizers, artists, cities, events } };
 }

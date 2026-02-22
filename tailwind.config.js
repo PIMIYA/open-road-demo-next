@@ -13,7 +13,7 @@ module.exports = {
       colors: {
         'brand-primary': '#2483ff',
         'brand-secondary': '#ed5024',
-        'brand-bg': '#f9f3e6',
+        'brand-bg': '#f5f5f5',
         'brand-muted': '#D8D4CC',
       },
     },

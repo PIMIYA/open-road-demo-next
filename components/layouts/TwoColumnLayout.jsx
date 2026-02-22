@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Box, Stack } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 
 export function Side({ sticky, children }) {
   if (sticky) {
@@ -37,22 +37,28 @@ export default function TwoColumnLayout({ children }) {
   }, [children]);
 
   return (
-    <Container maxWidth="lg">
+    <Box sx={{ px: '2rem' }}>
       <Stack direction={
         { xs: 'column', lg: 'row' }
       } spacing={4}>
         <Box
-          width={{
-            md: '100%',
-            lg: 300
+          sx={{
+            width: { md: '100%', lg: 400 },
+            position: 'relative',
+            zIndex: 2,
           }}
         >
           {sideContent}
         </Box>
-        <Box width={'100%'}>
+        <Box sx={{
+          width: '100%',
+          mt: { xs: 4, lg: 0 },
+          pt: { lg: '4rem' },
+          pl: { lg: '4rem' },
+        }}>
           {mainContent}
         </Box>
       </Stack>
-    </Container>
+    </Box>
   );
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { paginateAppend } from "@/lib/paginate";
 /* MUI */
-import { Box, Container, Autocomplete, TextField, Button, Chip } from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
 /* Components */
 import GeneralTokenCardGrid from "@/components/GeneralTokenCardGrid";
 import TwoColumnLayout, {
@@ -11,6 +11,7 @@ import TwoColumnLayout, {
   Side,
 } from "@/components/layouts/TwoColumnLayout";
 import SidePaper from "@/components/SidePaper";
+import CustomSelect from "@/components/CustomSelect";
 /* Fetch data */
 import { TZKT_API, GetClaimablePoolID, FetchDirectusData } from "@/lib/api";
 import { formatDateRange } from "@/lib/stringUtils";
@@ -71,23 +72,15 @@ export default function Project({ event, organizers, artists, tokens }) {
         .filter((item, index, self) => self.indexOf(item) === index)
     : [];
 
-  // Combine artists and organizers for the multi-select filter
+  // Combine artists and organizers for the single-select filter
   const allCreators = [
-    ...(artists?.data || []).map(artist => ({ 
-      id: artist.id, 
-      name: artist.name, 
-      type: 'artist' 
-    })),
-    ...(organizers?.data || []).map(organizer => ({ 
-      id: organizer.id, 
-      name: organizer.name, 
-      type: 'organizer' 
-    }))
-  ];
+    ...(artists?.data || []).map(artist => artist.name),
+    ...(organizers?.data || []).map(organizer => organizer.name),
+  ].filter((name, index, self) => self.indexOf(name) === index);
 
   const [catValue, setCatValue] = useState("");
   const [tagValue, setTagValue] = useState("");
-  const [selectedCreators, setSelectedCreators] = useState([]);
+  const [creatorValue, setCreatorValue] = useState("");
   const [filteredData, setFilteredData] = useState(tokens || []);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -95,32 +88,17 @@ export default function Project({ event, organizers, artists, tokens }) {
   const loaderRef = useRef(null);
   const observerRef = useRef(null);
 
-  // Function to check if a token's organizer contains any of the selected creators
-  const checkCreatorMatch = (tokenOrganizer, selectedCreatorNames) => {
-    if (!tokenOrganizer || selectedCreatorNames.length === 0) return true;
-    
-    return selectedCreatorNames.some(creatorName => 
-      tokenOrganizer.includes(creatorName)
-    );
-  };
-
-  const handleFilter = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-
-    const selectedCreatorNames = selectedCreators.map(creator => creator.name);
-    
-    const filterdByCat = tokens.filter(
+  // Auto-filter when any filter value changes
+  useEffect(() => {
+    const filtered = (tokens || []).filter(
       (c) =>
         (!catValue || c.metadata.category.includes(catValue)) &&
         (!tagValue || c.metadata.tags.some((tag) => tag.includes(tagValue))) &&
-        checkCreatorMatch(c.metadata.organizer, selectedCreatorNames)
+        (!creatorValue || (c.metadata.organizer && c.metadata.organizer.includes(creatorValue)))
     );
-    changePage(1);
-    setFilteredData(filterdByCat);
-  };
+    setCurrentPage(1);
+    setFilteredData(filtered);
+  }, [catValue, tagValue, creatorValue]);
 
   /* Pagination */
   const pageSize = 6;
@@ -166,99 +144,104 @@ export default function Project({ event, organizers, artists, tokens }) {
     <TwoColumnLayout>
       <Side sticky>
         <SidePaper>
-          <Box component="form">
-            <Box mb={2}>
-              <Autocomplete
-                id="category"
-                options={categories}
-                getOptionLabel={(option) => (option ? option : "")}
-                isOptionEqualToValue={(option, value) => option === value}
-                value={categories.find((cat) => cat === catValue) || null}
-                onChange={(event, newValue) => {
-                  setCatValue(newValue ? newValue : "");
-                }}
-                renderInput={(params) => (
-                  <TextField {...params} label="Category" variant="standard" />
-                )}
-              />
-            </Box>
-            <Box mb={2}>
-              <Autocomplete
-                id="tag"
-                options={tags}
-                getOptionLabel={(option) => (option ? option : "")}
-                value={tags.find((tag) => tag === tagValue) || null}
-                isOptionEqualToValue={(option, value) => option === value}
-                onChange={(event, newValue) => {
-                  setTagValue(newValue ? newValue : "");
-                }}
-                renderInput={(params) => (
-                  <TextField {...params} label="Tag" variant="standard" />
-                )}
-              />
-            </Box>
-            <Box mb={2}>
-              <Autocomplete
-                multiple
-                id="creators"
-                options={allCreators}
-                getOptionLabel={(option) => option.name}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-                value={selectedCreators}
-                onChange={(event, newValue) => {
-                  setSelectedCreators(newValue);
-                }}
-                renderInput={(params) => (
-                  <TextField {...params} label="創作者 / 主辦方" variant="standard" />
-                )}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
-                    <Chip
-                      key={option.id}
-                      label={`${option.name} (${option.type === 'artist' ? '藝術家' : '主辦方'})`}
-                      size="small"
-                      {...getTagProps({ index })}
-                    />
-                  ))
-                }
-                renderOption={(props, option) => (
-                  <Box component="li" {...props}>
-                    <Box>
-                      <Box component="span" sx={{ fontWeight: 'bold' }}>
-                        {option.name}
-                      </Box>
-                      <Box component="span" sx={{ color: 'text.secondary', ml: 1 }}>
-                        ({option.type === 'artist' ? '藝術家' : '主辦方'})
-                      </Box>
-                    </Box>
-                  </Box>
-                )}
-              />
-            </Box>
-          </Box>
-          <Box mt={4}>
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              onClick={handleFilter}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <CustomSelect
+              style={{
+                background: "transparent",
+                padding: "4px",
+                fontSize: 14,
+                color: "var(--brand-primary)",
+                width: "100%",
+              }}
+              value={catValue}
+              onChange={(e) => setCatValue(e.target.value)}
             >
-              Apply
-            </Button>
+              <option value="">類別</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </CustomSelect>
+
+            <CustomSelect
+              style={{
+                background: "transparent",
+                padding: "4px",
+                fontSize: 14,
+                color: "var(--brand-primary)",
+                width: "100%",
+              }}
+              value={tagValue}
+              onChange={(e) => setTagValue(e.target.value)}
+            >
+              <option value="">標籤</option>
+              {tags.map((tag) => (
+                <option key={tag} value={tag}>{tag}</option>
+              ))}
+            </CustomSelect>
+
+            <CustomSelect
+              style={{
+                background: "transparent",
+                padding: "4px",
+                fontSize: 14,
+                color: "var(--brand-primary)",
+                width: "100%",
+              }}
+              value={creatorValue}
+              onChange={(e) => setCreatorValue(e.target.value)}
+            >
+              <option value="">創作者 / 主辦方</option>
+              {allCreators.map((name) => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </CustomSelect>
           </Box>
         </SidePaper>
       </Side>
       <Main>
-        <Container maxWidth="lg">
-          <Box>{event.name}</Box>
-          <Box>{event.location}</Box>
-          <Box>
-            {event.start_time
-              ? formatDateRange(formattedStartTime, formattedEndTime)
-              : null}
+        <Box sx={{ mb: 6 }}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ opacity: 0.8 }}>
+              活動名稱
+            </Typography>
+            <Typography variant="h2" sx={{ mt: 0.5 }}>
+              {event.name}
+            </Typography>
           </Box>
-          <Box dangerouslySetInnerHTML={{ __html: event.description }} />
-        </Container>
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ opacity: 0.8 }}>
+              地點
+            </Typography>
+            <Typography variant="body1" sx={{ mt: 0.5 }}>
+              {event.location}
+            </Typography>
+          </Box>
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" sx={{ opacity: 0.8 }}>
+              時間
+            </Typography>
+            <Typography variant="body1" sx={{ mt: 0.5 }}>
+              {event.start_time
+                ? formatDateRange(formattedStartTime, formattedEndTime)
+                : "TBD"}
+            </Typography>
+          </Box>
+
+          {event.description && (
+            <Box
+              dangerouslySetInnerHTML={{ __html: event.description }}
+              sx={{
+                mt: 4,
+                fontSize: "0.875rem",
+                lineHeight: 1.8,
+                "& p": { margin: 0, mb: 1 },
+                "& *": { fontSize: "inherit", color: "inherit" },
+              }}
+            />
+          )}
+        </Box>
         <Box>{filteredData.length == 0 ? "no data" : ""}</Box>
         <GeneralTokenCardGrid
           data={paginateAppend(filteredData, currentPage, pageSize)}

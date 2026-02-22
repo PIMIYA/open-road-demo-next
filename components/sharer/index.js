@@ -1,16 +1,6 @@
 import React, { useState } from 'react'
-import styles from './styles.module.scss'
-// MUI
-import { Box, Button, TextField } from "@mui/material";
-import { styled } from '@mui/material/styles';
-
-const StyledButton = styled(Button)({
-    minWidth: 12,
-    minHeight: 12,
-    borderRadius: '50%',
-    margin: 6,
-    fontSize: 15,
-});
+import { Box, Button, IconButton, Stack, TextField, Typography } from "@mui/material";
+import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 
 export const Sharer = ({ id = 1, type, useSwapByRoyalties = false, sharers, maxSharer, handleSetSharer, handleUseSwapByRoyalties = () => null }) => {
 
@@ -66,67 +56,76 @@ export const Sharer = ({ id = 1, type, useSwapByRoyalties = false, sharers, maxS
         array[0] = {
             id: sharerId,
             address: sharers[0].address ? sharers[0].address : "owner",
-            // share: JSON.stringify(100 - sum)
             share: 100 - sum
         }
         return array
     }
 
-    const sharerRows = sharers.map((sharer, index) => {
-        return (
-            <div key={sharer.id} className={styles.shareRow}>
-
-                {type === "RoyaltiesShare" &&
-                    <>
-                        <TextField
-                            type="text"
-                            variant="standard"
-                            onChange={(e) => setSharerAddress(index, e.target.value)}
-                            label="shareWith"
-                            placeholder="Wallet Address"
-                            value={index === 0 ? sharer.address : (sharer.address ? sharer.address : '')}
-                            disabled={(index > 0 ? false : true)}
-                        />
-                        <TextField
-                            type="number"
-                            variant="standard"
-                            inputProps={{ min: 0, max: 100 }}
-                            onChange={(e) => setSharerShare(index, e.target.value)}
-                            label="rate(%)"
-                            placeholder='%'
-                            value={sharer.share ? sharer.share : 0}
-                        />
-                    </>
-                }
-
-                <Box >
-                    <StyledButton
-                        variant="outlined"
-                        onClick={(e) => { removeSharer(index) }}
-                        disabled={((!useSwapByRoyalties && index > 0) ? false : true)}
-                    >-</StyledButton>
-                </Box>
-
-            </div>
-        )
-    }
-    )
+    if (type !== "RoyaltiesShare") return null;
 
     return (
-        <div>
-            {sharerRows}
-            {/* <div className={styles.addRow}> */}
+        <Stack spacing={3}>
+            {sharers.map((sharer, index) => (
+                <Box
+                    key={sharer.id}
+                    sx={{
+                        border: "1px solid",
+                        borderColor: "divider",
+                        p: 3,
+                    }}
+                >
+                    {/* Row label */}
+                    <Typography variant="caption" sx={{ opacity: 0.6, mb: 2, display: "block" }}>
+                        {index === 0 ? "Owner" : `Sharer ${index}`}
+                    </Typography>
 
-            <StyledButton
+                    <Stack spacing={3}>
+                        {/* Wallet address — full width */}
+                        <TextField
+                            type="text"
+                            fullWidth
+                            onChange={(e) => setSharerAddress(index, e.target.value)}
+                            label="Wallet address"
+                            placeholder="tz1..."
+                            value={index === 0 ? sharer.address : (sharer.address ? sharer.address : '')}
+                            disabled={index === 0}
+                        />
+
+                        {/* Rate + remove on same line */}
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            <TextField
+                                type="number"
+                                inputProps={{ min: 0, max: 100 }}
+                                onChange={(e) => setSharerShare(index, e.target.value)}
+                                label="Rate (%)"
+                                placeholder="%"
+                                value={sharer.share ? sharer.share : 0}
+                                disabled={index === 0}
+                                sx={{ width: 120 }}
+                            />
+                            {index > 0 && (
+                                <IconButton
+                                    size="small"
+                                    onClick={() => removeSharer(index)}
+                                    disabled={useSwapByRoyalties}
+                                    sx={{ opacity: 0.6, "&:hover": { opacity: 1 } }}
+                                >
+                                    <RemoveCircleOutlineIcon fontSize="small" />
+                                </IconButton>
+                            )}
+                        </Stack>
+                    </Stack>
+                </Box>
+            ))}
+
+            <Button
                 variant="outlined"
+                size="small"
                 onClick={addSharer}
-                disabled={useSwapByRoyalties || sharers.length > maxSharer ? true : false}
+                disabled={useSwapByRoyalties || sharers.length > maxSharer}
             >
-                +
-            </StyledButton>
-
-
-            {/* </div> */}
-        </div>
+                + Add sharer
+            </Button>
+        </Stack>
     )
 }

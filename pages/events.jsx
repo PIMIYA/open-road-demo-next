@@ -5,16 +5,7 @@ import { paginateAppend } from "@/lib/paginate";
 /* Routing */
 import { useRouter } from "next/router";
 /* MUI */
-import {
-  Box,
-  Autocomplete,
-  TextField,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material";
+import { Box } from "@mui/material";
 /* Fetch data */
 import { FetchDirectusData } from "@/lib/api";
 /* Components */
@@ -24,6 +15,7 @@ import TwoColumnLayout, {
 } from "@/components/layouts/TwoColumnLayout";
 import EventCardGrid from "@/components/EventCardGrid";
 import SidePaper from "@/components/SidePaper";
+import CustomSelect from "@/components/CustomSelect";
 
 export default function Events({ events }) {
   // Filter only published events
@@ -52,9 +44,6 @@ export default function Events({ events }) {
     ...event,
     status: getEventStatus(event.start_time, event.end_time),
   }));
-
-  // get all statuses from events
-  const statuses = ["upcoming", "current", "archived"];
 
   const [statusValue, setStatusValue] = useState("");
   const [sortOrder, setSortOrder] = useState("newest"); // "newest" or "oldest"
@@ -93,17 +82,6 @@ export default function Events({ events }) {
     filtered = sortEvents(filtered, sortOrder);
 
     return filtered;
-  };
-
-  const handleFilter = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-
-    const filteredEvents = applyFiltersAndSort();
-    changePage(1);
-    setFilteredData(filteredEvents);
   };
 
   const handleSortChange = (newSortOrder) => {
@@ -179,59 +157,40 @@ export default function Events({ events }) {
     <TwoColumnLayout>
       <Side sticky>
         <SidePaper>
-          <Box component="form">
-            <Box mb={2}>
-              <Autocomplete
-                id="status"
-                options={statuses}
-                getOptionLabel={(option) => {
-                  switch (option) {
-                    case "upcoming":
-                      return "即將舉行";
-                    case "current":
-                      return "進行中";
-                    case "archived":
-                      return "已結束";
-                    default:
-                      return option;
-                  }
-                }}
-                isOptionEqualToValue={(option, value) => option === value}
-                value={
-                  statuses.find((status) => status === statusValue) || null
-                }
-                onChange={(event, newValue) => {
-                  setStatusValue(newValue ? newValue : "");
-                }}
-                renderInput={(params) => (
-                  <TextField {...params} label="活動狀態" variant="standard" />
-                )}
-              />
-            </Box>
-            <Box mb={2}>
-              <FormControl fullWidth variant="standard">
-                <InputLabel id="sort-label">排序方式</InputLabel>
-                <Select
-                  labelId="sort-label"
-                  value={sortOrder}
-                  onChange={(e) => handleSortChange(e.target.value)}
-                  label="排序方式"
-                >
-                  <MenuItem value="newest">最新優先</MenuItem>
-                  <MenuItem value="oldest">最舊優先</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-          </Box>
-          <Box mt={4}>
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              onClick={handleFilter}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <CustomSelect
+              style={{
+                background: "transparent",
+                padding: "4px",
+                fontSize: 14,
+                color: "var(--brand-primary)",
+                width: "100%",
+              }}
+              value={statusValue}
+              onChange={(e) => {
+                setStatusValue(e.target.value);
+              }}
             >
-              Apply
-            </Button>
+              <option value="">活動狀態</option>
+              <option value="upcoming">即將舉行</option>
+              <option value="current">進行中</option>
+              <option value="archived">已結束</option>
+            </CustomSelect>
+
+            <CustomSelect
+              style={{
+                background: "transparent",
+                padding: "4px",
+                fontSize: 14,
+                color: "var(--brand-primary)",
+                width: "100%",
+              }}
+              value={sortOrder}
+              onChange={(e) => handleSortChange(e.target.value)}
+            >
+              <option value="newest">最新優先</option>
+              <option value="oldest">最舊優先</option>
+            </CustomSelect>
           </Box>
         </SidePaper>
       </Side>

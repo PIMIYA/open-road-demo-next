@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Box, Container, List, ListItem, Typography } from "@mui/material";
 import { useGlobalContext } from "@/contexts/GlobalContext";
 
-import logo from "/public/logo-white.svg";
+import logo from "/public/logo.svg";
 
 export function Footer() {
   const { isLanded } = useGlobalContext();
@@ -16,7 +16,7 @@ export function Footer() {
           padding: 0,
           marginBottom: ".5em",
           a: {
-            color: "white",
+            color: "text.primary",
             textDecoration: "none",
             "&:hover": {
               textDecoration: "underline",
@@ -34,10 +34,12 @@ export function Footer() {
   return (
     <Box
       sx={{
-        bgcolor: "#7b7b7b",
-        color: "white",
+        bgcolor: "transparent",
+        color: "text.primary",
         mt: "5em",
         padding: "2em 0",
+        borderTop: "1px solid",
+        borderColor: "divider",
         display: isLanded ? "block" : "none",
       }}
     >
@@ -50,21 +52,10 @@ export function Footer() {
             },
           }}
         >
-          <Box>
-            <Image
-              src={logo}
-              alt="Kairos"
-              width="100"
-              height="100"
-              style={{
-                width: "100%",
-                height: "auto",
-              }}
-            />
-          </Box>
+
           <List>
             {/* <FooterLink href="/about" label="About" /> */}
-            {/* <FooterLink href="/faq" label="FAQ" /> */}
+            <FooterLink href="/faq" label="FAQ" />
             <FooterLink href="/privacy_policy" label="Privacy Policy" />
             {/* <FooterLink href="/press_kit" label="Press Kit" /> */}
             <FooterLink href="/terms_of_service" label="Terms of Service" />

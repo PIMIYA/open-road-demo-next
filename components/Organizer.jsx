@@ -1,75 +1,63 @@
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import Link from "next/link";
 
 export default function Organizer({ organizer, artists, organizers }) {
-  const first_org = {};
-  const second_org = {};
-  const third_org = {};
-  const org_frontend = organizer ? organizer.split(" x ") : [];
-  // console.log("org_frontend", org_frontend);
-  const org_backend = [...organizers.data, ...artists.data];
-  //   console.log("org_backend", org_backend);
+  if (!organizer) return null;
 
-  if (org_frontend.length === 1) {
-    org_backend.forEach((ob) => {
-      if (org_frontend[0] === ob.name) {
-        first_org.name = ob.name;
-        first_org.wallet = ob.address;
-      }
-    });
-  } else if (org_frontend.length === 2) {
-    org_backend.forEach((ob) => {
-      if (org_frontend[0] === ob.name) {
-        first_org.name = ob.name;
-        first_org.wallet = ob.address;
-      }
-      if (org_frontend[1] === ob.name) {
-        second_org.name = ob.name;
-        second_org.wallet = ob.address;
-      }
-    });
-  } else if (org_frontend.length === 3) {
-    org_backend.forEach((ob) => {
-      if (org_frontend[0] === ob.name) {
-        first_org.name = ob.name;
-        first_org.wallet = ob.address;
-      }
-      if (org_frontend[1] === ob.name) {
-        second_org.name = ob.name;
-        second_org.wallet = ob.address;
-      }
-      if (org_frontend[2] === ob.name) {
-        third_org.name = ob.name;
-        third_org.wallet = ob.address;
-      }
-    });
-  }
-  //   console.log("first_org", first_org);
-  //   console.log("second_org", second_org);
-  //   console.log("third_org", third_org);
+  const names = organizer.split(" x ").map((n) => n.trim()).filter(Boolean);
+  const artistSet = new Set((artists?.data || []).map((a) => a.name));
+  const organizerSet = new Set((organizers?.data || []).map((o) => o.name));
+  const allPeople = [...(organizers?.data || []), ...(artists?.data || [])];
+
+  const resolve = (name) => {
+    const match = allPeople.find((p) => p.name === name);
+    return match ? { name, wallet: match.address } : { name, wallet: null };
+  };
+
+  const grouped = { artist: [], organizer: [] };
+  names.forEach((name) => {
+    const person = resolve(name);
+    if (artistSet.has(name)) {
+      grouped.artist.push(person);
+    } else if (organizerSet.has(name)) {
+      grouped.organizer.push(person);
+    } else {
+      // fallback: treat as artist
+      grouped.artist.push(person);
+    }
+  });
+
+  const renderNames = (people) =>
+    people.map((person, i) => (
+      <span key={person.name}>
+        {i > 0 && ", "}
+        {person.wallet ? (
+          <Link href="/wallet/[address]" as={`/wallet/${person.wallet}`}>
+            <Box component="span">{person.name}</Box>
+          </Link>
+        ) : (
+          <Box component="span">{person.name}</Box>
+        )}
+      </span>
+    ));
 
   return (
     <div>
-      {first_org.name && (
-        <Link href="/wallet/[address]" as={`/wallet/${first_org.wallet}`}>
-          <Box component="span">{first_org.name}</Box>
-        </Link>
+      {grouped.artist.length > 0 && (
+        <Box>
+          <Typography variant="caption" sx={{ opacity: 0.8 }}>
+            藝術家
+          </Typography>
+          <Box sx={{ fontSize: "inherit" }}>{renderNames(grouped.artist)}</Box>
+        </Box>
       )}
-      {second_org.name && (
-        <>
-          <span> x </span>
-          <Link href="/wallet/[address]" as={`/wallet/${second_org.wallet}`}>
-            <Box component="span">{second_org.name}</Box>
-          </Link>
-        </>
-      )}
-      {third_org.name && (
-        <>
-          <span> x </span>
-          <Link href="/wallet/[address]" as={`/wallet/${third_org.wallet}`}>
-            <Box component="span">{third_org.name}</Box>
-          </Link>
-        </>
+      {grouped.organizer.length > 0 && (
+        <Box sx={{ mt: grouped.artist.length > 0 ? 0.5 : 0 }}>
+          <Typography variant="caption" sx={{ opacity: 0.8 }}>
+            主辦方
+          </Typography>
+          <Box sx={{ fontSize: "inherit" }}>{renderNames(grouped.organizer)}</Box>
+        </Box>
       )}
     </div>
   );

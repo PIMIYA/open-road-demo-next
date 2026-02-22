@@ -87,15 +87,6 @@ export default function NavBar() {
       <MenuItem onClick={handleClose}>
         <Link href="/events">Events</Link>
       </MenuItem>
-      <MenuItem onClick={handleClose}>
-        <Link href="/faq">FAQ</Link>
-      </MenuItem>
-      <MenuItem onClick={handleClose}>
-        <Link href="/privacy_policy">Privacy Policy</Link>
-      </MenuItem>
-      <MenuItem onClick={handleClose}>
-        <Link href="/terms_of_service">Terms of Service</Link>
-      </MenuItem>
     </>
   );
 

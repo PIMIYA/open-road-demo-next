@@ -3,7 +3,6 @@ import { useRouter } from "next/router";
 
 import {
   Box,
-  Chip,
   CardMedia,
   Stack,
   Skeleton,
@@ -12,9 +11,8 @@ import {
 import Grid from "@mui/material/Unstable_Grid2";
 
 import Tags from "@/components/Tags";
-import { formatDateRange, getAkaswapAssetUrl } from "@/lib/stringUtils";
+import { getAkaswapAssetUrl } from "@/lib/stringUtils";
 import { getRandomObjectType, getRandomPeriod } from "@/lib/dummy";
-import FadeOnScroll from "./fadeOnScroll";
 
 import Organizer from "@/components/Organizer";
 
@@ -71,7 +69,7 @@ export default function GeneralTokenCardGrid(props) {
 
   return (
     <>
-      <Grid container spacing={4} columns={columnSettings.grid}>
+      <Grid container spacing={12} columns={columnSettings.grid} sx={{ my: '2rem' }}>
         {!data &&
           Array.from(new Array(pageSize)).map((_, index) => (
             <Grid xs={columnSettings.item.xs} key={index}>
@@ -86,18 +84,8 @@ export default function GeneralTokenCardGrid(props) {
             (
               {
                 tokenId,
-                name,
-                creator,
-                tokenImageUrl,
-                tags,
                 contract,
-                objectType,
-                eventDate,
-                eventPlace,
-                start_time,
-                end_time,
                 metadata,
-                poolID,
               },
               index
             ) => (
@@ -114,16 +102,19 @@ export default function GeneralTokenCardGrid(props) {
                   },
                 }}
               >
-                <Box>
+                <Box
+                  sx={{
+                    border: "1px solid rgba(36, 131, 255, 0.3)",
+                    p: 2,
+                  }}
+                >
                   <Link
                     href="/claimsToken/[contract]/[tokenId]"
                     as={`/claimsToken/${contract.address}/${tokenId}`}
                   >
                     <Box
                       sx={{
-                        bgcolor: "white",
                         height: 200,
-                        padding: 3,
                         mb: 1.5,
                       }}
                     >
@@ -142,25 +133,27 @@ export default function GeneralTokenCardGrid(props) {
                   </Link>
 
                   <Box id="primary-info" mb={1}>
-                    <Stack direction="row" spacing={1}>
-                      <Typography
-                        variant="cardTitle"
-                        component="h6"
-                        gutterBottom
-                      >
-                        {metadata.name}
-                      </Typography>
-                      <Chip
-                        label={metadata.category}
-                        size="small"
-                        onClick={() => {
-                          router.push({
-                            pathname: "/events",
-                            query: { cat: metadata.category },
-                          });
-                        }}
-                      />
-                    </Stack>
+                    <Typography
+                      variant="caption"
+                      sx={{ opacity: 0.9 }}
+                      onClick={() => {
+                        router.push({
+                          pathname: "/events",
+                          query: { cat: metadata.category },
+                        });
+                      }}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {metadata.category}
+                    </Typography>
+                    <Typography
+                      variant="cardTitle"
+                      component="h6"
+                      gutterBottom
+                      sx={{ fontWeight: 500 }}
+                    >
+                      {metadata.name}
+                    </Typography>
                     <Box>
                       <Link
                         href="/events/[id]"
@@ -177,19 +170,6 @@ export default function GeneralTokenCardGrid(props) {
                     />
                   </Box>
 
-                  <Box id="secondary-info" mb={2}>
-                    <Typography variant="body2">
-                      {metadata.start_time
-                        ? formatDateRange(
-                            metadata.start_time,
-                            metadata.end_time
-                          )
-                        : eventDate}
-                    </Typography>
-                    <Typography variant="body2">
-                      {metadata.event_location}
-                    </Typography>
-                  </Box>
                   <Stack direction="row" flexWrap="wrap">
                     <Tags tags={metadata.tags} />
                   </Stack>

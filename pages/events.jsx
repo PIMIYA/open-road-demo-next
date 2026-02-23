@@ -8,6 +8,7 @@ import { useRouter } from "next/router";
 import { Box } from "@mui/material";
 /* Fetch data */
 import { FetchDirectusData } from "@/lib/api";
+import { fetchCities, fetchVenues } from "@/lib/map-api";
 /* Components */
 import TwoColumnLayout, {
   Main,
@@ -220,9 +221,29 @@ export default function Events({ events }) {
 export async function getStaticProps() {
   const events = await FetchDirectusData(`/events`);
 
+  // Resolve venue_id → venue_name for display
+  let venueMap = {};
+  try {
+    const cities = await fetchCities();
+    const allVenues = (
+      await Promise.all(cities.map((c) => fetchVenues(c.slug)))
+    ).flat();
+    venueMap = Object.fromEntries(allVenues.map((v) => [v.id, v.name]));
+  } catch (err) {
+    console.error("Failed to fetch venues for events page:", err);
+  }
+
+  const enrichedEvents = {
+    ...events,
+    data: (events?.data || []).map((event) => ({
+      ...event,
+      venue_name: venueMap[event.venue_id] || null,
+    })),
+  };
+
   return {
     props: {
-      events: events,
+      events: enrichedEvents,
     },
     revalidate: 1, // In seconds
   };

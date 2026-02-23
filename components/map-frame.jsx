@@ -21,8 +21,9 @@ import {
  * @param {Object} props.cityMap - { viewBox, mapBounds } from loaded map state
  * @param {Object} props.containerSize - { w, h } in pixels
  * @param {boolean} props.isMobileUI - Whether mobile UI is active
+ * @param {boolean} props.hideScaleBar - Whether to hide the scale bar
  */
-export default function MapFrame({ city, cityMap, containerSize, isMobileUI = false }) {
+export default function MapFrame({ city, cityMap, containerSize, isMobileUI = false, hideScaleBar = false }) {
   // Validate required props
   if (!city?.bbox_wgs84) return null;
   if (!cityMap?.viewBox || !cityMap?.mapBounds) return null;
@@ -82,7 +83,7 @@ export default function MapFrame({ city, cityMap, containerSize, isMobileUI = fa
   const barMeters = niceMeters(targetPx * metersPerPx);
   const barPx = barMeters * t.scale;
   const sbRightOffset = isMobileUI ? 34 : 24;
-  const sbBottomOffset = isMobileUI ? 45 : 22; // Higher on mobile to avoid longitude label overlap
+  const sbBottomOffset = isMobileUI ? 55 : 42; // Raised to avoid overlap with longitude labels
   const sb = { x: pixelW - sbRightOffset - barPx, y: pixelH - sbBottomOffset };
 
   return (
@@ -157,14 +158,16 @@ export default function MapFrame({ city, cityMap, containerSize, isMobileUI = fa
       </g>
 
       {/* Scale bar (bottom-right) */}
-      <g>
-        <line x1={sb.x} y1={sb.y} x2={sb.x + barPx} y2={sb.y} stroke={stroke} strokeWidth={2} opacity="0.95" />
-        <line x1={sb.x} y1={sb.y - 6} x2={sb.x} y2={sb.y + 6} stroke={stroke} strokeWidth={thin} opacity="0.95" />
-        <line x1={sb.x + barPx} y1={sb.y - 6} x2={sb.x + barPx} y2={sb.y + 6} stroke={stroke} strokeWidth={thin} opacity="0.95" />
-        <text x={sb.x + barPx / 2} y={sb.y - 8} textAnchor="middle" fontSize={11} fill={textFill} opacity="0.9">
-          {fmtMeters(barMeters)}
-        </text>
-      </g>
+      {!hideScaleBar && (
+        <g>
+          <line x1={sb.x} y1={sb.y} x2={sb.x + barPx} y2={sb.y} stroke={stroke} strokeWidth={2} opacity="0.95" />
+          <line x1={sb.x} y1={sb.y - 6} x2={sb.x} y2={sb.y + 6} stroke={stroke} strokeWidth={thin} opacity="0.95" />
+          <line x1={sb.x + barPx} y1={sb.y - 6} x2={sb.x + barPx} y2={sb.y + 6} stroke={stroke} strokeWidth={thin} opacity="0.95" />
+          <text x={sb.x + barPx / 2} y={sb.y - 8} textAnchor="middle" fontSize={11} fill={textFill} opacity="0.9">
+            {fmtMeters(barMeters)}
+          </text>
+        </g>
+      )}
     </svg>
   );
 }

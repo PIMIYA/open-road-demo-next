@@ -14,6 +14,7 @@ import SidePaper from "@/components/SidePaper";
 import CustomSelect from "@/components/CustomSelect";
 /* Fetch data */
 import { TZKT_API, GetClaimablePoolID, FetchDirectusData } from "@/lib/api";
+import { fetchCities, fetchVenues } from "@/lib/map-api";
 import { formatDateRange } from "@/lib/stringUtils";
 
 export default function Project({ event, organizers, artists, tokens }) {
@@ -214,7 +215,7 @@ export default function Project({ event, organizers, artists, tokens }) {
               地點
             </Typography>
             <Typography variant="body1" sx={{ mt: 0.5 }}>
-              {event.location}
+              {event.venue_name || "Location TBD"}
             </Typography>
           </Box>
 
@@ -286,6 +287,30 @@ export async function getStaticProps({ params }) {
     await FetchDirectusData(`/events/${params.id}`),
   ]);
 
+  // Resolve venue_id → venue name from map-server
+  // Legacy events have different venue name characters (台 vs 臺), hardcode for TZKT matching
+  const legacyVenueNames = {
+    "gm-kairos": "台北市立美術館",
+    "the-interest-from-the-street-corner": "台北當代藝術館",
+  };
+
+  let venueName = null;
+  if (event.data.venue_id) {
+    try {
+      const cities = await fetchCities();
+      const allVenues = (
+        await Promise.all(cities.map((c) => fetchVenues(c.slug)))
+      ).flat();
+      const venue = allVenues.find((v) => v.id === event.data.venue_id);
+      venueName = venue?.name || null;
+    } catch (err) {
+      console.error("Failed to fetch venue name:", err);
+    }
+  }
+
+  // For old events, use legacy venue name to match TZKT metadata
+  const legacyVenueName = legacyVenueNames[params.id] || null;
+
   // Fetch burned tokens data
   const burnedData = await TZKT_API(
     `/v1/tokens/transfers?to.eq=tz1burnburnburnburnburnburnburjAYjjX&token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
@@ -302,15 +327,31 @@ export async function getStaticProps({ params }) {
     new Date(event.data.start_time).getTime() - 8 * 60 * 60 * 1000
   ).toUTCString();
 
-  const data = await TZKT_API(
-    `/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.ni=${burned_tokenIds}&sort.desc=tokenId&metadata.event_location=${event.data.location}&metadata.start_time=${formattedDate}` // Filter by event location and formatted start_time
-  );
+  // Fetch NFTs with backward compatibility:
+  // - New NFTs: matched by metadata.event_id
+  // - Old NFTs: matched by metadata.event_location (venue name) + start_time
+  const baseQuery = `/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.ni=${burned_tokenIds}&sort.desc=tokenId`;
+
+  const [dataByEventId, dataByLocation] = await Promise.all([
+    TZKT_API(`${baseQuery}&metadata.event_id=${params.id}`),
+    (legacyVenueName || venueName)
+      ? TZKT_API(`${baseQuery}&metadata.event_location=${legacyVenueName || venueName}&metadata.start_time=${formattedDate}`)
+      : Promise.resolve([]),
+  ]);
+
+  // Merge and deduplicate by tokenId (new NFTs take priority)
+  const seen = new Set();
+  const mergedData = [...(dataByEventId || []), ...(dataByLocation || [])].filter((item) => {
+    if (seen.has(item.tokenId)) return false;
+    seen.add(item.tokenId);
+    return true;
+  });
 
   // Check if tokens are claimable and add claimable status and poolID
   const claimableData =
-    data && Array.isArray(data) && data.length > 0
+    mergedData.length > 0
       ? await Promise.all(
-          data.map(async (item) => {
+          mergedData.map(async (item) => {
             const data_from_pool = await GetClaimablePoolID(
               contractAddress,
               targetContractAddress,
@@ -332,7 +373,7 @@ export async function getStaticProps({ params }) {
 
   return {
     props: {
-      event: event.data,
+      event: { ...event.data, venue_name: venueName },
       tokens: claimableData,
       organizers: organizers,
       artists: artists,

@@ -50,7 +50,7 @@ export default function EventCardGrid(props) {
         {data &&
           data.map(
             (
-              { id, name, start_time, end_time, description, location, cover },
+              { id, name, start_time, end_time, description, venue_name, cover },
               index
             ) => (
               <Grid
@@ -99,7 +99,7 @@ export default function EventCardGrid(props) {
                         : "TBD"}
                     </Typography>
                     <Typography variant="body2">
-                      {location || "Location TBD"}
+                      {venue_name || "Location TBD"}
                     </Typography>
                   </Box>
 

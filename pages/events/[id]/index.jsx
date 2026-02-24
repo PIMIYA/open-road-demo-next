@@ -13,7 +13,7 @@ import TwoColumnLayout, {
 import SidePaper from "@/components/SidePaper";
 import CustomSelect from "@/components/CustomSelect";
 /* Fetch data */
-import { TZKT_API, GetClaimablePoolID, FetchDirectusData } from "@/lib/api";
+import { TZKT_API, GetClaimablePoolIDBatch, FetchDirectusData } from "@/lib/api";
 import { fetchCities, fetchVenues } from "@/lib/map-api";
 import { formatDateRange } from "@/lib/stringUtils";
 
@@ -283,17 +283,24 @@ const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 const targetContractAddress = "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW";
 
 export async function getStaticProps({ params }) {
-  const [event] = await Promise.all([
-    await FetchDirectusData(`/events/${params.id}`),
-  ]);
-
-  // Resolve venue_id → venue name from map-server
   // Legacy events have different venue name characters (台 vs 臺), hardcode for TZKT matching
   const legacyVenueNames = {
     "gm-kairos": "台北市立美術館",
     "the-interest-from-the-street-corner": "台北當代藝術館",
   };
+  const legacyVenueName = legacyVenueNames[params.id] || null;
 
+  // --- Parallel group A: all independent fetches ---
+  const [event, burnedData, organizers, artists] = await Promise.all([
+    FetchDirectusData(`/events/${params.id}`),
+    TZKT_API(
+      `/v1/tokens/transfers?to.eq=tz1burnburnburnburnburnburnburjAYjjX&token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
+    ),
+    FetchDirectusData(`/organizers`),
+    FetchDirectusData(`/artists`),
+  ]);
+
+  // --- Sequential B: venue name (needs event.data.venue_id) ---
   let venueName = null;
   if (event.data.venue_id) {
     try {
@@ -308,28 +315,16 @@ export async function getStaticProps({ params }) {
     }
   }
 
-  // For old events, use legacy venue name to match TZKT metadata
-  const legacyVenueName = legacyVenueNames[params.id] || null;
-
-  // Fetch burned tokens data
-  const burnedData = await TZKT_API(
-    `/v1/tokens/transfers?to.eq=tz1burnburnburnburnburnburnburjAYjjX&token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
-  );
-
-  // Extract burned tokenIds and join them into a comma-separated string
+  // --- Sequential C: TZKT NFT queries (needs burned + venue + event) ---
   const burned_tokenIds =
     burnedData && Array.isArray(burnedData)
       ? burnedData.map((item) => item.token.tokenId).join(",")
       : "";
 
-  // formate event.data.start_time to GMT timezone, and subtract 8 hours
   const formattedDate = new Date(
     new Date(event.data.start_time).getTime() - 8 * 60 * 60 * 1000
   ).toUTCString();
 
-  // Fetch NFTs with backward compatibility:
-  // - New NFTs: matched by metadata.event_id
-  // - Old NFTs: matched by metadata.event_location (venue name) + start_time
   const baseQuery = `/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.ni=${burned_tokenIds}&sort.desc=tokenId`;
 
   const [dataByEventId, dataByLocation] = await Promise.all([
@@ -347,29 +342,20 @@ export async function getStaticProps({ params }) {
     return true;
   });
 
-  // Check if tokens are claimable and add claimable status and poolID
-  const claimableData =
-    mergedData.length > 0
-      ? await Promise.all(
-          mergedData.map(async (item) => {
-            const data_from_pool = await GetClaimablePoolID(
-              contractAddress,
-              targetContractAddress,
-              item.tokenId
-            );
-            return {
-              ...item,
-              claimable: !!data_from_pool,
-              poolID: data_from_pool ? data_from_pool[0].key : null,
-            };
-          })
-        )
-      : [];
+  // --- Sequential D: pool batch (needs mergedData) ---
+  const tokenIds = mergedData.map((item) => item.tokenId);
+  const poolMap = tokenIds.length > 0
+    ? await GetClaimablePoolIDBatch(contractAddress, targetContractAddress, tokenIds)
+    : {};
 
-  const [organizers, artists] = await Promise.all([
-    await FetchDirectusData(`/organizers`),
-    await FetchDirectusData(`/artists`),
-  ]);
+  const claimableData = mergedData.map((item) => {
+    const data_from_pool = poolMap[item.tokenId] || null;
+    return {
+      ...item,
+      claimable: !!data_from_pool,
+      poolID: data_from_pool ? data_from_pool[0].key : null,
+    };
+  });
 
   return {
     props: {

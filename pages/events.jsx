@@ -1,6 +1,6 @@
 // all event lists
 
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { useState, useEffect, useRef, useLayoutEffect, useMemo } from "react";
 import { paginateAppend } from "@/lib/paginate";
 /* Routing */
 import { useRouter } from "next/router";
@@ -19,32 +19,32 @@ import SidePaper from "@/components/SidePaper";
 import CustomSelect from "@/components/CustomSelect";
 
 export default function Events({ events }) {
-  // Filter only published events
-  const publishedEvents =
-    events?.data?.filter((event) => event.status === "published") || [];
+  // Filter only published events and add computed status (memoized to avoid infinite re-render)
+  const eventsWithStatus = useMemo(() => {
+    const published =
+      events?.data?.filter((event) => event.status === "published") || [];
 
-  // Function to get event status based on start_time and end_time
-  const getEventStatus = (start_time, end_time) => {
-    const now = new Date();
-    const startDate = start_time ? new Date(start_time) : null;
-    const endDate = end_time ? new Date(end_time) : null;
+    const getEventStatus = (start_time, end_time) => {
+      const now = new Date();
+      const startDate = start_time ? new Date(start_time) : null;
+      const endDate = end_time ? new Date(end_time) : null;
 
-    if (!startDate) return "upcoming";
+      if (!startDate) return "upcoming";
 
-    if (now < startDate) {
-      return "upcoming";
-    } else if (endDate && now > endDate) {
-      return "archived";
-    } else {
-      return "current";
-    }
-  };
+      if (now < startDate) {
+        return "upcoming";
+      } else if (endDate && now > endDate) {
+        return "archived";
+      } else {
+        return "current";
+      }
+    };
 
-  // Add status to each event
-  const eventsWithStatus = publishedEvents.map((event) => ({
-    ...event,
-    status: getEventStatus(event.start_time, event.end_time),
-  }));
+    return published.map((event) => ({
+      ...event,
+      status: getEventStatus(event.start_time, event.end_time),
+    }));
+  }, [events]);
 
   const [statusValue, setStatusValue] = useState("");
   const [sortOrder, setSortOrder] = useState("newest"); // "newest" or "oldest"

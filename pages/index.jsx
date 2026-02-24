@@ -557,14 +557,14 @@ function SpotlightStack({ nfts, anchors, onClose, compact = false }) {
         })}
       </svg>
 
-      {/* Card stack — compact: bottom-right 1/2, default: right 1/3 centered */}
+      {/* Card stack — compact: bottom-right, default: right 1/3 centered */}
       <div
         style={{
           position: "absolute",
-          top: compact ? "66.66%" : 0,
+          top: compact ? "50%" : 0,
           right: 0,
           width: compact ? "60%" : "33.33%",
-          height: compact ? "34%" : "100%",
+          height: compact ? "50%" : "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -1013,9 +1013,21 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
   // Mobile gesture tutorial animation state
   const [isTutorialAnimating, setIsTutorialAnimating] = useState(false);
 
+  // Collapsible filter menu for narrow screens
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+
   const containerRefs = useRef({});
   const canvasRefs = useRef({});
   const [containerSizes, setContainerSizes] = useState({});
+
+  // Pure width-based narrow check (≤600px), independent of device detection
+  const [isNarrowWidth, setIsNarrowWidth] = useState(false);
+  useEffect(() => {
+    const check = () => setIsNarrowWidth(window.innerWidth <= 600);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const isPanningRef = useRef(false);
   const panStartRef = useRef({ x: 0, y: 0 });
@@ -1025,6 +1037,9 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
   // Mobile pan optimization: refs for RAF batching
   const pendingViewBoxRef = useRef(null);
   const rafIdRef = useRef(null);
+
+  // Pinch-to-zoom refs
+  const pinchRef = useRef({ active: false, initialDist: 0, initialVB: null, city: null });
 
   const currentCity = cities[currentCityIndex];
   const currentSlug = currentCity?.slug;
@@ -1054,6 +1069,22 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
       }
     );
   }, [filtersByCity, currentSlug]);
+
+  // Count active filters for badge on collapsed filter button
+  const activeFilterCount = useMemo(() => {
+    if (!currentFilters) return 0;
+    let count = 0;
+    if (currentFilters.tag) count++;
+    if (currentFilters.category) count++;
+    if (currentFilters.creator) count++;
+    if (currentFilters.year) count++;
+    if (currentFilters.month) count++;
+    if (currentFilters.day) count++;
+    if (!currentFilters.activityStatus.past) count++;
+    if (!currentFilters.activityStatus.ongoing) count++;
+    if (!currentFilters.activityStatus.future) count++;
+    return count;
+  }, [currentFilters]);
 
   const setCurrentFilters = (updater) => {
     if (!currentSlug) return;
@@ -1536,6 +1567,138 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
     };
   }, [cities, cityMaps, containerSizes]);
 
+  // Pinch-to-zoom (touch events for multi-touch)
+  useEffect(() => {
+    if (cities.length === 0) return;
+
+    const getTouchDist = (t0, t1) =>
+      Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+
+    const getTouchMid = (t0, t1) => ({
+      x: (t0.clientX + t1.clientX) / 2,
+      y: (t0.clientY + t1.clientY) / 2,
+    });
+
+    const handlers = [];
+
+    for (const city of cities) {
+      const slug = city.slug;
+      const containerEl = containerRefs.current[slug];
+      if (!containerEl) continue;
+
+      const onTouchStart = (e) => {
+        if (e.touches.length === 2) {
+          // Cancel any ongoing single-finger pan
+          isPanningRef.current = false;
+          currentPanningCity.current = null;
+          viewBoxStartRef.current = null;
+
+          const cityMap = cityMaps[slug];
+          if (!cityMap?.viewBox) return;
+
+          pinchRef.current = {
+            active: true,
+            initialDist: getTouchDist(e.touches[0], e.touches[1]),
+            initialVB: { ...cityMap.viewBox },
+            city: slug,
+          };
+        }
+      };
+
+      const onTouchMove = (e) => {
+        if (!pinchRef.current.active || pinchRef.current.city !== slug) return;
+        if (e.touches.length < 2) return;
+
+        e.preventDefault();
+
+        const cityMap = cityMaps[slug];
+        const size = containerSizes[slug];
+        if (!cityMap?.viewBox || !cityMap?.mapBounds || !size?.w || !size?.h) return;
+
+        const currentDist = getTouchDist(e.touches[0], e.touches[1]);
+        const scaleFactor = pinchRef.current.initialDist / currentDist;
+
+        const vb0 = pinchRef.current.initialVB;
+        const newWidth = vb0.width * scaleFactor;
+        const newHeight = vb0.height * scaleFactor;
+
+        const minWidth = cityMap.mapBounds.width * 0.02;
+        const maxWidth = cityMap.mapBounds.width * 100;
+        if (newWidth < minWidth || newWidth > maxWidth) return;
+
+        // Zoom centered on midpoint of two fingers
+        const rect = containerEl.getBoundingClientRect();
+        const mid = getTouchMid(e.touches[0], e.touches[1]);
+        const midX = mid.x - rect.left;
+        const midY = mid.y - rect.top;
+
+        const t = getMeetTransform(size.w, size.h, vb0);
+        const ax = (clamp(midX, t.offsetX, t.offsetX + t.drawW) - t.offsetX) / t.drawW;
+        const ay = (clamp(midY, t.offsetY, t.offsetY + t.drawH) - t.offsetY) / t.drawH;
+
+        const anchorMapX = vb0.x + ax * vb0.width;
+        const anchorMapY = vb0.y + ay * vb0.height;
+
+        const newViewBox = {
+          width: newWidth,
+          height: newHeight,
+          x: anchorMapX - ax * newWidth,
+          y: anchorMapY - ay * newHeight,
+        };
+
+        // Use RAF batching for performance
+        pendingViewBoxRef.current = { slug, viewBox: newViewBox };
+        if (!rafIdRef.current) {
+          rafIdRef.current = requestAnimationFrame(() => {
+            if (!pendingViewBoxRef.current) return;
+            const pend = pendingViewBoxRef.current;
+            setCityMaps((prev) => ({
+              ...prev,
+              [pend.slug]: { ...prev[pend.slug], viewBox: pend.viewBox },
+            }));
+            pendingViewBoxRef.current = null;
+            rafIdRef.current = null;
+          });
+        }
+      };
+
+      const onTouchEnd = (e) => {
+        if (!pinchRef.current.active || pinchRef.current.city !== slug) return;
+        if (e.touches.length < 2) {
+          // Commit any pending viewBox
+          if (rafIdRef.current) {
+            cancelAnimationFrame(rafIdRef.current);
+            rafIdRef.current = null;
+          }
+          if (pendingViewBoxRef.current) {
+            const pend = pendingViewBoxRef.current;
+            setCityMaps((prev) => ({
+              ...prev,
+              [pend.slug]: { ...prev[pend.slug], viewBox: pend.viewBox },
+            }));
+            pendingViewBoxRef.current = null;
+          }
+          pinchRef.current = { active: false, initialDist: 0, initialVB: null, city: null };
+        }
+      };
+
+      containerEl.addEventListener("touchstart", onTouchStart, { passive: true });
+      containerEl.addEventListener("touchmove", onTouchMove, { passive: false });
+      containerEl.addEventListener("touchend", onTouchEnd, { passive: true });
+      containerEl.addEventListener("touchcancel", onTouchEnd, { passive: true });
+      handlers.push({ el: containerEl, onTouchStart, onTouchMove, onTouchEnd });
+    }
+
+    return () => {
+      for (const h of handlers) {
+        h.el.removeEventListener("touchstart", h.onTouchStart);
+        h.el.removeEventListener("touchmove", h.onTouchMove);
+        h.el.removeEventListener("touchend", h.onTouchEnd);
+        h.el.removeEventListener("touchcancel", h.onTouchEnd);
+      }
+    };
+  }, [cities, cityMaps, containerSizes]);
+
   // Pan (window pointermove)
   // On mobile: uses requestAnimationFrame to batch updates for better performance
   // On desktop: updates immediately for responsiveness
@@ -1619,6 +1782,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
   }, [containerSizes, isMobileUI]);
 
   const handlePointerDown = (e, slug) => {
+    if (pinchRef.current.active) return; // Don't start pan during pinch
     const cityMap = cityMaps[slug];
     if (!cityMap?.viewBox) return;
     if (e.button !== 0) return;
@@ -1830,7 +1994,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
 
   return (
     <div
-      style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden', backgroundColor: 'var(--brand-bg)' }}
+      style={{ position: 'relative', width: '100%', height: '100dvh', overflow: 'hidden', backgroundColor: 'var(--brand-bg)' }}
       onClick={() => currentSlug && setOpenBubbleNfts((prev) => ({ ...prev, [currentSlug]: [] }))}
     >
       <MobileGestureTutorial onAnimationStateChange={setIsTutorialAnimating} />
@@ -2126,214 +2290,336 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
         </div>
       )}
 
-      {/* Left-bottom filters: only for current city (because options are derived from current city's filtered NFTs) */}
-      {/* On mobile: only show in Focused Mode (venue or event selected) */}
-      {currentSlug && currentFilters && (!isMobileUI || isMobileFocusedMode) && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: isMobileUI ? 'max(2.5rem, env(safe-area-inset-bottom))' : '2.5rem',
-            left: isMobileUI ? 'max(1.25rem, env(safe-area-inset-left))' : '1.25rem',
-            zIndex: 20,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.75rem',
-          }}
-          onPointerDown={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <CustomSelect
+      {/* Left-bottom filters: only for current city */}
+      {/* On narrow viewports (≤600px): collapsible circular button; on wide: inline */}
+      {currentSlug && currentFilters && (!isNarrowWidth || !!(selectedVenue?.[currentSlug] || selectedEvent?.[currentSlug])) && (
+        isNarrowWidth ? (
+          /* --- Narrow: circular FAB + collapsible panel --- */
+          <div
             style={{
-              background: "transparent",
-              padding: "4px",
-              fontSize: 14,
-              color: "var(--brand-primary)",
-              minWidth: 220,
+              position: 'absolute',
+              bottom: 'max(2.5rem, env(safe-area-inset-bottom))',
+              left: 'max(1.25rem, env(safe-area-inset-left))',
+              zIndex: 20,
             }}
-            value={currentFilters.tag}
-            onChange={(e) => setCurrentFilters((prev) => ({ ...prev, tag: e.target.value }))}
-            forceOpenUpward
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
-            <option value="">Tag</option>
-            {filterOptions.tags.map((tag) => (
-              <option key={tag} value={tag}>
-                {tag}
-              </option>
-            ))}
-          </CustomSelect>
+            {/* Collapsible filter panel */}
+            {filterMenuOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 56,
+                  left: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem',
+                  background: 'rgba(245, 245, 245, 0.92)',
+                  backdropFilter: 'blur(8px)',
+                  borderRadius: 12,
+                  padding: '0.75rem',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+                  minWidth: 200,
+                }}
+              >
+                <CustomSelect
+                  style={{ background: "transparent", padding: "4px", fontSize: 13, color: "var(--brand-primary)", width: "100%" }}
+                  value={currentFilters.tag}
+                  onChange={(e) => setCurrentFilters((prev) => ({ ...prev, tag: e.target.value }))}
+                  forceOpenUpward
+                >
+                  <option value="">Tag</option>
+                  {filterOptions.tags.map((tag) => (
+                    <option key={tag} value={tag}>{tag}</option>
+                  ))}
+                </CustomSelect>
 
-          <CustomSelect
-            style={{
-              background: "transparent",
-              padding: "4px",
-              fontSize: 14,
-              color: "var(--brand-primary)",
-              minWidth: 220,
-            }}
-            value={currentFilters.category}
-            onChange={(e) => setCurrentFilters((prev) => ({ ...prev, category: e.target.value }))}
-            forceOpenUpward
-          >
-            <option value="">Category</option>
-            {filterOptions.categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </CustomSelect>
+                <CustomSelect
+                  style={{ background: "transparent", padding: "4px", fontSize: 13, color: "var(--brand-primary)", width: "100%" }}
+                  value={currentFilters.category}
+                  onChange={(e) => setCurrentFilters((prev) => ({ ...prev, category: e.target.value }))}
+                  forceOpenUpward
+                >
+                  <option value="">Category</option>
+                  {filterOptions.categories.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </CustomSelect>
 
-          <CustomSelect
-            style={{
-              background: "transparent",
-              padding: "4px",
-              fontSize: 14,
-              color: "var(--brand-primary)",
-              minWidth: 220,
-            }}
-            value={currentFilters.creator}
-            onChange={(e) => setCurrentFilters((prev) => ({ ...prev, creator: e.target.value }))}
-            forceOpenUpward
-          >
-            <option value="">Creator</option>
-            {filterOptions.creators.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </CustomSelect>
+                <CustomSelect
+                  style={{ background: "transparent", padding: "4px", fontSize: 13, color: "var(--brand-primary)", width: "100%" }}
+                  value={currentFilters.creator}
+                  onChange={(e) => setCurrentFilters((prev) => ({ ...prev, creator: e.target.value }))}
+                  forceOpenUpward
+                >
+                  <option value="">Creator</option>
+                  {filterOptions.creators.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </CustomSelect>
 
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <CustomSelect
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <CustomSelect
+                    style={{ background: "transparent", padding: "4px", fontSize: 13, color: "var(--brand-primary)", width: "80px" }}
+                    value={currentFilters.year}
+                    onChange={(e) => setCurrentFilters((prev) => ({ ...prev, year: e.target.value, month: "", week: "", day: "" }))}
+                    forceOpenUpward
+                  >
+                    <option value="">Year</option>
+                    {filterOptions.years.map((y) => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </CustomSelect>
+
+                  <CustomSelect
+                    style={{ background: "transparent", padding: "4px", fontSize: 13, color: "var(--brand-primary)", width: "90px" }}
+                    value={currentFilters.month}
+                    onChange={(e) => setCurrentFilters((prev) => ({ ...prev, month: e.target.value, day: "" }))}
+                    forceOpenUpward
+                  >
+                    <option value="">Month</option>
+                    {filterOptions.months.map((m) => {
+                      const label = m.split("-")[1] || m;
+                      return <option key={m} value={m}>{label}</option>;
+                    })}
+                  </CustomSelect>
+
+                  <CustomSelect
+                    style={{ background: "transparent", padding: "4px", fontSize: 13, color: "var(--brand-primary)", width: "80px" }}
+                    value={currentFilters.day}
+                    onChange={(e) => setCurrentFilters((prev) => ({ ...prev, day: e.target.value }))}
+                    forceOpenUpward
+                  >
+                    <option value="">Day</option>
+                    {filterOptions.days.map((d) => {
+                      const label = d.split("-")[2] || d;
+                      return <option key={d} value={d}>{label}</option>;
+                    })}
+                  </CustomSelect>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', color: 'var(--brand-primary)', fontSize: 13 }}>
+                  {[
+                    { key: "past", label: "Past" },
+                    { key: "ongoing", label: "Ongoing" },
+                    { key: "future", label: "Future" },
+                  ].map(({ key, label }) => (
+                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={!!currentFilters.activityStatus[key]}
+                        onChange={(e) =>
+                          setCurrentFilters((prev) => ({
+                            ...prev,
+                            activityStatus: { ...prev.activityStatus, [key]: e.target.checked },
+                          }))
+                        }
+                        style={{ width: 16, height: 16, cursor: "pointer" }}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Circular filter toggle button */}
+            <button
+              onClick={() => setFilterMenuOpen((prev) => !prev)}
               style={{
-                background: "transparent",
-                padding: "4px",
-                fontSize: 14,
-                color: "var(--brand-primary)",
-                width: "90px",
+                position: 'relative',
+                width: 44,
+                height: 44,
+                borderRadius: '50%',
+                background: filterMenuOpen ? 'var(--brand-secondary)' : 'rgba(245, 245, 245, 0.85)',
+                backdropFilter: 'blur(4px)',
+                border: `1.5px solid ${filterMenuOpen ? 'var(--brand-secondary)' : 'var(--brand-primary)'}`,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                padding: 0,
               }}
-              value={currentFilters.year}
-              onChange={(e) =>
-                setCurrentFilters((prev) => ({
-                  ...prev,
-                  year: e.target.value,
-                  month: "",
-                  week: "",
-                  day: "",
-                }))
-              }
+              aria-label="Toggle filters"
+            >
+              {/* Filter funnel icon */}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={filterMenuOpen ? '#fff' : 'var(--brand-primary)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+              </svg>
+              {/* Active filter count badge */}
+              {activeFilterCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -4,
+                    width: 18,
+                    height: 18,
+                    borderRadius: '50%',
+                    background: 'var(--brand-secondary)',
+                    color: '#fff',
+                    fontSize: 10,
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    lineHeight: 1,
+                  }}
+                >
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </div>
+        ) : (
+          /* --- Wide: inline filters (unchanged) --- */
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '2.5rem',
+              left: '1.25rem',
+              zIndex: 20,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem',
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CustomSelect
+              style={{ background: "transparent", padding: "4px", fontSize: 14, color: "var(--brand-primary)", minWidth: 220 }}
+              value={currentFilters.tag}
+              onChange={(e) => setCurrentFilters((prev) => ({ ...prev, tag: e.target.value }))}
               forceOpenUpward
             >
-              <option value="">Year</option>
-              {filterOptions.years.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
+              <option value="">Tag</option>
+              {filterOptions.tags.map((tag) => (
+                <option key={tag} value={tag}>{tag}</option>
               ))}
             </CustomSelect>
 
             <CustomSelect
-              style={{
-                background: "transparent",
-                padding: "4px",
-                fontSize: 14,
-                color: "var(--brand-primary)",
-                width: "110px",
-              }}
-              value={currentFilters.month}
-              onChange={(e) =>
-                setCurrentFilters((prev) => ({
-                  ...prev,
-                  month: e.target.value,
-                  day: "",
-                }))
-              }
+              style={{ background: "transparent", padding: "4px", fontSize: 14, color: "var(--brand-primary)", minWidth: 220 }}
+              value={currentFilters.category}
+              onChange={(e) => setCurrentFilters((prev) => ({ ...prev, category: e.target.value }))}
               forceOpenUpward
             >
-              <option value="">Month</option>
-              {filterOptions.months.map((m) => {
-                const parts = m.split("-");
-                const label = parts[1] || m;
-                return (
-                  <option key={m} value={m}>
-                    {label}
-                  </option>
-                );
-              })}
+              <option value="">Category</option>
+              {filterOptions.categories.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
             </CustomSelect>
 
             <CustomSelect
-              style={{
-                background: "transparent",
-                padding: "4px",
-                fontSize: 14,
-                color: "var(--brand-primary)",
-                width: "90px",
-              }}
-              value={currentFilters.day}
-              onChange={(e) => setCurrentFilters((prev) => ({ ...prev, day: e.target.value }))}
+              style={{ background: "transparent", padding: "4px", fontSize: 14, color: "var(--brand-primary)", minWidth: 220 }}
+              value={currentFilters.creator}
+              onChange={(e) => setCurrentFilters((prev) => ({ ...prev, creator: e.target.value }))}
               forceOpenUpward
             >
-              <option value="">Day</option>
-              {filterOptions.days.map((d) => {
-                const parts = d.split("-");
-                const label = parts[2] || d;
-                return (
-                  <option key={d} value={d}>
-                    {label}
-                  </option>
-                );
-              })}
+              <option value="">Creator</option>
+              {filterOptions.creators.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
             </CustomSelect>
+
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <CustomSelect
+                style={{ background: "transparent", padding: "4px", fontSize: 14, color: "var(--brand-primary)", width: "90px" }}
+                value={currentFilters.year}
+                onChange={(e) => setCurrentFilters((prev) => ({ ...prev, year: e.target.value, month: "", week: "", day: "" }))}
+                forceOpenUpward
+              >
+                <option value="">Year</option>
+                {filterOptions.years.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </CustomSelect>
+
+              <CustomSelect
+                style={{ background: "transparent", padding: "4px", fontSize: 14, color: "var(--brand-primary)", width: "110px" }}
+                value={currentFilters.month}
+                onChange={(e) => setCurrentFilters((prev) => ({ ...prev, month: e.target.value, day: "" }))}
+                forceOpenUpward
+              >
+                <option value="">Month</option>
+                {filterOptions.months.map((m) => {
+                  const parts = m.split("-");
+                  const label = parts[1] || m;
+                  return (
+                    <option key={m} value={m}>{label}</option>
+                  );
+                })}
+              </CustomSelect>
+
+              <CustomSelect
+                style={{ background: "transparent", padding: "4px", fontSize: 14, color: "var(--brand-primary)", width: "90px" }}
+                value={currentFilters.day}
+                onChange={(e) => setCurrentFilters((prev) => ({ ...prev, day: e.target.value }))}
+                forceOpenUpward
+              >
+                <option value="">Day</option>
+                {filterOptions.days.map((d) => {
+                  const parts = d.split("-");
+                  const label = parts[2] || d;
+                  return (
+                    <option key={d} value={d}>{label}</option>
+                  );
+                })}
+              </CustomSelect>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', color: 'var(--brand-primary)' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={!!currentFilters.activityStatus.past}
+                  onChange={(e) =>
+                    setCurrentFilters((prev) => ({
+                      ...prev,
+                      activityStatus: { ...prev.activityStatus, past: e.target.checked },
+                    }))
+                  }
+                  style={{ width: 18, height: 18, cursor: "pointer" }}
+                />
+                Past
+              </label>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={!!currentFilters.activityStatus.ongoing}
+                  onChange={(e) =>
+                    setCurrentFilters((prev) => ({
+                      ...prev,
+                      activityStatus: { ...prev.activityStatus, ongoing: e.target.checked },
+                    }))
+                  }
+                  style={{ width: 18, height: 18, cursor: "pointer" }}
+                />
+                Ongoing
+              </label>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={!!currentFilters.activityStatus.future}
+                  onChange={(e) =>
+                    setCurrentFilters((prev) => ({
+                      ...prev,
+                      activityStatus: { ...prev.activityStatus, future: e.target.checked },
+                    }))
+                  }
+                  style={{ width: 18, height: 18, cursor: "pointer" }}
+                />
+                Future
+              </label>
+            </div>
           </div>
-
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', color: 'var(--brand-primary)' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={!!currentFilters.activityStatus.past}
-                onChange={(e) =>
-                  setCurrentFilters((prev) => ({
-                    ...prev,
-                    activityStatus: { ...prev.activityStatus, past: e.target.checked },
-                  }))
-                }
-                style={{ width: 18, height: 18, cursor: "pointer" }}
-              />
-              Past
-            </label>
-
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={!!currentFilters.activityStatus.ongoing}
-                onChange={(e) =>
-                  setCurrentFilters((prev) => ({
-                    ...prev,
-                    activityStatus: { ...prev.activityStatus, ongoing: e.target.checked },
-                  }))
-                }
-                style={{ width: 18, height: 18, cursor: "pointer" }}
-              />
-              Ongoing
-            </label>
-
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={!!currentFilters.activityStatus.future}
-                onChange={(e) =>
-                  setCurrentFilters((prev) => ({
-                    ...prev,
-                    activityStatus: { ...prev.activityStatus, future: e.target.checked },
-                  }))
-                }
-                style={{ width: 18, height: 18, cursor: "pointer" }}
-              />
-              Future
-            </label>
-          </div>
-        </div>
+        )
       )}
 
       <style jsx global>{`

@@ -17,7 +17,6 @@ async function getDirectusToken(email, password) {
         });
 
         const { access_token } = response.data.data;
-        console.log('Directus token obtained successfully');
         return access_token;
     } catch (error) {
         console.error('Error requesting Directus token:', error.response ? error.response.data : error.message);

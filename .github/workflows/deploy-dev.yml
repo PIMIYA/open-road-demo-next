@@ -25,6 +25,7 @@ jobs:
       SERVER_URL: ${{ secrets.SERVER_URL }}
       DIRECTUS: ${{ secrets.DIRECTUS }}
       COMMENT_URL: ${{ secrets.COMMENT_URL }}
+      NEXT_PUBLIC_MAP_SERVER: ${{ vars.NEXT_PUBLIC_MAP_SERVER }}
 
     steps:
       - name: Checkout code
@@ -93,6 +94,7 @@ jobs:
             echo "SERVER_URL=\"${{ secrets.SERVER_URL }}\"" >> .env
             echo "DIRECTUS=\"${{ secrets.DIRECTUS }}\"" >> .env
             echo "COMMENT_URL=\"${{ secrets.COMMENT_URL }}\"" >> .env
+            echo "NEXT_PUBLIC_MAP_SERVER=\"${{ vars.NEXT_PUBLIC_MAP_SERVER }}\"" >> .env
             echo "PORT=3002" >> .env
 
             # Copy .env to .env.local

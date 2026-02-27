@@ -450,14 +450,19 @@ export async function getStaticProps({ params }) {
   const addressFromURL = await params.address;
 
   /* Check if the address is valid */
-  const res = await fetch(
-    `https://api.tzkt.io/v1/accounts?address=${addressFromURL}`
-  );
-  const address_checker = await res.json();
-  if (address_checker.code == 400) {
-    return {
-      notFound: true,
-    };
+  try {
+    const res = await fetch(
+      `https://api.tzkt.io/v1/accounts?address=${addressFromURL}`
+    );
+    const address_checker = await res.json();
+    if (address_checker.code == 400) {
+      return {
+        notFound: true,
+      };
+    }
+  } catch (error) {
+    console.error("Address validation failed:", error.message);
+    return { notFound: true };
   }
 
   /* Fetch data */
@@ -471,14 +476,14 @@ export async function getStaticProps({ params }) {
     walletData,
     userWalletsData,
   ] = await Promise.all([
-    await WalletRoleAPI(`/${addressFromURL}`),
-    await AkaDropAPI(`/${addressFromURL}/pools?offset=0&limit=0`),
-    await AkaDropAPI(`/${addressFromURL}/claims?offset=0&limit=0`),
-    await FetchDirectusData(`/events`),
-    await FetchDirectusData(`/organizers`),
-    await FetchDirectusData(`/artists`),
-    await FetchDirectusData(`/Wallet?filter[address][_eq]=${addressFromURL}`),
-    await FetchDirectusData(
+    WalletRoleAPI(`/${addressFromURL}`),
+    AkaDropAPI(`/${addressFromURL}/pools?offset=0&limit=0`),
+    AkaDropAPI(`/${addressFromURL}/claims?offset=0&limit=0`),
+    FetchDirectusData(`/events`),
+    FetchDirectusData(`/organizers`),
+    FetchDirectusData(`/artists`),
+    FetchDirectusData(`/Wallet?filter[address][_eq]=${addressFromURL}`),
+    FetchDirectusData(
       `/userWallets?filter[address][_eq]=${addressFromURL}`
     ),
   ]);

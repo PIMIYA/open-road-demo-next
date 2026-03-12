@@ -44,11 +44,7 @@ export default function NFTclaim({ ownersData, data, children }) {
         <Box sx={{ width: "100%", maxWidth: "65ch" }}>
           {/* Claimed progress */}
           <Box sx={{ mb: 4 }}>
-            {collected !== 0 ? (
-              <TokenClaimedProgress collected={collected} total={total} />
-            ) : (
-              <Typography variant="overline">NO OWNER</Typography>
-            )}
+            <TokenClaimedProgress collected={collected} total={total} />
           </Box>
 
           {/* Title */}

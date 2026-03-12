@@ -1,14 +1,24 @@
-import nodemailer from "nodemailer";
+async function sendWithSendGrid({ to, subject, html }) {
+  const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      personalizations: [{ to: [{ email: to }] }],
+      from: { email: process.env.SENDGRID_FROM_EMAIL },
+      subject,
+      content: [{ type: "text/html", value: html }],
+    }),
+  });
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: process.env.SMTP_SECURE === "true",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`SendGrid ${res.status}: ${text}`);
+  }
+  return { messageId: res.headers.get("x-message-id") };
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -22,16 +32,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM,
+    const info = await sendWithSendGrid({
       to: testEmail,
       subject: "NFT Claim Email Test",
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2>Test email sent successfully</h2>
           <p>Time: ${new Date().toLocaleString("zh-TW")}</p>
-          <p>From: ${process.env.SMTP_FROM}</p>
-          <p>Method: Gmail SMTP (nodemailer)</p>
+          <p>From: ${process.env.SENDGRID_FROM_EMAIL}</p>
+          <p>Method: SendGrid HTTP API</p>
         </div>
       `,
     });
@@ -41,9 +50,8 @@ export default async function handler(req, res) {
       message: "Test email sent",
       messageId: info.messageId,
       config: {
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        from: process.env.SMTP_FROM,
+        method: "SendGrid HTTP API",
+        from: process.env.SENDGRID_FROM_EMAIL,
       },
     });
   } catch (error) {
@@ -51,9 +59,8 @@ export default async function handler(req, res) {
       success: false,
       error: error.message,
       config: {
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        from: process.env.SMTP_FROM,
+        method: "SendGrid HTTP API",
+        from: process.env.SENDGRID_FROM_EMAIL,
       },
     });
   }

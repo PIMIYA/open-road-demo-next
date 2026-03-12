@@ -137,6 +137,234 @@ export default function TestEmail() {
           </Typography>
         </Box>
       </Paper>
+
+      {/* Email Content Sample for SendGrid Review */}
+      <Paper
+        variant="outlined"
+        sx={{ mt: 4, overflow: 'hidden', borderRadius: 0 }}
+      >
+        <Box sx={{
+          p: 2,
+          borderBottom: '1px solid #2483ff33',
+        }}>
+          <Typography
+            variant="overline"
+            sx={{ letterSpacing: '0.2em' }}
+          >
+            Email Content Sample — SendGrid Review
+          </Typography>
+        </Box>
+
+        {/* Email Preview */}
+        <Box sx={{ backgroundColor: '#f5f5f5', p: 3 }}>
+          <Box sx={{
+            maxWidth: 600,
+            mx: 'auto',
+            border: '1px solid #2483ff33',
+            borderRadius: 0,
+            overflow: 'hidden',
+            backgroundColor: '#fff',
+          }}>
+            {/* Email Header */}
+            <Box sx={{
+              borderBottom: '1px solid #2483ff33',
+              p: 4,
+              textAlign: 'center',
+            }}>
+              <Typography
+                variant="h3"
+                sx={{
+                  color: '#2483ff',
+                  fontWeight: 400,
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                KAIROS
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: '#999',
+                  mt: 1,
+                  display: 'block',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.2em',
+                }}
+              >
+                Discover the world through digital collectibles
+              </Typography>
+            </Box>
+
+            {/* Email Body */}
+            <Box sx={{ p: 4 }}>
+              <Typography
+                variant="h5"
+                sx={{
+                  mb: 3,
+                  fontWeight: 400,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                Your NFT Has Been Claimed
+              </Typography>
+
+              <Typography variant="body1" sx={{ mb: 2, fontWeight: 300 }}>
+                Hello Explorer,
+              </Typography>
+
+              <Typography variant="body1" sx={{ mb: 3, fontWeight: 300 }}>
+                Congratulations! You have successfully claimed your digital
+                collectible from the <strong>KAIROS Map</strong> collection.
+                Your unique NFT is now safely stored in your wallet.
+              </Typography>
+
+              {/* NFT Card Preview */}
+              <Box sx={{
+                border: '1px solid #2483ff33',
+                borderRadius: 0,
+                p: 3,
+                mb: 3,
+                textAlign: 'center',
+              }}>
+                <Box sx={{
+                  width: 200,
+                  height: 200,
+                  mx: 'auto',
+                  mb: 2,
+                  border: '1px solid #2483ff33',
+                  borderRadius: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Typography variant="caption" sx={{ color: '#D8D4CC' }}>
+                    [NFT IMAGE]
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 400,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  Taipei City Boundary #001
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#999', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                  KAIROS Map Collection
+                </Typography>
+              </Box>
+
+              <Typography variant="body1" sx={{ mb: 3, fontWeight: 300 }}>
+                You can view your NFT anytime in your connected wallet or on the KAIROS platform.
+              </Typography>
+
+              <Box sx={{ textAlign: 'center', mb: 3 }}>
+                <Button
+                  variant="contained"
+                  sx={{
+                    backgroundColor: '#2483ff',
+                    borderRadius: 0,
+                    px: 4,
+                    py: 1,
+                    fontSize: '11px',
+                    fontWeight: 400,
+                    letterSpacing: '0.05em',
+                    textTransform: 'uppercase',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      backgroundColor: '#1a6fd6',
+                      boxShadow: 'none',
+                    },
+                  }}
+                >
+                  View My NFT
+                </Button>
+              </Box>
+
+              <Typography variant="body2" sx={{ color: '#D8D4CC', fontWeight: 300 }}>
+                If you did not request this email, please ignore it or contact our support team.
+              </Typography>
+            </Box>
+
+            {/* Email Footer */}
+            <Box sx={{
+              borderTop: '1px solid #2483ff33',
+              p: 4,
+              textAlign: 'center',
+            }}>
+              <Typography
+                variant="overline"
+                sx={{
+                  display: 'block',
+                  mb: 2,
+                  color: '#2483ff',
+                  letterSpacing: '0.2em',
+                }}
+              >
+                KAIROS
+              </Typography>
+
+              <Typography variant="caption" sx={{ display: 'block', mb: 2, color: '#999', fontWeight: 300 }}>
+                You are receiving this email because you opted in to receive
+                communications from KAIROS when claiming an NFT on our platform.
+              </Typography>
+
+              {/* Required Links */}
+              <Box sx={{ mb: 2 }}>
+
+                <Typography
+                  component="a"
+                  href="#"
+                  variant="caption"
+                  sx={{
+                    color: '#ed5024',
+                    textDecoration: 'underline',
+                    mx: 1,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    fontWeight: 400,
+                  }}
+                >
+                  Privacy Policy
+                </Typography>
+                <Typography component="span" variant="caption" sx={{ color: '#D8D4CC' }}>
+                  |
+                </Typography>
+                <Typography
+                  component="a"
+                  href="#"
+                  variant="caption"
+                  sx={{
+                    color: '#ed5024',
+                    textDecoration: 'underline',
+                    mx: 1,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    fontWeight: 400,
+                  }}
+                >
+                  Manage Preferences
+                </Typography>
+              </Box>
+
+              {/* Physical Mailing Address */}
+              <Typography variant="caption" sx={{ display: 'block', color: '#999', fontWeight: 300, lineHeight: 1.8 }}>
+                KAIROS Ltd.<br />
+                3F., No. 123, Sec. 2, Dunhua S. Rd.,<br />
+                Da&#39;an Dist., Taipei City 106, Taiwan
+              </Typography>
+
+              <Typography variant="caption" sx={{ display: 'block', mt: 2, color: '#D8D4CC', fontWeight: 300 }}>
+                © 2026 KAIROS. All rights reserved.
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Paper>
     </Container>
   );
 }

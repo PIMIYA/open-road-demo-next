@@ -49,21 +49,30 @@ export default function Id({ ownersData, data, data_from_pool, organizers, artis
       return d;
     });
   }
-  /* add projectName to data */
+  /* add projectName and fill missing eventPlace from events */
   if (data && events) {
     data.forEach((item) => {
       const matchingProject = events.data.find(
         (project) =>
           project.status === "published" &&
-          project.location === item.metadata.event_location &&
-          project.start_time &&
-          new Date(
-            new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000
-          ).toUTCString() === item.metadata.start_time
+          (
+            // Match by event_id (id in Directus) first
+            (item.metadata.event_id && project.id === item.metadata.event_id) ||
+            // Fallback: match by location + start_time
+            (project.location === item.metadata.event_location &&
+              project.start_time &&
+              new Date(
+                new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000
+              ).toUTCString() === item.metadata.start_time)
+          )
       );
       if (matchingProject) {
         item.metadata.projectName = matchingProject.name;
         item.metadata.projectId = matchingProject.id;
+        // Fill missing eventPlace from event's venue
+        if (!item.eventPlace && matchingProject.venue_id && venueNameMap?.[matchingProject.venue_id]) {
+          item.eventPlace = venueNameMap[matchingProject.venue_id];
+        }
       }
     });
   }
@@ -126,7 +135,7 @@ export async function getServerSideProps(params) {
   let venueNameMap = {};
   if (data && Array.isArray(data)) {
     const needsVenue = data.some(
-      (d) => !d.metadata?.event_location && d.metadata?.venue_id && d.metadata?.city_slug
+      (d) => !d.metadata?.event_location
     );
     if (needsVenue) {
       try {

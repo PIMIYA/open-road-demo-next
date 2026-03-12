@@ -13,22 +13,15 @@ export default function TokenComments({
   ownerAliases = [],
   comments,
 }) {
-  /* map messsage in comments.data to ownerAddresses */
-  const ownerComments = {};
-  if (comments && Array.isArray(comments.data)) {
-    comments.data.forEach((comment) => {
-      const walletAddress = comment.walletAddress;
-      if (ownerAddresses.includes(walletAddress)) {
-        ownerComments[walletAddress] = comment.message;
-      }
-    });
-  }
-  // console.log("ownerComments", ownerComments);
+  const commentList = comments && Array.isArray(comments.data) ? comments.data : [];
 
   return (
     <Box>
-        {ownerAddresses.map((address, index) =>
-          ownerComments[address] ? (
+        {commentList.map((comment, index) => {
+          const address = comment.walletAddress;
+          const alias = ownerAliases?.[address];
+          const displayName = alias || (address ? truncateAddress(address) : "Anonymous");
+          return (
             <Link
               key={index}
               href={{
@@ -47,25 +40,23 @@ export default function TokenComments({
                 }}
               >
                 <Avatar>
-                  {(
-                    ownerAliases[address] || truncateAddress(address)
-                  ).slice(0, 2)}
+                  {displayName.slice(0, 2)}
                 </Avatar>
                 <Box sx={{ paddingLeft: 2 }}>
                   <Typography noWrap>
-                    {ownerAliases[address] || truncateAddress(address)}
+                    {displayName}
                   </Typography>
                   <Box
                     sx={{ opacity: 0.6 }}
                     dangerouslySetInnerHTML={{
-                      __html: ownerComments[address],
+                      __html: comment.message,
                     }}
                   />
                 </Box>
               </Stack>
             </Link>
-          ) : null
-        )}
+          );
+        })}
     </Box>
   );
 }

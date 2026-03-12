@@ -1,14 +1,26 @@
-import nodemailer from "nodemailer";
+async function sendWithSendGrid({ to, subject, html, text }) {
+  const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      personalizations: [{ to: [{ email: to }] }],
+      from: { email: process.env.SENDGRID_FROM_EMAIL },
+      subject,
+      content: [
+        { type: "text/plain", value: text },
+        { type: "text/html", value: html },
+      ],
+    }),
+  });
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: process.env.SMTP_SECURE === "true",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`SendGrid ${res.status}: ${body}`);
+  }
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -75,13 +87,7 @@ async function processEmailInBackground({
   });
 
   try {
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM,
-      to: email,
-      subject,
-      text,
-      html,
-    });
+    await sendWithSendGrid({ to: email, subject, html, text });
     console.log("Background claim email sent to:", email);
   } catch (error) {
     console.error("Background claim email failed:", error.message);

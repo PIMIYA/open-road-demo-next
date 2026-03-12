@@ -2578,7 +2578,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     onChange={(e) => setCurrentFilters((prev) => ({ ...prev, year: e.target.value, month: "", week: "", day: "" }))}
                     forceOpenUpward
                   >
-                    <option value="">年份</option>
+                    <option value="">年</option>
                     {filterOptions.years.map((y) => (
                       <option key={y} value={y}>{y}</option>
                     ))}
@@ -2590,7 +2590,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     onChange={(e) => setCurrentFilters((prev) => ({ ...prev, month: e.target.value, day: "" }))}
                     forceOpenUpward
                   >
-                    <option value="">月份</option>
+                    <option value="">月</option>
                     {filterOptions.months.map((m) => {
                       return <option key={m} value={m}>{m}</option>;
                     })}
@@ -2602,7 +2602,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     onChange={(e) => setCurrentFilters((prev) => ({ ...prev, day: e.target.value }))}
                     forceOpenUpward
                   >
-                    <option value="">日期</option>
+                    <option value="">日</option>
                     {filterOptions.days.map((d) => {
                       return <option key={d} value={d}>{d}</option>;
                     })}
@@ -2742,7 +2742,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                 onChange={(e) => setCurrentFilters((prev) => ({ ...prev, year: e.target.value, month: "", week: "", day: "" }))}
                 forceOpenUpward
               >
-                <option value="">年份</option>
+                <option value="">年</option>
                 {filterOptions.years.map((y) => (
                   <option key={y} value={y}>{y}</option>
                 ))}
@@ -2754,7 +2754,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                 onChange={(e) => setCurrentFilters((prev) => ({ ...prev, month: e.target.value, day: "" }))}
                 forceOpenUpward
               >
-                <option value="">月份</option>
+                <option value="">月</option>
                 {filterOptions.months.map((m) => {
                   return (
                     <option key={m} value={m}>{m}</option>
@@ -2768,7 +2768,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                 onChange={(e) => setCurrentFilters((prev) => ({ ...prev, day: e.target.value }))}
                 forceOpenUpward
               >
-                <option value="">日期</option>
+                <option value="">日</option>
                 {filterOptions.days.map((d) => {
                   return (
                     <option key={d} value={d}>{d}</option>

@@ -33,6 +33,7 @@ import {
 } from "@/components/mint/const";
 
 import { FetchDirectusData } from "@/lib/api";
+import { MAP_SERVER } from "@/lib/map-api";
 
 const ACCEPT_EXTS =
   ".bmp,.gif,.jpg,.jpeg,.png,.svg,.webp," +
@@ -301,6 +302,72 @@ export default function Mint({ organizers, artists, cities, events }) {
         try {
           const opHash = await callcontract(contractCallDetails);
           console.log("Operation successful with hash:", opHash);
+
+          // Query TzKT for the token_id from the mint operation
+          let tokenId = null;
+          try {
+            // Wait briefly for TzKT indexer to catch up after confirmation
+            await new Promise((r) => setTimeout(r, 3000));
+            const tzktRes = await fetch(
+              `https://api.tzkt.io/v1/tokens/transfers?transactionId.null&sort.desc=id&limit=1&contract=${contractAddress}`
+            );
+            if (!tzktRes.ok) throw new Error(`TzKT ${tzktRes.status}`);
+            // Fallback: query by operation hash
+            const transfersRes = await fetch(
+              `https://api.tzkt.io/v1/operations/${opHash}`
+            );
+            if (transfersRes.ok) {
+              const ops = await transfersRes.json();
+              // Find the internal operation that has a token transfer (diffs with token_id)
+              for (const op of ops) {
+                const diffs = op.diffs || [];
+                for (const diff of diffs) {
+                  if (
+                    diff.content?.key != null &&
+                    diff.path === "token_metadata"
+                  ) {
+                    tokenId = String(diff.content.key);
+                    break;
+                  }
+                }
+                if (tokenId) break;
+              }
+            }
+            console.log("Resolved token_id from TzKT:", tokenId);
+          } catch (tzktErr) {
+            console.warn("Could not resolve token_id from TzKT:", tzktErr);
+          }
+
+          // Sync to kairos-map-server in background
+          const syncPayload = {
+            token_id: tokenId,
+            title: titleRef.current.value || "",
+            description: descriptionRef.current.value || "",
+            event_id: selectedEvent?.id || "",
+            city_slug: selectedCity?.slug || "",
+            venue_id: selectedVenue?.id || "",
+            geoLocation: selectedVenue
+              ? [selectedVenue.lat, selectedVenue.lng]
+              : null,
+            organizer: selectedOrganizer?.name || "",
+            startTime: startTime ? startTime.toISOString() : "",
+            endTime: endTime ? endTime.toISOString() : "",
+            category: selectedCategory?.label || "",
+            tags: (selectedTags || []).map((t) => t.label),
+            creators: [createrAddress, address],
+            thumbnailUri: payload.msg.imageHash
+              ? `ipfs://${payload.msg.imageHash}`
+              : null,
+          };
+
+          fetch(`${MAP_SERVER}/api/nfts-sync`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(syncPayload),
+          })
+            .then((r) => r.json())
+            .then((d) => console.log("Map sync OK:", d))
+            .catch((e) => console.error("Map sync failed:", e));
         } catch (err) {
           console.error("Error calling contract function:", err);
         }

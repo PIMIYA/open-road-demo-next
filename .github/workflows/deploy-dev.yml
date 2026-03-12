@@ -26,7 +26,16 @@ jobs:
       DIRECTUS: ${{ secrets.DIRECTUS }}
       COMMENT_URL: ${{ secrets.COMMENT_URL }}
       NEXT_PUBLIC_MAP_SERVER: ${{ vars.NEXT_PUBLIC_MAP_SERVER }}
-
+      SMTP_HOST: ${{ vars.SMTP_HOST }}
+      SMTP_PORT: ${{ vars.SMTP_PORT }}
+      SMTP_SECURE: ${{ vars.SMTP_SECURE }}
+      SMTP_USER: ${{ vars.SMTP_USER }}
+      SMTP_PASS: ${{ secrets.SMTP_PASS }}
+      SMTP_FROM: ${{ vars.SMTP_FROM }}
+      SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+      SENDGRID_FROM_EMAIL: ${{ vars.SENDGRID_FROM_EMAIL }}
+      NEXT_PUBLIC_BASE_URL: ${{ vars.NEXT_PUBLIC_BASE_URL }}
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

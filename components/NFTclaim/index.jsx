@@ -26,7 +26,6 @@ export default function NFTclaim({ ownersData, data, children }) {
   const mimeType = data.metadata.formats[0].mimeType;
   const src = data.metadata;
   const poolId = data.poolId;
-  const duration = data.duration;
 
   return (
     <Container maxWidth="lg" sx={{ py: 6 }}>
@@ -103,19 +102,7 @@ export default function NFTclaim({ ownersData, data, children }) {
             ))}
           </Box>
 
-          {/* Pool duration info */}
-          {poolId !== null ? (
-            <Box sx={{ border: 1, borderColor: "divider", p: 3, mb: 4 }}>
-              <Stack direction="row" justifyContent="space-between">
-                <Typography variant="caption">
-                  START: {duration.start_time}
-                </Typography>
-                <Typography variant="caption">
-                  END: {duration.end_time}
-                </Typography>
-              </Stack>
-            </Box>
-          ) : (
+          {poolId === null && (
             <Typography variant="caption" color="warning.main" sx={{ mb: 4, display: "block" }}>
               EXPIRED OR NOT ABLE TO CLAIM
             </Typography>

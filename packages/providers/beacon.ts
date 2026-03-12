@@ -193,7 +193,7 @@ export const callContractBeaconFn =
       //   .send({ storageLimit: 350 });
 
       const collectionId = 92340;
-      const editions = 1;
+      const editions = tokenQty;
       const cidBytes = stringToBytes(tokens[0]);
       const recipient = creators[0];
       console.log("=== Contract Call Parameters ===");

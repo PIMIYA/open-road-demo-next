@@ -200,7 +200,19 @@ export default function Project({ event, organizers, artists, tokens }) {
         </SidePaper>
       </Side>
       <Main>
-        <Box sx={{ mb: 6 }}>
+        <Box sx={{ maxWidth: 1200, mx: "auto" }}>
+        {/* Banner 3:1 aspect ratio */}
+        {event.banner_url && (
+          <Box sx={{ width: "100%", mb: 3, paddingTop: "33.33%", position: "relative", overflow: "hidden", borderRadius: "8px" }}>
+            <img
+              src={event.banner_url}
+              alt={event.name || "Event banner"}
+              style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            />
+          </Box>
+        )}
+
+        <Box sx={{ mb: 6, maxWidth: "70ch" }}>
           <Box sx={{ mb: 2 }}>
             <Typography variant="caption" sx={{ opacity: 0.8 }}>
               活動名稱
@@ -262,6 +274,7 @@ export default function Project({ event, organizers, artists, tokens }) {
             {hasMore ? "Loading..." : ""}
           </Box>
         )}
+        </Box>
       </Main>
     </TwoColumnLayout>
   );
@@ -321,6 +334,7 @@ export async function getStaticProps({ params }) {
       ? burnedData.map((item) => item.token.tokenId).join(",")
       : "";
 
+  // 只用於legacy的nft資料，新的nft資料是直接用event_id抓取
   const formattedDate = new Date(
     new Date(event.data.start_time).getTime() - 8 * 60 * 60 * 1000
   ).toUTCString();
@@ -357,9 +371,32 @@ export async function getStaticProps({ params }) {
     };
   });
 
+  // Resolve banner URL
+  const directusBaseUrl = "https://data.kairos-mint.art";
+  let directusToken = "";
+  try {
+    const loginRes = await fetch(`${directusBaseUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: process.env.NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL,
+        password: process.env.NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD,
+      }),
+    });
+    const loginData = await loginRes.json();
+    directusToken = loginData?.data?.access_token || "";
+  } catch (err) {
+    console.error("Failed to get Directus token for banner:", err);
+  }
+
+  const bannerFileId = event.data.banner || null;
+  const banner_url = bannerFileId && directusToken
+    ? `${directusBaseUrl}/assets/${bannerFileId}?access_token=${directusToken}`
+    : null;
+
   return {
     props: {
-      event: { ...event.data, venue_name: venueName },
+      event: { ...event.data, venue_name: venueName, banner_url },
       tokens: claimableData,
       organizers: organizers,
       artists: artists,

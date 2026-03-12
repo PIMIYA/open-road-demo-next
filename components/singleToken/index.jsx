@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   Box,
+  Divider,
   Stack,
   Tabs,
   Tab,
@@ -27,50 +28,40 @@ export default function SingleToken({
   comments,
 }) {
   const total = ownersData?.amount;
-  const collected = ownersData ? Object.keys(ownersData?.owners).length - 2 : 0;
+  const collected = ownersData ? Math.max(0, Object.keys(ownersData?.owners).length - 2) : 0;
   const ownerAddresses = ownersData ? Object.keys(ownersData?.owners) : 0;
 
   const mimeType = data.metadata.formats[0].mimeType;
   const src = data.metadata;
 
-  /* Tab: Description, Collectors, Comments */
   const [tabValue, setTabValue] = useState(0);
 
   return (
     <Box sx={{ px: { xs: 2, md: 3 }, py: 6 }}>
       <Stack direction={{ xs: "column", lg: "row" }} spacing={8}>
         {/* Media */}
-        <Box
-          sx={{
-            width: { xs: "100%", lg: "55%" },
-            flexShrink: 0,
-            height: "auto",
-          }}
-        >
+        <Box sx={{ width: { xs: "100%", lg: "55%" }, flexShrink: 0 }}>
           <RenderMedia mimeType={mimeType} src={src} />
         </Box>
 
         {/* Info */}
         <Box sx={{ width: "100%", maxWidth: "65ch" }}>
-          <Box mb={2} maxWidth={400}>
+          {/* Claimed progress */}
+          <Box sx={{ mb: 4, maxWidth: 400 }}>
             {collected !== 0 ? (
-              <TokenClaimedProgress
-                collected={collected}
-                total={total}
-              />
+              <TokenClaimedProgress collected={collected} total={total} />
             ) : (
-              <Typography variant="h6" component="h1">
-                No Owner
-              </Typography>
+              <Typography variant="overline">NO OWNER</Typography>
             )}
           </Box>
 
-          <Typography variant="h4" component="h1">
+          {/* Title */}
+          <Typography variant="h1" component="h1">
             {data.metadata.name}
           </Typography>
 
           {data.metadata.projectName && (
-            <Typography variant="h6" component="div" mt={1}>
+            <Typography variant="h4" component="div" sx={{ mt: 2 }}>
               <Link
                 href="/events/[id]"
                 as={`/events/${data.metadata.projectId}`}
@@ -80,7 +71,10 @@ export default function SingleToken({
             </Typography>
           )}
 
-          <Box mt={3}>
+          <Divider sx={{ my: 3 }} />
+
+          {/* Organizer */}
+          <Box sx={{ mb: 3 }}>
             <Organizer
               organizer={data.creator}
               artists={artists}
@@ -88,60 +82,65 @@ export default function SingleToken({
             />
           </Box>
 
-          <Box mt={3}>
-            <Typography variant="caption" sx={{ opacity: 0.8 }}>
-              時間
+          {/* Time */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="overline" color="text.secondary">
+              TIME
             </Typography>
             <Typography variant="body2">
               {data.metadata.start_time
-                ? formatDateRange(
-                    data.metadata.start_time,
-                    data.metadata.end_time
-                  )
+                ? formatDateRange(data.metadata.start_time, data.metadata.end_time)
                 : data.eventDate}
             </Typography>
           </Box>
 
-          <Box mt={3}>
-            <Typography variant="caption" sx={{ opacity: 0.8 }}>
-              地點
+          {/* Location */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="overline" color="text.secondary">
+              LOCATION
             </Typography>
-            <Typography>{data.eventPlace}</Typography>
+            <Typography variant="body1">{data.eventPlace}</Typography>
           </Box>
 
+          {/* Format */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="overline" color="text.secondary">
+              FORMAT
+            </Typography>
+            <Typography variant="body2">{mimeType}</Typography>
+          </Box>
+
+          {/* Tags */}
           {data.tags && (
-            <Box mt={3}>
+            <Box sx={{ mb: 3 }}>
               <Tags tags={data.tags} />
             </Box>
           )}
 
+          <Divider sx={{ my: 3 }} />
+
           {/* Tabs: Description / Collectors / Comments */}
-          <Box mt={4}>
+          <Box>
             <Tabs
               value={tabValue}
               onChange={(_, newValue) => setTabValue(newValue)}
               sx={{
-                borderBottom: "1px solid",
+                borderBottom: 1,
                 borderColor: "divider",
                 mb: 3,
-                "& .MuiTabs-flexContainer": {
-                  justifyContent: "flex-start",
-                },
                 "& .MuiTab-root": {
-                  textTransform: "none",
+                  textTransform: "uppercase",
                   fontWeight: 400,
-                  fontSize: "0.875rem",
+                  fontSize: "11px",
+                  letterSpacing: "0.05em",
                   minWidth: "auto",
-                  px: 2,
-                },
-                "& .Mui-selected": {
-                  fontWeight: 500,
+                  px: 3,
                 },
               }}
             >
               <Tab label="Description" />
               <Tab
-                label="Collectors"
+                label={<span>Collectors(<i>{collected}</i>)</span>}
                 disabled={
                   !ownersData ||
                   ownersData.owners === null ||
@@ -149,7 +148,7 @@ export default function SingleToken({
                 }
               />
               <Tab
-                label="Comments"
+                label={<span>Comments(<i>{comments?.data?.length || 0}</i>)</span>}
                 disabled={
                   !comments ||
                   comments.data === null ||
@@ -163,7 +162,7 @@ export default function SingleToken({
               {data.metadata.description
                 .split("\n")
                 .map((paragraph, index) => (
-                  <Typography key={index} paragraph>
+                  <Typography key={index} variant="body1" paragraph>
                     {paragraph}
                   </Typography>
                 ))}

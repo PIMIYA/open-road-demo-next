@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/router";
+import { Box, Container, Typography } from "@mui/material";
 import {
   TZKT_API,
   MainnetAPI,
@@ -203,11 +204,19 @@ export default function NFTPage({ ownersData, data, data_from_pool, nftData, err
   };
 
   if (error) {
-    return <div>{error}</div>;
+    return (
+      <Container maxWidth="sm" sx={{ py: 10, textAlign: "center" }}>
+        <Typography variant="overline" color="error.main">{error}</Typography>
+      </Container>
+    );
   }
 
   if (!nftData) {
-    return <div>Error fetching NFT data.</div>;
+    return (
+      <Container maxWidth="sm" sx={{ py: 10, textAlign: "center" }}>
+        <Typography variant="overline" color="error.main">ERROR FETCHING NFT DATA</Typography>
+      </Container>
+    );
   }
 
   if (data) {
@@ -237,8 +246,14 @@ export default function NFTPage({ ownersData, data, data_from_pool, nftData, err
         data.map((d, index) => (
           <div key={index}>
             <NFTclaim data={d} ownersData={ownersData}>
-              <KukaiEmbedComponent ref={embedRef} onLoginSuccess={handleClaim} />
-              {claimStatus && <div>{claimStatus}</div>}
+              {d.poolId !== null ? (
+                <KukaiEmbedComponent ref={embedRef} onLoginSuccess={handleClaim} />
+              ) : null}
+              {claimStatus && (
+                <Box sx={{ mt: 3, border: 1, borderColor: "divider", p: 3 }}>
+                  <Typography variant="caption">{claimStatus}</Typography>
+                </Box>
+              )}
             </NFTclaim>
           </div>
         ))}

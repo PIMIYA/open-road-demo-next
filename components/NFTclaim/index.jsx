@@ -1,204 +1,134 @@
-import { useTheme } from "@emotion/react";
 import { useRouter } from "next/router";
 
-import Link from "next/link";
-import Image from "next/image";
 import {
   Box,
-  Button,
   Container,
+  Divider,
   Stack,
-  Paper,
   Typography,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
 import Tags from "@/components/Tags";
-import TokenCollectors from "../singleToken/TokenCollectors";
 import TokenClaimedProgress from "../singleToken/TokenClaimedProgress";
 import RenderMedia from "@/components/render-media";
 
-import { formatDateRange, getAkaswapAssetUrl } from "@/lib/stringUtils";
+import { formatDateRange } from "@/lib/stringUtils";
 import { encrypt } from "@/lib/dummy";
-
-/* stack Item setting */
-const Item = styled(Paper)(({ theme }) => ({
-  textAlign: "left",
-  boxShadow: "none",
-}));
 
 export default function NFTclaim({ ownersData, data, children }) {
   const router = useRouter();
-  const theme = useTheme();
-  const tokenImageUrl = getAkaswapAssetUrl(data.metadata.displayUri);
   const total = ownersData.amount;
-  const collected = ownersData ? Object.keys(ownersData.owners).length - 2 : 0;
-  const ownerAddresses = ownersData ? Object.keys(ownersData.owners) : 0;
+  const collected = ownersData ? Math.max(0, Object.keys(ownersData.owners).length - 2) : 0;
 
   const url = `${router.query.contract}/${router.query.tokenId}`;
   const hash = encrypt(url);
-  const showcaseUrl = `/showcase/${hash}`;
-  const isShowcasePageLinkAvailable = true; // TODO: depends on wallet
 
   const mimeType = data.metadata.formats[0].mimeType;
   const src = data.metadata;
   const poolId = data.poolId;
   const duration = data.duration;
-  // console.log(mimeType);
-  // console.log(duration);
 
   return (
-    <>
-      <Box mx={3} borderRadius={2}>
-        <Container maxWidth="lg">
-          <Box py={6}>
-            <Stack
-              direction={{ xs: "column", lg: "row" }}
-              spacing={8}
-              alignItems={{ xs: "center", lg: "flex-start" }}
-            >
-              <Box
-                sx={{
-                  width: { xs: "100%", lg: "50%" },
-                  flexShrink: 0,
-                  height: "auto",
-                }}
-              >
-                <RenderMedia mimeType={mimeType} src={src} />
-              </Box>
-              <Item
-                sx={{
-                  width: "100%",
-                  height: "auto",
-                  maxWidth: "65ch",
-                  background: "transparent",
-                }}
-              >
-                <Box
-                  sx={{
-                    width: "100%",
-                    height: "auto",
-                  }}
-                >
-                  <Box>
-                    <Box mb={2} width="100%">
-                      {collected !== 0 ? (
-                        <TokenClaimedProgress
-                          collected={collected}
-                          total={total}
-                        />
-                      ) : (
-                        <Typography variant="h6" component="h1">
-                          No Owner
-                        </Typography>
-                      )}
-                    </Box>
+    <Container maxWidth="lg" sx={{ py: 6 }}>
+      <Stack
+        direction={{ xs: "column", lg: "row" }}
+        spacing={8}
+        alignItems={{ xs: "center", lg: "flex-start" }}
+      >
+        {/* Media */}
+        <Box sx={{ width: { xs: "100%", lg: "50%" }, flexShrink: 0 }}>
+          <RenderMedia mimeType={mimeType} src={src} />
+        </Box>
 
-                    <Typography variant="h4" component="h1">
-                      {data.metadata.name}
-                    </Typography>
-
-                    <Box mt={3}>
-                      <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                        主辦方
-                      </Typography>
-                      <Typography variant="h6" component="div">
-                        {data.creator}
-                      </Typography>
-                    </Box>
-
-                    <Box mt={3}>
-                      <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                        時間
-                      </Typography>
-                      <Typography variant="body2">
-                        {data.metadata.start_time
-                          ? formatDateRange(
-                              data.metadata.start_time,
-                              data.metadata.end_time
-                            )
-                          : eventDate}
-                      </Typography>
-                    </Box>
-
-                    <Box mt={3}>
-                      <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                        地點
-                      </Typography>
-                      <Typography>{data.eventPlace}</Typography>
-                    </Box>
-
-                    {data.tags && (
-                      <Box mt={3}>
-                        <Tags tags={data.tags} />
-                      </Box>
-                    )}
-
-                    <Box mt={3}>
-                      <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                        活動內容
-                      </Typography>
-                      {data.metadata.description
-                        .split("\n")
-                        .map((paragraph, index) => (
-                          <Typography key={index} paragraph>
-                            {paragraph}
-                          </Typography>
-                        ))}
-                    </Box>
-
-                    {/* add poolID for claim page and event time from akadrop  */}
-                    <Box
-                      sx={{
-                        color: "#000",
-                        padding: "16px",
-                        borderRadius: "8px",
-                        marginBottom: "16px",
-                      }}
-                    >
-                      {poolId !== null ? (
-                        <>
-                          <Typography variant="h6">
-                            {/* Pool ID: {poolId} */}
-                          </Typography>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                            }}
-                          >
-                            <Typography variant="body2">
-                              Start Time: {duration.start_time}
-                            </Typography>
-                            <Typography variant="body2">
-                              End Time: {duration.end_time}
-                            </Typography>
-                          </Box>
-                        </>
-                      ) : (
-                        <Typography variant="body2" color="warning.main">
-                          Expired or not able to claim
-                        </Typography>
-                      )}
-                    </Box>
-                    {children}
-                  </Box>
-                </Box>
-              </Item>
-            </Stack>
+        {/* Info */}
+        <Box sx={{ width: "100%", maxWidth: "65ch" }}>
+          {/* Claimed progress */}
+          <Box sx={{ mb: 4 }}>
+            {collected !== 0 ? (
+              <TokenClaimedProgress collected={collected} total={total} />
+            ) : (
+              <Typography variant="overline">NO OWNER</Typography>
+            )}
           </Box>
-        </Container>
-      </Box>
 
-      {/* {ownerAddresses === 0 ? null : (
-        <TokenCollectors
-          owners={ownersData.owners}
-          ownerAddresses={ownerAddresses}
-          ownerAliases={ownersData.ownerAliases}
-        />
-      )} */}
-    </>
+          {/* Title */}
+          <Typography variant="h1" component="h1" sx={{ mb: 4 }}>
+            {data.metadata.name}
+          </Typography>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Organizer */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="overline" color="text.secondary">
+              ORGANIZER
+            </Typography>
+            <Typography variant="body1">{data.creator}</Typography>
+          </Box>
+
+          {/* Time */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="overline" color="text.secondary">
+              TIME
+            </Typography>
+            <Typography variant="body2">
+              {data.metadata.start_time
+                ? formatDateRange(data.metadata.start_time, data.metadata.end_time)
+                : data.eventDate}
+            </Typography>
+          </Box>
+
+          {/* Location */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="overline" color="text.secondary">
+              LOCATION
+            </Typography>
+            <Typography variant="body1">{data.eventPlace}</Typography>
+          </Box>
+
+          {/* Tags */}
+          {data.tags && (
+            <Box sx={{ mb: 3 }}>
+              <Tags tags={data.tags} />
+            </Box>
+          )}
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Description */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="overline" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+              DESCRIPTION
+            </Typography>
+            {data.metadata.description.split("\n").map((paragraph, index) => (
+              <Typography key={index} variant="body1" paragraph>
+                {paragraph}
+              </Typography>
+            ))}
+          </Box>
+
+          {/* Pool duration info */}
+          {poolId !== null ? (
+            <Box sx={{ border: 1, borderColor: "divider", p: 3, mb: 4 }}>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="caption">
+                  START: {duration.start_time}
+                </Typography>
+                <Typography variant="caption">
+                  END: {duration.end_time}
+                </Typography>
+              </Stack>
+            </Box>
+          ) : (
+            <Typography variant="caption" color="warning.main" sx={{ mb: 4, display: "block" }}>
+              EXPIRED OR NOT ABLE TO CLAIM
+            </Typography>
+          )}
+
+          {/* Claim action (children = KukaiEmbed + status) */}
+          {children}
+        </Box>
+      </Stack>
+    </Container>
   );
 }

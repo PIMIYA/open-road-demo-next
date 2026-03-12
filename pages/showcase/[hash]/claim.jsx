@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import Image from "next/image";
-import { Box, Button, Container, Stack, Typography } from "@mui/material";
+import { Box, Button, Container, Divider, Stack, Typography } from "@mui/material";
 
 import { MainnetURL } from "@/lib/api";
 import { decrypt } from "@/lib/dummy";
@@ -18,7 +18,6 @@ export default function Claim({ apiEndPoint }) {
       try {
         const data = await response.json();
         data.tokenImageUrl = getAkaswapAssetUrl(data.displayUri);
-
         return setData(data);
       } catch (error) {
         return null;
@@ -32,83 +31,78 @@ export default function Claim({ apiEndPoint }) {
 
   function LoginActions() {
     return (
-      <Button variant="contained" onClick={() => setIsLogin(true)}>
-        Google button here
+      <Button variant="contained" size="large" fullWidth onClick={() => setIsLogin(true)}>
+        SIGN IN WITH GOOGLE
       </Button>
     );
   }
 
   function LoggedInActions() {
     return (
-      <Stack
-        direction="row"
-        justifyContent="center"
-        alignItems="center"
-        spacing={5}
-      >
+      <Stack spacing={3} alignItems="center">
         <Button
           variant="contained"
           color="secondary"
+          size="large"
+          fullWidth
           onClick={() => setIsClaimed(true)}
         >
-          Claim NFT
+          CLAIM NFT
         </Button>
-        <a onClick={() => setIsLogin(false)}>
-          Sign out
-        </a>
+        <Button variant="ghost" size="sm" onClick={() => setIsLogin(false)}>
+          SIGN OUT
+        </Button>
       </Stack>
     );
   }
 
   function ClaimedActions() {
     return (
-      <Button
-        variant="contained"
-        color="secondary"
-      >
-        View Wallet
+      <Button variant="outlined" size="large" fullWidth>
+        VIEW WALLET
       </Button>
     );
   }
 
   return (
-    <>
-      <Container maxWidth="lg">
-        <Box my={4} textAlign="center">
-          <Box>
-            <Typography variant="h5" gutterBottom>
-              {data.name}
-            </Typography>
-            <Box>
-              {data.description.split("\n").map((paragraph, index) => (
-                <Typography key={index} variant="body1" paragraph>{paragraph}</Typography>
-              ))}
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              width: { xs: "100%", md: "500px" },
-              height: { xs: "100vw", md: "500px" },
-              margin: "auto",
-              my: 5,
-              position: "relative",
-            }}
-          >
-            <Image
-              priority={true}
-              src={data.tokenImageUrl}
-              fill
-              style={{
-                objectFit: "contain", // cover, contain, none
-                objectPosition: "top",
-              }}
-              alt="Picture of the author"
-            />
-          </Box>
-          {isLogin ? (isClaimed ? <ClaimedActions /> : <LoggedInActions />) : <LoginActions />}
-        </Box>
-      </Container>
-    </>
+    <Container maxWidth="sm" sx={{ py: 8, textAlign: "center" }}>
+      {/* Title & description */}
+      <Typography variant="h2" gutterBottom>
+        {data.name}
+      </Typography>
+      <Divider sx={{ my: 3 }} />
+      {data.description.split("\n").map((paragraph, index) => (
+        <Typography key={index} variant="body1" paragraph>
+          {paragraph}
+        </Typography>
+      ))}
+
+      {/* NFT Image */}
+      <Box
+        sx={{
+          width: { xs: "100%", md: 400 },
+          height: { xs: "100vw", md: 400 },
+          mx: "auto",
+          my: 6,
+          position: "relative",
+          border: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Image
+          priority={true}
+          src={data.tokenImageUrl}
+          fill
+          style={{ objectFit: "contain", objectPosition: "center" }}
+          alt={data.name}
+        />
+      </Box>
+
+      {/* Actions */}
+      <Box sx={{ maxWidth: 320, mx: "auto" }}>
+        {isLogin ? (isClaimed ? <ClaimedActions /> : <LoggedInActions />) : <LoginActions />}
+      </Box>
+    </Container>
   );
 }
 

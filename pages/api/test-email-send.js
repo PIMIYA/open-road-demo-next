@@ -1,3 +1,15 @@
+import nodemailer from "nodemailer";
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: process.env.SMTP_SECURE === "true",
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -9,84 +21,40 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Please provide testEmail" });
   }
 
-  // 立即返回成功響應，不等待寄信完成
-  res.status(200).json({
-    success: true,
-    message: "Test email queued for background processing via HTTP API",
-  });
-
-  // 在背景處理寄信（不阻塞響應）
-  processTestEmailInBackground(testEmail).catch((error) => {
-    console.error("Background test email processing failed:", error);
-  });
-}
-
-async function processTestEmailInBackground(testEmail) {
   try {
-    console.log(
-      "🔄 Processing test email in background via HTTP API for:",
-      testEmail
-    );
-    console.log("=== SendGrid HTTP API Test ===");
-    console.log(
-      "SENDGRID_API_KEY:",
-      process.env.SENDGRID_API_KEY ? "Set" : "NOT SET"
-    );
-    console.log("SENDGRID_FROM_EMAIL:", process.env.SENDGRID_FROM_EMAIL);
-
-    const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        personalizations: [
-          {
-            to: [{ email: testEmail }],
-            subject: "🧪 NFT Claim Email Test (HTTP API)",
-          },
-        ],
-        from: {
-          email: process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM,
-        },
-        content: [
-          {
-            type: "text/html",
-            value: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h2 style="color: #4caf50;">✅ 測試郵件發送成功！</h2>
-              <p>這是一封通過 SendGrid HTTP API 發送的測試郵件。</p>
-              <div style="padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <h3>測試信息：</h3>
-                <p><strong>發送時間：</strong> ${new Date().toLocaleString(
-                  "zh-TW"
-                )}</p>
-                <p><strong>服務提供商：</strong> SendGrid HTTP API</p>
-                <p><strong>發送者：</strong> ${
-                  process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_FROM
-                }</p>
-                <p><strong>發送方式：</strong> 背景處理</p>
-              </div>
-              <p>如果你收到這封郵件，說明寄信功能已經正常工作了！</p>
-            </div>
-          `,
-          },
-        ],
-      }),
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to: testEmail,
+      subject: "NFT Claim Email Test",
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2>Test email sent successfully</h2>
+          <p>Time: ${new Date().toLocaleString("zh-TW")}</p>
+          <p>From: ${process.env.SMTP_FROM}</p>
+          <p>Method: Gmail SMTP (nodemailer)</p>
+        </div>
+      `,
     });
 
-    if (response.ok) {
-      console.log("✅ Background test email sent successfully via HTTP API");
-    } else {
-      const errorText = await response.text();
-      console.error(
-        "❌ Background test email failed via HTTP API:",
-        response.status,
-        errorText
-      );
-    }
+    return res.status(200).json({
+      success: true,
+      message: "Test email sent",
+      messageId: info.messageId,
+      config: {
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        from: process.env.SMTP_FROM,
+      },
+    });
   } catch (error) {
-    console.error("❌ Background test email failed:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+      config: {
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        from: process.env.SMTP_FROM,
+      },
+    });
   }
 }

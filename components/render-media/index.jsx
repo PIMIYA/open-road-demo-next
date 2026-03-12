@@ -1,14 +1,55 @@
 import Image from "next/image";
 import { Box } from "@mui/material";
-import { useEffect } from "react";
-
+import { useEffect, useState } from "react";
 import { getAkaswapAssetUrl } from "@/lib/stringUtils";
-import { HTMLComponent } from "./html/index";
-import { ZipHandler } from "./ZipHandler";
+import dynamic from "next/dynamic";
+import VideoViewer from "./VideoViewer";
+import AudioViewer from "./AudioViewer";
+
+const PDFViewer = dynamic(() => import("./PDFViewer"), { ssr: false });
+
+/**
+ * For x-directory IPFS content, the gateway may show a directory listing
+ * instead of index.html if index.html is nested in a subdirectory.
+ * This hook resolves the actual URL by checking if we need to append
+ * the subdirectory path.
+ */
+function useResolvedXdirUrl(baseUrl, mimeType) {
+  const [resolved, setResolved] = useState(null);
+  useEffect(() => {
+    if (mimeType !== "application/x-directory") {
+      setResolved(baseUrl);
+      return;
+    }
+    const url = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+    // Fetch the root and check if it's a directory listing or actual HTML
+    fetch(url)
+      .then((res) => res.text())
+      .then((html) => {
+        // IPFS directory listings have this specific title pattern
+        if (html.includes('<meta name="description" content="A directory of content-addressed files hosted on IPFS.">')) {
+          // Extract the single subdirectory link
+          const match = html.match(/href="[^"]*\/([^/"]+)"/g);
+          const dirLinks = (match || [])
+            .map((m) => m.match(/href="[^"]*\/([^/"]+)"/)?.[1])
+            .filter((name) => name && !name.includes(".") && !name.startsWith("Qm"));
+          if (dirLinks.length === 1) {
+            setResolved(`${url}${dirLinks[0]}/`);
+            return;
+          }
+        }
+        setResolved(url);
+      })
+      .catch(() => setResolved(url));
+  }, [baseUrl, mimeType]);
+  return resolved;
+}
 
 export default function RenderMedia({ mimeType, src }) {
   const tokenImageUrl = getAkaswapAssetUrl(src.displayUri);
-  const gltfUrl = getAkaswapAssetUrl(src.artifactUri);
+  const artifactUrl = getAkaswapAssetUrl(src.artifactUri);
+  const gltfUrl = artifactUrl;
+  const resolvedXdirUrl = useResolvedXdirUrl(artifactUrl, mimeType);
 
   const boxProps = {
     sx: {
@@ -88,21 +129,8 @@ export default function RenderMedia({ mimeType, src }) {
     case "video/mov":
     case "video/webm":
       return (
-        <Box {...boxProps}>
-          <video
-            controls
-            autoPlay
-            loop
-            muted
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-            }}
-          >
-            <source src={tokenImageUrl} type={mimeType} />
-            Your browser does not support the video tag.
-          </video>
+        <Box sx={{ width: "100%" }}>
+          <VideoViewer src={artifactUrl} mimeType={mimeType} poster={tokenImageUrl} />
         </Box>
       );
 
@@ -112,48 +140,52 @@ export default function RenderMedia({ mimeType, src }) {
     case "audio/ogg":
     case "audio/oga":
       return (
-        <Box {...boxProps}>
-          <audio
-            controls
-            autoPlay
-            loop
-            style={{
-              width: "100%",
-              height: "100%",
-            }}
-          >
-            <source src={tokenImageUrl} type={mimeType} />
-            Your browser does not support the audio tag.
-          </audio>
+        <Box sx={{ width: "100%" }}>
+          <AudioViewer src={artifactUrl} title={src.name || "UNTITLED"} />
         </Box>
       );
 
-    /* HTML ZIP - 使用新的 ZipHandler 來分流 3D 和 HTML */
+    /* HTML x-directory (IPFS can serve index.html or directory listing) */
     case "application/x-directory":
-    case "application/zip":
-    case "application/x-zip-compressed":
-    case "application/multipart/x-zip":
-      return (
-        <ZipHandler
-          src={src.artifactUri}
-          displayUri={src.displayUri}
-          mimeType={mimeType}
-        />
-      );
-
-    /* PDF */
-    case "application/pdf":
+      if (!resolvedXdirUrl) {
+        return (
+          <Box {...boxProps}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+              Loading...
+            </div>
+          </Box>
+        );
+      }
       return (
         <Box {...boxProps}>
           <iframe
-            src={tokenImageUrl}
+            src={resolvedXdirUrl}
             style={{
               width: "100%",
               height: "100%",
               border: "none",
             }}
-            title="PDF Preview"
+            sandbox="allow-scripts allow-same-origin"
+            title="HTML Preview"
           />
+        </Box>
+      );
+
+    /* ZIP archives — IPFS gateway can't extract these, show thumbnail */
+    case "application/zip":
+    case "application/x-zip-compressed":
+    case "application/multipart/x-zip":
+      return (
+        <Box {...boxProps}>
+          <Image {...imageProps} alt="NFT image" />
+        </Box>
+      );
+
+    /* PDF */
+    case "application/pdf":
+      return (
+        <Box sx={{ width: "100%", minHeight: { xs: "100vw", md: "70vh" } }}>
+          <PDFViewer src={artifactUrl} />
         </Box>
       );
 

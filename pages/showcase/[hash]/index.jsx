@@ -2,8 +2,7 @@ import QRCode from 'qrcode'
 import { useEffect, useState } from "react";
 
 import Image from "next/image";
-import { Box, Container, Typography } from "@mui/material";
-import logo from "/public/logo.svg";
+import { Box, Container, Divider, Typography } from "@mui/material";
 
 import { MainnetURL } from "@/lib/api";
 import { decrypt } from "@/lib/dummy";
@@ -56,54 +55,41 @@ export default function ShowCase({ hash, apiEndPoint }) {
   if (!codeImage) return null;
 
   return (
-    <Container
-      maxWidth="md"
-      align="center"
-      sx={{
-        my: 10,
-      }}
-    >
-      <Box sx={{
-        width: 150,
-        mb: 10,
-      }}>
-        <Image
-          src={logo}
-          alt="Kairos"
-          width='150'
-          height='75'
-          style={{
-            width: '100%',
-            height: 'auto',
-          }}
-        />
-      </Box>
-      <Box my={4}>
-        <Typography variant="h5" gutterBottom>
+    <Container maxWidth="sm" sx={{ py: 10, textAlign: "center" }}>
+      <Typography variant="overline" sx={{ mb: 8, display: "block" }}>
+        KAIROS
+      </Typography>
+
+      <Box sx={{ mb: 6 }}>
+        <Typography variant="h2" gutterBottom>
           {data?.name}
         </Typography>
-        <Box>
-          {data?.description.split("\n").map((paragraph, index) => (
-            <Typography key={index} variant="body1" paragraph>{paragraph}</Typography>
-          ))}
+        <Divider sx={{ my: 3 }} />
+        {data?.description.split("\n").map((paragraph, index) => (
+          <Typography key={index} variant="body1" paragraph>
+            {paragraph}
+          </Typography>
+        ))}
+      </Box>
+
+      <Box sx={{ maxWidth: 360, mx: "auto", mb: 6 }}>
+        <Box sx={{ border: 1, borderColor: "divider", p: 2 }}>
+          <Image
+            width={400}
+            height={400}
+            src={codeImage}
+            alt="Scan to claim"
+            style={{ width: '100%', height: 'auto' }}
+          />
         </Box>
+        <Typography variant="caption" sx={{ mt: 2, display: "block", opacity: 0.6 }}>
+          SCAN TO CLAIM
+        </Typography>
       </Box>
-      <Box
-        mb={3}
-        maxWidth={400}
-      >
-        <Image
-          width={400}
-          height={400}
-          src={codeImage} alt="claim"
-          style={{
-            width: '100%',
-            height: 'auto',
-          }}
-        />
-      </Box>
-      <Typography variant="body2">
-        Copyright © 2024 kairos
+
+      <Divider sx={{ mb: 3 }} />
+      <Typography variant="caption" sx={{ opacity: 0.6 }}>
+        KAIROS © 2024
       </Typography>
     </Container>
   )

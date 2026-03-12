@@ -104,7 +104,8 @@ export default function GeneralTokenCardGrid(props) {
               >
                 <Box
                   sx={{
-                    border: "1px solid rgba(36, 131, 255, 0.3)",
+                    border: "1px solid var(--brand-secondary)",
+                    borderRadius: "10px",
                     p: 2,
                   }}
                 >

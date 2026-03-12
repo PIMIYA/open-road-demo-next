@@ -8,7 +8,7 @@ const brandColors = {
   background: '#f5f5f5',
   muted: '#D8D4CC',
   success: '#25e56b',
-  warning: '#ffd447',
+  warning: '#fcaf28',
   error: '#ff0000',
 };
 

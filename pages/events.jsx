@@ -233,11 +233,33 @@ export async function getStaticProps() {
     console.error("Failed to fetch venues for events page:", err);
   }
 
+  const directusBaseUrl = "https://data.kairos-mint.art";
+
+  // Get Directus token once for all cover images
+  let directusToken = "";
+  try {
+    const loginRes = await fetch(`${directusBaseUrl}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: process.env.NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL,
+        password: process.env.NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD,
+      }),
+    });
+    const loginData = await loginRes.json();
+    directusToken = loginData?.data?.access_token || "";
+  } catch (err) {
+    console.error("Failed to get Directus token for covers:", err);
+  }
+
   const enrichedEvents = {
     ...events,
     data: (events?.data || []).map((event) => ({
       ...event,
       venue_name: venueMap[event.venue_id] || null,
+      cover_url: event.cover && directusToken
+        ? `${directusBaseUrl}/assets/${event.cover}?access_token=${directusToken}`
+        : null,
     })),
   };
 

@@ -200,6 +200,7 @@ export default function Mint({ organizers, artists, cities, events }) {
     }
 
     try {
+      setMiningInProgress(true);
       pinningMetadata = true;
       const data = new FormData();
 
@@ -298,7 +299,6 @@ export default function Mint({ organizers, artists, cities, events }) {
         };
 
         try {
-          setMiningInProgress(true);
           const opHash = await callcontract(contractCallDetails);
           console.log("Operation successful with hash:", opHash);
         } catch (err) {

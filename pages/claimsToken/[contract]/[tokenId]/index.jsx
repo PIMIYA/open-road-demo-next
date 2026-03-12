@@ -8,6 +8,7 @@ import {
   GetClaimablePoolID,
   FetchDirectusData,
 } from "@/lib/api";
+import { fetchCities, fetchVenues } from "@/lib/map-api";
 /* Components */
 import SingleToken from "@/components/singleToken";
 /* Routing */
@@ -17,20 +18,19 @@ import {
   getRandomCreator,
   getRandomObjectType,
   getRandomPeriod,
-  getRandomPlace,
 } from "@/lib/dummy";
 
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 
-export default function Id({ ownersData, data, data_from_pool, organizers, artists, events }) {
+export default function Id({ ownersData, data, data_from_pool, organizers, artists, events, venueNameMap }) {
   // console.log("current active claimable token data", data[0].tokenId);
 
   // TODO: remove dummy data after api ready
   if (data) {
     data = data.map((d) => {
       d.eventPlace = d.metadata.event_location
-        ? d.metadata.event_location
-        : getRandomPlace();
+        || (d.metadata.venue_id && venueNameMap?.[d.metadata.venue_id])
+        || "";
       d.creator = d.metadata.organizer
         ? d.metadata.organizer
         : getRandomCreator();
@@ -104,26 +104,46 @@ export default function Id({ ownersData, data, data_from_pool, organizers, artis
 }
 
 export async function getServerSideProps(params) {
-  //   console.log(params.params.id);
   const [ownersData, data, data_from_pool, organizers, artists, events] =
     await Promise.all([
-      await MainnetAPI(
+      MainnetAPI(
         `/fa2tokens/${params.params.contract}/${params.params.tokenId}`
       ),
-      await TZKT_API(
+      TZKT_API(
         `/v1/tokens?contract=${params.params.contract}&tokenId=${params.params.tokenId}`
       ),
-      await GetClaimablePoolID(
+      GetClaimablePoolID(
         contractAddress,
         params.params.contract,
         params.params.tokenId
       ),
-      await FetchDirectusData(`/organizers`),
-      await FetchDirectusData(`/artists`),
-      await FetchDirectusData(`/events`),
+      FetchDirectusData(`/organizers`),
+      FetchDirectusData(`/artists`),
+      FetchDirectusData(`/events`),
     ]);
 
+  // Resolve venue name from venue_id for tokens missing event_location
+  let venueNameMap = {};
+  if (data && Array.isArray(data)) {
+    const needsVenue = data.some(
+      (d) => !d.metadata?.event_location && d.metadata?.venue_id && d.metadata?.city_slug
+    );
+    if (needsVenue) {
+      try {
+        const cities = await fetchCities();
+        const allVenues = (
+          await Promise.all(cities.map((c) => fetchVenues(c.slug)))
+        ).flat();
+        for (const v of allVenues) {
+          venueNameMap[v.id] = v.name;
+        }
+      } catch (err) {
+        console.error("Failed to fetch venues for claimsToken:", err);
+      }
+    }
+  }
+
   return {
-    props: { ownersData, data, data_from_pool, organizers, artists, events },
+    props: { ownersData, data, data_from_pool, organizers, artists, events, venueNameMap },
   };
 }

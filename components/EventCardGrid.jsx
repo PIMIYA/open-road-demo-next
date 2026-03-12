@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 
-import { Box, Stack, Skeleton, Typography } from "@mui/material";
+import { Box, Stack, Skeleton, Typography, CardMedia } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import { formatDateRange } from "@/lib/stringUtils";
 import FadeOnScroll from "./fadeOnScroll";
@@ -50,7 +50,7 @@ export default function EventCardGrid(props) {
         {data &&
           data.map(
             (
-              { id, name, start_time, end_time, description, venue_name, cover },
+              { id, name, start_time, end_time, description, venue_name, cover, cover_url },
               index
             ) => (
               <Grid
@@ -74,7 +74,24 @@ export default function EventCardGrid(props) {
                         mb: 1.5,
                       }}
                     >
-                      <DirectusImage fileId={cover} />
+                      {cover_url ? (
+                        <CardMedia
+                          component="img"
+                          alt={name || "Event cover"}
+                          sx={{
+                            objectFit: "contain",
+                            height: "100%",
+                            width: "100%",
+                            margin: "auto",
+                            opacity: 0,
+                            transition: "opacity 0.4s ease-in",
+                          }}
+                          image={cover_url}
+                          onLoad={(e) => { e.target.style.opacity = 1; }}
+                        />
+                      ) : (
+                        <DirectusImage fileId={cover} />
+                      )}
                     </Box>
                   </Link>
 

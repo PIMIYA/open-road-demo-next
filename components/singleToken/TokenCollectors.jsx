@@ -34,6 +34,7 @@ export default function TokenCollectors({
               paddingY: 1,
               marginBottom: 1,
               borderRadius: 1,
+              breakInside: "avoid",
             }}
           >
             <Avatar>

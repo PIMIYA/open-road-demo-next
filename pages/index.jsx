@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useLayoutEffect, useCallback } from "react";
+import { useRouter } from "next/router";
 import Image from "next/image";
 import MapFrame from "@/components/map-frame";
 import MobileGestureTutorial from "@/components/MobileGestureTutorial";
@@ -7,7 +8,8 @@ import CustomSelect from "@/components/CustomSelect";
 import { FetchDirectusData } from "@/lib/api";
 import { fetchCities as fetchCitiesApi, fetchSpotlightNfts as fetchSpotlightNftsApi } from "@/lib/map-api";
 
-const nftPointRadius = 2.5;
+const nftPointRadius = 20;
+const NFT_CONTRACT = "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW";
 const nftPointColor = { default: "#2483ff", selected: "#ff3300" };
 
 const MAP_SERVER = process.env.NEXT_PUBLIC_MAP_SERVER || "http://localhost:3001";
@@ -15,6 +17,32 @@ const MAP_SERVER = process.env.NEXT_PUBLIC_MAP_SERVER || "http://localhost:3001"
 /**
  * UI callout line geometry
  */
+/**
+ * Build a polyline path from anchor to target with a 45-degree chamfer at the bend.
+ * Goes vertical first, then chamfers into horizontal.
+ */
+function chamferedElbowPoints(anchor, target, chamferSize = 50) {
+  const dx = target.x - anchor.x;
+  const dy = target.y - anchor.y;
+
+  // If nearly aligned on one axis, draw a straight line
+  if (Math.abs(dx) < 5 || Math.abs(dy) < 5) {
+    return `${anchor.x},${anchor.y} ${target.x},${target.y}`;
+  }
+
+  // Clamp chamfer to half the shorter leg
+  const chamfer = Math.min(chamferSize, Math.abs(dx) / 2, Math.abs(dy) / 2);
+  const dirX = Math.sign(dx);
+  const dirY = Math.sign(dy);
+
+  // Vertical segment ends, chamfer begins
+  const bendStartY = target.y - dirY * chamfer;
+  // Chamfer ends, horizontal segment begins
+  const bendEndX = anchor.x + dirX * chamfer;
+
+  return `${anchor.x},${anchor.y} ${anchor.x},${bendStartY} ${bendEndX},${target.y} ${target.x},${target.y}`;
+}
+
 function anchorLineToRect(anchor, rect) {
   const cx = rect.x + rect.w / 2;
   const cy = rect.y + rect.h / 2;
@@ -87,6 +115,16 @@ function getWeekNumber(date) {
   );
 }
 
+function resolveNftThumbnail(nft) {
+  if (nft?.image_thumbnail) return nft.image_thumbnail;
+  if (nft?.thumbnailUri) {
+    const uri = nft.thumbnailUri;
+    if (uri.startsWith("ipfs://")) return `https://ipfs.io/ipfs/${uri.slice(7)}`;
+    return uri;
+  }
+  return null;
+}
+
 function venueKey(v) {
   const id = typeof v?.id === "string" ? v.id.trim() : "";
   if (id) return id;
@@ -107,19 +145,17 @@ function enrichNftWithVenue(nft, venues) {
 
 function formatDateRange(fromString, toString) {
   if (!fromString && !toString) return "";
-  const formatDateTime = (dateString) => {
+  const formatDate = (dateString) => {
     if (!dateString) return "";
-    const date = new Date(dateString);
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    return `${year}/${month}/${day} ${hours}:${minutes}`;
+    const d = new Date(dateString);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
   };
-  const from = formatDateTime(fromString);
-  const to = formatDateTime(toString);
-  const range = from && to ? `${from} - ${to}` : from || to || "";
+  const from = formatDate(fromString);
+  const to = formatDate(toString);
+  const range = from && to ? `${from} ~ ${to}` : from || to || "";
   if (!range) return "";
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
   return `${range} (${tz})`;
@@ -240,6 +276,7 @@ function computeBubblePlacements({ containerW, containerH, anchors, bubbleSizes,
  * NftCallout - renders a single bubble at a computed position
  */
 function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
+  const router = useRouter();
   if (!placement) return null;
 
   const { x, y, w, h } = placement;
@@ -250,11 +287,9 @@ function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
     <>
       <svg style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 30,  }}>
         <circle cx={anchor.x} cy={anchor.y} r={4} fill={"var(--brand-secondary)"} opacity={0.9} />
-        <line
-          x1={anchor.x}
-          y1={anchor.y}
-          x2={lineEnd.x}
-          y2={lineEnd.y}
+        <polyline
+          points={chamferedElbowPoints(anchor, lineEnd)}
+          fill="none"
           stroke={"var(--brand-secondary)"}
           strokeWidth={2}
           opacity={0.9}
@@ -276,22 +311,30 @@ function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
           color: "var(--brand-primary)",
           boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
           pointerEvents: "auto",
+          cursor: nft?.token_id != null ? "pointer" : "default",
         }}
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (nft?.token_id != null) {
+            router.push(`/claimsToken/${NFT_CONTRACT}/${nft.token_id}`);
+          }
+        }}
       >
         {/* NFT Thumbnail */}
-        {nft?.image_thumbnail && (
-          <div style={{ marginBottom: 12, display: "flex", justifyContent: "center" }}>
+        {resolveNftThumbnail(nft) && (
+          <div style={{ marginBottom: 12, display: "flex", justifyContent: "center", maxHeight: 150, overflow: "hidden" }}>
             <Image
-              src={nft.image_thumbnail}
+              src={resolveNftThumbnail(nft)}
               alt={nft?.name || "NFT thumbnail"}
               width={150}
               height={150}
               style={{
-                objectFit: "cover",
+                objectFit: "contain",
                 borderRadius: 8,
+                maxHeight: 150,
+                width: "auto",
               }}
             />
           </div>
@@ -335,21 +378,21 @@ function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {nft?.event_title && (
             <div>
-              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>Event</div>
+              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>活動</div>
               <div style={{ fontSize: 14 }}>{nft.event_title}</div>
             </div>
           )}
 
           {Array.isArray(nft?.creators) && nft.creators.length > 0 && (
             <div>
-              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>Artists</div>
+              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>藝術家</div>
               <div style={{ fontSize: 14 }}>{nft.creators.join(", ")}</div>
             </div>
           )}
 
           {nft?.venue && (
             <div>
-              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>Venue</div>
+              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>場館</div>
               <div style={{ fontSize: 14 }}>{nft.venue}</div>
               {(nft?.start_time || nft?.end_time) && (
                 <div style={{ fontSize: 12, opacity: 0.8, marginTop: 2 }}>
@@ -361,7 +404,7 @@ function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
 
           {nft?.category && (
             <div>
-              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>Category</div>
+              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>類別</div>
               <div style={{ fontSize: 14 }}>{nft.category}</div>
             </div>
           )}
@@ -401,7 +444,7 @@ function BubbleMeasurer({ nft, onMeasure }) {
     if (r.width && r.height) {
       onMeasure(nft.id, { w: Math.round(r.width), h: Math.round(r.height) });
     }
-  }, [nft?.id, nft?.name, nft?.event_title, nft?.venue, nft?.category, nft?.image_thumbnail, onMeasure]);
+  }, [nft?.id, nft?.name, nft?.event_title, nft?.venue, nft?.category, nft?.image_thumbnail, nft?.thumbnailUri, onMeasure]);
 
   return (
     <div
@@ -420,7 +463,7 @@ function BubbleMeasurer({ nft, onMeasure }) {
       }}
     >
       {/* NFT Thumbnail placeholder for measurement */}
-      {nft?.image_thumbnail && (
+      {resolveNftThumbnail(nft) && (
         <div style={{ marginBottom: 12, display: "flex", justifyContent: "center" }}>
           <div style={{ width: 150, height: 150, borderRadius: 8 }} />
         </div>
@@ -434,19 +477,19 @@ function BubbleMeasurer({ nft, onMeasure }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {nft?.event_title && (
           <div>
-            <div style={{ fontSize: 10, marginBottom: 4 }}>Event</div>
+            <div style={{ fontSize: 10, marginBottom: 4 }}>活動</div>
             <div style={{ fontSize: 14 }}>{nft.event_title}</div>
           </div>
         )}
         {Array.isArray(nft?.creators) && nft.creators.length > 0 && (
           <div>
-            <div style={{ fontSize: 10, marginBottom: 4 }}>Artists</div>
+            <div style={{ fontSize: 10, marginBottom: 4 }}>藝術家</div>
             <div style={{ fontSize: 14 }}>{nft.creators.join(", ")}</div>
           </div>
         )}
         {nft?.venue && (
           <div>
-            <div style={{ fontSize: 10, marginBottom: 4 }}>Venue</div>
+            <div style={{ fontSize: 10, marginBottom: 4 }}>場館</div>
             <div style={{ fontSize: 14 }}>{nft.venue}</div>
             {(nft?.start_time || nft?.end_time) && (
               <div style={{ fontSize: 12, marginTop: 2 }}>
@@ -457,7 +500,7 @@ function BubbleMeasurer({ nft, onMeasure }) {
         )}
         {nft?.category && (
           <div>
-            <div style={{ fontSize: 10, marginBottom: 4 }}>Category</div>
+            <div style={{ fontSize: 10, marginBottom: 4 }}>類別</div>
             <div style={{ fontSize: 14 }}>{nft.category}</div>
           </div>
         )}
@@ -476,175 +519,260 @@ function BubbleMeasurer({ nft, onMeasure }) {
 }
 
 /**
- * SpotlightStack - fixed-position stacked cards for initial state (no venue selected).
- * Shows only image_thumbnail + name. Desktop: right 1/3 of screen, vertically centered.
- * Draws SVG leader lines from map anchor points to card edges.
+ * SpotlightStack - unified wheel picker + NFT card.
+ * The selected item's thumbnail appears behind the center selection band.
+ * Users scroll vertically to browse NFTs.
  */
+const PICKER_VISIBLE_ITEMS = 5;
+
 function SpotlightStack({ nfts, anchors, onClose, compact = false }) {
-  const cardRefs = useRef({});
+  const router = useRouter();
+  const widgetRef = useRef(null);
   const svgRef = useRef(null);
-  const [cardRects, setCardRects] = useState({});
+  const pickerRef = useRef(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [widgetRect, setWidgetRect] = useState(null);
+  const [windowH, setWindowH] = useState(typeof window !== "undefined" ? window.innerHeight : 800);
+  const [windowW, setWindowW] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
+  const scrollTimer = useRef(null);
 
-  // Measure card positions relative to the SVG overlay (= parent container)
+  useEffect(() => {
+    const onResize = () => { setWindowH(window.innerHeight); setWindowW(window.innerWidth); };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // Derive item height: 35% on mobile, 50% on desktop
+  const pickerHeight = Math.round(windowH * (compact ? 0.35 : 0.5));
+  const itemHeight = Math.round(pickerHeight / PICKER_VISIBLE_ITEMS);
+
+  // Measure widget position for leader line
   useLayoutEffect(() => {
-    if (!svgRef.current || !nfts || nfts.length === 0) return;
+    if (!svgRef.current || !widgetRef.current) return;
     const svgRect = svgRef.current.getBoundingClientRect();
+    const r = widgetRef.current.getBoundingClientRect();
+    setWidgetRect({
+      x: r.left - svgRect.left,
+      y: r.top - svgRect.top,
+      w: r.width,
+      h: r.height,
+    });
+  }, [nfts, selectedIndex, windowW, windowH]);
 
-    const rects = {};
-    for (const nft of nfts) {
-      const el = cardRefs.current[nft.id];
-      if (!el) continue;
-      const r = el.getBoundingClientRect();
-      rects[nft.id] = {
-        x: r.left - svgRect.left,
-        y: r.top - svgRect.top,
-        w: r.width,
-        h: r.height,
-      };
-    }
-    setCardRects(rects);
-  }, [nfts]);
-
-  // Build anchor lookup
   const anchorMap = useMemo(() => {
     const map = {};
-    for (const a of anchors || []) {
-      map[a.id] = a;
-    }
+    for (const a of anchors || []) map[a.id] = a;
     return map;
   }, [anchors]);
 
+  // Scroll to initial position on mount
+  useEffect(() => {
+    const el = pickerRef.current;
+    if (!el) return;
+    el.scrollTop = selectedIndex * itemHeight;
+  }, []);
+
+  // Debounced scroll handler
+  const handlePickerScroll = useCallback(() => {
+    if (scrollTimer.current) clearTimeout(scrollTimer.current);
+    scrollTimer.current = setTimeout(() => {
+      const el = pickerRef.current;
+      if (el) {
+        const idx = Math.round(el.scrollTop / itemHeight);
+        setSelectedIndex(Math.max(0, Math.min(idx, nfts.length - 1)));
+      }
+    }, 60);
+  }, [nfts.length]);
+
   if (!nfts || nfts.length === 0) return null;
+
+  const nft = nfts[selectedIndex] || nfts[0];
+  const anchor = anchorMap[nft?.id];
+  const pickerPadding = itemHeight * Math.floor(PICKER_VISIBLE_ITEMS / 2);
+  const thumbSrc = resolveNftThumbnail(nft);
+  const widgetWidth = Math.round(windowW * (compact ? 0.9 : 0.3));
 
   return (
     <>
-      {/* Leader lines SVG overlay - covers full parent container */}
+      {/* Leader line SVG overlay */}
       <svg
         ref={svgRef}
-        id="spotlight-leader-lines"
         style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 30, width: "100%", height: "100%" }}
       >
-        {nfts.map((nft) => {
-          const anchor = anchorMap[nft.id];
-          const rect = cardRects[nft.id];
-          if (!anchor || !rect) return null;
-
-          // Right-angle elbow: vertical from anchor to card mid-height, then horizontal to card left edge
-          const cardMidY = rect.y + rect.h / 2;
-          const cardLeftX = rect.x;
-          const points = `${anchor.x},${anchor.y} ${anchor.x},${cardMidY} ${cardLeftX},${cardMidY}`;
-
-          return (
-            <g key={nft.id} id={`leader-group-${nft.id.slice(0, 8)}`}>
-              <circle
-                id={`leader-dot-${nft.id.slice(0, 8)}`}
-                cx={anchor.x}
-                cy={anchor.y}
-                r={3}
-                fill="var(--brand-secondary)"
-                opacity={0.7}
-              />
-              <polyline
-                id={`leader-line-${nft.id.slice(0, 8)}`}
-                points={points}
-                fill="none"
-                stroke="var(--brand-secondary)"
-                strokeWidth={1}
-                opacity={0.7}
-              />
-            </g>
-          );
-        })}
+        {anchor && widgetRect && (
+          <g>
+            <circle cx={anchor.x} cy={anchor.y} r={3} fill="var(--brand-secondary)" opacity={0.7} />
+            <polyline
+              points={chamferedElbowPoints(anchor, compact ? { x: widgetRect.x + widgetRect.w / 2, y: widgetRect.y - 3 } : { x: widgetRect.x, y: widgetRect.y + widgetRect.h / 2 })}
+              fill="none"
+              stroke="var(--brand-secondary)"
+              strokeWidth={1}
+              opacity={0.7}
+            />
+          </g>
+        )}
       </svg>
 
-      {/* Card stack — compact: bottom-right, default: right 1/3 centered */}
+      {/* Wheel widget container */}
       <div
         style={{
           position: "absolute",
           top: compact ? "50%" : 0,
-          right: 0,
-          width: compact ? "60%" : "33.33%",
+          right: compact ? 0 : 48,
+          width: compact ? "100%" : "33.33%",
           height: compact ? "50%" : "100%",
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
-          justifyContent: compact ? "flex-start" : "center",
-          gap: 10,
+          justifyContent: "center",
           zIndex: 40,
           pointerEvents: "none",
-          overflowY: "auto",
-          padding: compact ? "0.5rem 0" : "1rem 0",
         }}
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
-        {nfts.map((nft) => (
+        <div
+          ref={widgetRef}
+          style={{
+            position: "relative",
+            width: widgetWidth,
+            height: pickerHeight,
+            pointerEvents: "auto",
+            overflow: "hidden",
+            background: "rgba(255, 255, 255, 0.15)",
+            backdropFilter: "blur(2px)",
+            border: "1px solid var(--brand-secondary)",
+            borderRadius: 12,
+            boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
+          }}
+        >
+          {/* Selection highlight band with thumbnail on the right */}
           <div
-            key={nft.id}
-            ref={(el) => (cardRefs.current[nft.id] = el)}
             style={{
-              position: "relative",
-              width: compact ? 160 : 200,
-              flexShrink: 0,
-              background: "rgba(255, 255, 255, 0.3)",
-              backdropFilter: "blur(2px)",
-              border: "1px solid var(--brand-secondary)",
-              borderRadius: 10,
-              padding: compact ? 10 : 14,
-              color: "var(--brand-primary)",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
-              pointerEvents: "auto",
+              position: "absolute",
+              top: "50%",
+              left: 0,
+              right: 0,
+              height: itemHeight,
+              transform: "translateY(-50%)",
+              borderTop: "1px solid var(--brand-secondary)",
+              borderBottom: "1px solid var(--brand-secondary)",
+              background: "rgba(255, 0, 0, 0.15)",
+              pointerEvents: "none",
+              zIndex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
             }}
           >
-            <button
-              onClick={() => onClose(nft.id)}
-              style={{
-                position: "absolute",
-                top: 6,
-                right: 6,
-                background: "transparent",
-                border: "none",
-                fontSize: 18,
-                cursor: "pointer",
-                color: "var(--brand-secondary)",
-                padding: 0,
-                lineHeight: 1,
-                width: 20,
-                height: 20,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-              aria-label="close"
-            >
-              ×
-            </button>
-            {nft?.image_thumbnail && (
-              <div style={{ marginBottom: 8, display: "flex", justifyContent: "center" }}>
+            {thumbSrc && (() => {
+              const imgSize = compact ? Math.round(windowW * 0.3) : itemHeight - 8;
+              return (
                 <Image
-                  src={nft.image_thumbnail}
-                  alt={nft?.name || "NFT"}
-                  width={150}
-                  height={150}
-                  style={{ objectFit: "contain", width: "100%", height: "auto", borderRadius: 8 }}
+                  src={thumbSrc}
+                  alt=""
+                  width={imgSize}
+                  height={imgSize}
+                  style={{ objectFit: "contain", borderRadius: 6, opacity: 0.8, marginRight: 8 }}
                 />
-              </div>
-            )}
-            <h3
-              style={{
-                margin: 0,
-                fontSize: 14,
-                fontWeight: "bold",
-                color: "var(--brand-secondary)",
-                lineHeight: 1.3,
-                textAlign: "center",
-              }}
-            >
-              {nft?.name}
-            </h3>
+              );
+            })()}
           </div>
-        ))}
+
+          {/* Fade masks */}
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: pickerHeight * 0.3, background: "linear-gradient(to bottom, rgba(255,255,255,0.85), transparent)", pointerEvents: "none", zIndex: 2 }} />
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: pickerHeight * 0.3, background: "linear-gradient(to top, rgba(255,255,255,0.85), transparent)", pointerEvents: "none", zIndex: 2 }} />
+
+          {/* 近期活動 label top-left */}
+          <div
+            style={{
+              position: "absolute",
+              top: 6,
+              left: 10,
+              fontSize: 11,
+              color: "var(--brand-secondary)",
+              pointerEvents: "none",
+              zIndex: 3,
+              fontWeight: "bold",
+            }}
+          >
+            近期活動
+          </div>
+
+          {/* Scroll hint at bottom-right */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: 6,
+              right: 10,
+              fontSize: 10,
+              color: "var(--brand-secondary)",
+              pointerEvents: "none",
+              zIndex: 3,
+            }}
+          >
+            向下捲動
+          </div>
+
+          {/* Scrollable list */}
+          <div
+            ref={pickerRef}
+            onScroll={handlePickerScroll}
+            style={{
+              position: "relative",
+              height: "100%",
+              overflowY: "auto",
+              scrollSnapType: "y mandatory",
+              WebkitOverflowScrolling: "touch",
+              msOverflowStyle: "none",
+              scrollbarWidth: "none",
+              zIndex: 1,
+            }}
+          >
+            <div style={{ height: pickerPadding }} />
+            {nfts.map((n, idx) => {
+              const isActive = idx === selectedIndex;
+              return (
+                <div
+                  key={n.id}
+                  onClick={() => {
+                    if (isActive && n.token_id != null) {
+                      router.push(`/claimsToken/${NFT_CONTRACT}/${n.token_id}`);
+                    } else {
+                      setSelectedIndex(idx);
+                      if (pickerRef.current) {
+                        pickerRef.current.scrollTo({ top: idx * itemHeight, behavior: "smooth" });
+                      }
+                    }
+                  }}
+                  style={{
+                    height: itemHeight,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "flex-start",
+                    scrollSnapAlign: "center",
+                    cursor: "pointer",
+                    fontSize: isActive ? 14 : 12,
+                    fontWeight: isActive ? "bold" : "normal",
+                    color: isActive ? "var(--brand-secondary)" : "var(--brand-primary)",
+                    opacity: isActive ? 1 : 0.45,
+                    transition: "all 0.15s ease",
+                    padding: "0 12px",
+                    textAlign: "left",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    textDecoration: isActive && n.token_id != null ? "underline" : "none",
+                    textShadow: isActive ? "0 0 8px rgba(237, 80, 36, 0.8), 0 0 20px rgba(237, 80, 36, 0.8)" : "none",
+                  }}
+                >
+                  {n.name}
+                </div>
+              );
+            })}
+            <div style={{ height: pickerPadding }} />
+          </div>
+        </div>
       </div>
     </>
   );
@@ -656,12 +784,51 @@ function SpotlightStack({ nfts, anchors, onClose, compact = false }) {
  * Positioned on the right 1/3 of the screen, vertically centered.
  */
 function VenueNftCarousel({ nfts, onClose, compact = false }) {
+  const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const touchRef = useRef({ startX: 0, startY: 0, swiping: false });
+  const modalRef = useRef(null);
 
   // Reset index when nfts change (e.g., different venue selected)
   useEffect(() => {
     setCurrentIndex(0);
   }, [nfts]);
+
+  const handleTouchStart = useCallback((e) => {
+    const touch = e.touches[0];
+    touchRef.current = { startX: touch.clientX, startY: touch.clientY, swiping: false };
+  }, []);
+
+  const handleTouchMove = useCallback((e) => {
+    const dx = e.touches[0].clientX - touchRef.current.startX;
+    const dy = e.touches[0].clientY - touchRef.current.startY;
+    // If horizontal movement is dominant, mark as swiping and prevent scroll
+    if (!touchRef.current.swiping && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      touchRef.current.swiping = true;
+    }
+    if (touchRef.current.swiping) {
+      e.preventDefault();
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback((e) => {
+    if (!touchRef.current.swiping) return;
+    const dx = e.changedTouches[0].clientX - touchRef.current.startX;
+    const threshold = 40;
+    if (dx < -threshold) {
+      setCurrentIndex((i) => (i + 1) % nfts.length);
+    } else if (dx > threshold) {
+      setCurrentIndex((i) => (i - 1 + nfts.length) % nfts.length);
+    }
+  }, [nfts.length]);
+
+  // Attach touchmove with { passive: false } so preventDefault works
+  useEffect(() => {
+    const el = modalRef.current;
+    if (!el) return;
+    el.addEventListener("touchmove", handleTouchMove, { passive: false });
+    return () => el.removeEventListener("touchmove", handleTouchMove);
+  }, [handleTouchMove]);
 
   if (!nfts || nfts.length === 0) return null;
 
@@ -689,12 +856,15 @@ function VenueNftCarousel({ nfts, onClose, compact = false }) {
       onClick={(e) => e.stopPropagation()}
     >
       <div
+        ref={modalRef}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         style={{
           position: "relative",
           width: 280,
           maxHeight: "80vh",
           overflowY: "auto",
-          background: "rgba(255, 255, 255, 0.3)",
+          background: "rgba(255, 255, 255, 0.85)",
           backdropFilter: "blur(2px)",
           border: "1px solid var(--brand-secondary)",
           borderRadius: 10,
@@ -731,14 +901,14 @@ function VenueNftCarousel({ nfts, onClose, compact = false }) {
         </button>
 
         {/* Thumbnail */}
-        {nft?.image_thumbnail && (
-          <div style={{ marginBottom: 8, display: "flex", justifyContent: "center" }}>
+        {resolveNftThumbnail(nft) && (
+          <div style={{ marginBottom: 8, display: "flex", justifyContent: "center", maxHeight: 150, overflow: "hidden" }}>
             <Image
-              src={nft.image_thumbnail}
+              src={resolveNftThumbnail(nft)}
               alt={nft?.name || "NFT"}
               width={150}
               height={150}
-              style={{ objectFit: "contain", width: "100%", height: "auto", borderRadius: 8 }}
+              style={{ objectFit: "contain", width: "100%", maxHeight: 150, borderRadius: 8 }}
             />
           </div>
         )}
@@ -750,7 +920,7 @@ function VenueNftCarousel({ nfts, onClose, compact = false }) {
             fontSize: 16,
             fontWeight: "bold",
             color: "var(--brand-secondary)",
-            lineHeight: 1.3,
+            lineHeight: 1.6,
           }}
         >
           {nft?.name}
@@ -759,44 +929,47 @@ function VenueNftCarousel({ nfts, onClose, compact = false }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {/* Date range */}
           {(nft?.start_time || nft?.end_time) && (
-            <div style={{ fontSize: 12, lineHeight: 1.3 }}>{formatDateRange(nft.start_time, nft.end_time)}</div>
+            <div style={{ fontSize: 12, lineHeight: 1.6 }}>{formatDateRange(nft.start_time, nft.end_time)}</div>
           )}
 
           {/* Creators */}
           {Array.isArray(nft?.creators) && nft.creators.length > 0 && (
-            <div style={{ fontSize: 12, lineHeight: 1.3 }}>
-              <span style={{ color: "var(--brand-secondary)", marginRight: 6 }}>Artists</span>
+            <div style={{ fontSize: 12, lineHeight: 1.6 }}>
+              <span style={{ color: "var(--brand-secondary)", marginRight: 6 }}>藝術家</span>
               {nft.creators.join(", ")}
             </div>
           )}
 
           {/* Venue */}
           {nft?.venue && (
-            <div style={{ fontSize: 12, lineHeight: 1.3 }}>
-              <span style={{ color: "var(--brand-secondary)", marginRight: 6 }}>Venue</span>
+            <div style={{ fontSize: 12, lineHeight: 1.6 }}>
+              <span style={{ color: "var(--brand-secondary)", marginRight: 6 }}>場館</span>
               {nft.venue}
             </div>
           )}
 
           {/* Category */}
           {nft?.category && (
-            <div style={{ fontSize: 12, lineHeight: 1.3 }}>
-              <span style={{ color: "var(--brand-secondary)", marginRight: 6 }}>Category</span>
+            <div style={{ fontSize: 12, lineHeight: 1.6 }}>
+              <span style={{ color: "var(--brand-secondary)", marginRight: 6 }}>類別</span>
               {nft.category}
             </div>
           )}
 
           {/* Tags */}
           {Array.isArray(nft?.tags) && nft.tags.length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 2 }}>
               {nft.tags.map((tag, idx) => (
                 <span
                   key={idx}
                   style={{
-                    background: "rgba(36, 131, 255, 0.2)",
-                    padding: "2px 6px",
-                    borderRadius: 6,
+                    background: "transparent",
+                    border: "1px solid var(--brand-primary)",
+                    padding: "2px 8px",
+                    borderRadius: 2,
                     fontSize: 10,
+                    lineHeight: 1.6,
+                    color: "var(--brand-primary)",
                   }}
                 >
                   {tag}
@@ -805,6 +978,26 @@ function VenueNftCarousel({ nfts, onClose, compact = false }) {
             </div>
           )}
         </div>
+
+        {/* Read more link */}
+        {nft?.token_id != null && (
+          <button
+            onClick={() => router.push(`/claimsToken/${NFT_CONTRACT}/${nft.token_id}`)}
+            style={{
+              display: "block",
+              marginTop: 8,
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              fontSize: 12,
+              color: "var(--brand-secondary)",
+              cursor: "pointer",
+              marginLeft: "auto",
+            }}
+          >
+            [ 閱讀更多 ]
+          </button>
+        )}
 
         {/* Carousel navigation */}
         {nfts.length > 1 && (
@@ -939,28 +1132,8 @@ function BubbleLayoutManager({ containerW, containerH, nfts, anchors, onClose })
  *   step 3 → [E.2, A.3, B.3]
  *   step 4 → [C.3, D.3, E.3]
  */
-const getRotationBatch = (nfts, step, batchSize = 3) => {
-  const byVenue = new Map();
-  for (const n of nfts) {
-    if (!byVenue.has(n.venue_id)) byVenue.set(n.venue_id, []);
-    byVenue.get(n.venue_id).push(n);
-  }
-  const venues = [...byVenue.values()];
-  if (venues.length === 0) return [];
-  const numVenues = venues.length;
-  const startPos = step * batchSize;
-  const batch = [];
-  for (let i = 0; i < batchSize; i++) {
-    const pos = startPos + i;
-    const venueIdx = pos % numVenues;
-    const round = Math.floor(pos / numVenues);
-    const venue = venues[venueIdx];
-    batch.push(venue[round % venue.length]);
-  }
-  return batch;
-};
-
 function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = {} }) {
+  const router = useRouter();
   const { isMobileUI, isSmallViewport } = useUIEnvironment();
 
   // Build wallet address → artist name lookup from Directus artists
@@ -1000,12 +1173,11 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
   const [selectedEvent, setSelectedEvent] = useState({});
   const [filtersByCity, setFiltersByCity] = useState({});
 
-  // Multiple open bubbles per city: { [citySlug]: nft[] }
-  // Initialize with first batch (up to 3) from SSR spotlight data
+  // All spotlight NFTs per city: { [citySlug]: nft[] }
   const [openBubbleNfts, setOpenBubbleNfts] = useState(() => {
     const initial = {};
     for (const [slug, nfts] of Object.entries(spotlightByCity)) {
-      initial[slug] = getRotationBatch(nfts, 0);
+      initial[slug] = nfts;
     }
     return initial;
   });
@@ -1373,23 +1545,16 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
     };
   }, [cities, currentCityIndex, cityMaps]);
 
-  // Spotlight rotation: round-robin across venues every 3 seconds
-  // Desktop: 3 per batch, Mobile: 1 per batch
+  // Ensure all spotlight NFTs are loaded when city changes
   useEffect(() => {
     if (!currentSlug || currentVenueSelected) return;
     const allNfts = spotlightByCity[currentSlug] || [];
-    const batchSize = isSmallViewport ? 1 : 3;
-    if (allNfts.length <= batchSize) return;
-    // Correct initial batch for current device size
-    setOpenBubbleNfts((prev) => ({ ...prev, [currentSlug]: getRotationBatch(allNfts, 0, batchSize) }));
-    let step = 0;
-    const interval = setInterval(() => {
-      step += 1;
-      const batch = getRotationBatch(allNfts, step, batchSize);
-      setOpenBubbleNfts((prev) => ({ ...prev, [currentSlug]: batch }));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [currentSlug, isSmallViewport, currentVenueSelected, spotlightByCity]);
+    if (allNfts.length === 0) return;
+    setOpenBubbleNfts((prev) => {
+      if (prev[currentSlug]?.length === allNfts.length) return prev;
+      return { ...prev, [currentSlug]: allNfts };
+    });
+  }, [currentSlug, currentVenueSelected, spotlightByCity]);
 
   // Load venues list per city (cached)
   useEffect(() => {
@@ -1489,16 +1654,62 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
     const H = cityMap.mapBounds.height;
     const openIds = new Set((openBubbleNfts[currentSlug] || []).map((n) => n.id));
 
+    // Draw all NFT translucent fills first, then strokes + dots on top.
+    // Use a separate offscreen canvas so overlapping circles don't stack alpha.
+    const offscreen = document.createElement("canvas");
+    offscreen.width = Math.round(pixelW * dpr);
+    offscreen.height = Math.round(pixelH * dpr);
+    const oCtx = offscreen.getContext("2d");
+    oCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Pass 1: draw all fills onto offscreen with globalCompositeOperation
+    // "source-over" first circle, then "lighter" would add — but we want max, not add.
+    // Trick: draw opaque circles, then composite the offscreen onto main at reduced alpha.
     for (const nft of filteredNfts) {
       const mapX = nft.svgX;
       const mapY = H - nft.svgY;
-
       const { x: sx, y: sy } = mapToScreen(mapX, mapY, viewBox, t);
-
       const isSelected = openIds.has(nft.id);
+      const r = isSelected ? nftPointRadius * 1.3 : nftPointRadius;
+      const color = isSelected ? nftPointColor.selected : nftPointColor.default;
+      oCtx.beginPath();
+      oCtx.arc(sx, sy, r, 0, Math.PI * 2);
+      oCtx.fillStyle = color;
+      oCtx.fill();
+    }
+
+    // Composite offscreen fills at 0.4 alpha onto main canvas
+    // Reset transform so drawImage maps pixel-to-pixel (offscreen already has dpr scaling baked in)
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 0.4;
+    ctx.drawImage(offscreen, 0, 0);
+    ctx.restore();
+
+    // Pass 2: strokes and center dots directly on main canvas (deduplicated)
+    const drawn = new Set();
+    for (const nft of filteredNfts) {
+      const mapX = nft.svgX;
+      const mapY = H - nft.svgY;
+      const { x: sx, y: sy } = mapToScreen(mapX, mapY, viewBox, t);
+      const isSelected = openIds.has(nft.id);
+      const cellX = Math.round(sx / nftPointRadius);
+      const cellY = Math.round(sy / nftPointRadius);
+      const posKey = `${cellX},${cellY}`;
+      if (!isSelected && drawn.has(posKey)) continue;
+      drawn.add(posKey);
+
+      const r = isSelected ? nftPointRadius * 1.3 : nftPointRadius;
+      const color = isSelected ? nftPointColor.selected : nftPointColor.default;
       ctx.beginPath();
-      ctx.arc(sx, sy, isSelected ? nftPointRadius * 1.5 : nftPointRadius, 0, Math.PI * 2);
-      ctx.fillStyle = isSelected ? nftPointColor.selected : nftPointColor.default;
+      ctx.arc(sx, sy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+      // Center dot
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = color;
       ctx.fill();
     }
   }, [currentSlug, cityMaps, containerSizes, filteredNfts, openBubbleNfts]);
@@ -1814,7 +2025,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
     const viewBox = cityMap.viewBox;
     const t = getMeetTransform(size.w, size.h, viewBox);
 
-    const clickThreshold = nftPointRadius * 3;
+    const clickThreshold = nftPointRadius * 2.5;
     let clicked = null;
 
     const candidates = slug === currentSlug ? filteredNfts : cityNfts?.[slug] || [];
@@ -1835,17 +2046,18 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
       }
     }
 
-    // Toggle bubble: if clicked NFT is already open, close it; otherwise add it
-    if (clicked) {
-      setOpenBubbleNfts((prev) => {
-        const current = prev[slug] || [];
-        const isAlreadyOpen = current.some((n) => n.id === clicked.id);
-        if (isAlreadyOpen) {
-          return { ...prev, [slug]: current.filter((n) => n.id !== clicked.id) };
-        } else {
-          return { ...prev, [slug]: [...current, clicked] };
-        }
-      });
+    // Clicking an NFT point focuses its venue
+    if (clicked && clicked.venue_id) {
+      const venues = cityVenues?.[slug]?.venues || [];
+      const venue = venues.find((v) => v.id === clicked.venue_id);
+      if (venue) {
+        const vKey = venueKey(venue);
+        setSelectedVenue((prev) => ({ ...prev, [slug]: vKey }));
+        setCarouselOpen((prev) => ({ ...prev, [slug]: true }));
+        setSelectedEvent((prev) => ({ ...prev, [slug]: "" }));
+        zoomToVenue(slug, venue);
+        fetchVenueNfts(slug, venue.id);
+      }
     }
   };
 
@@ -1968,9 +2180,8 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
    */
   const restoreSpotlightNfts = (slug) => {
     const allSpotlight = spotlightByCity[slug] || [];
-    const batchSize = isSmallViewport ? 1 : 3;
     setCityNfts((prev) => ({ ...prev, [slug]: allSpotlight }));
-    setOpenBubbleNfts((prev) => ({ ...prev, [slug]: getRotationBatch(allSpotlight, 0, batchSize) }));
+    setOpenBubbleNfts((prev) => ({ ...prev, [slug]: allSpotlight }));
   };
 
   // Helper to compute anchor for any NFT
@@ -2108,7 +2319,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     }
                   }}
                 >
-                  <option value="">All Venues</option>
+                  <option value="">所有場館</option>
                   {venues.map((venue, index) => (
                     <option key={`${venueKey(venue)}-${index}`} value={venueKey(venue)}>
                       {venue.name}
@@ -2132,7 +2343,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     setOpenBubbleNfts((prev) => ({ ...prev, [slug]: [] }));
                   }}
                 >
-                  <option value="">All Events</option>
+                  <option value="">所有活動</option>
                   {eventsForThisCity.map((ev, index) => (
                     <option key={`${ev.id}-${index}`} value={ev.id}>
                       {ev.name}
@@ -2208,7 +2419,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
               e.stopPropagation();
               goToPrevCity();
             }}
-            className={isTutorialAnimating ? "city-nav-pulse" : ""}
+            className={isTutorialAnimating ? "city-nav-pulse" : "city-nav-breathe"}
             style={{
               position: 'absolute',
               left: isMobileUI ? 'max(1.25rem, env(safe-area-inset-left))' : '1.25rem',
@@ -2217,7 +2428,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
               width: '3rem',
               height: '3rem',
               fontSize: '1.5rem',
-              color: 'var(--brand-primary)',
+              color: 'var(--brand-secondary)',
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
@@ -2231,7 +2442,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
               e.stopPropagation();
               goToNextCity();
             }}
-            className={isTutorialAnimating ? "city-nav-pulse" : ""}
+            className={isTutorialAnimating ? "city-nav-pulse" : "city-nav-breathe"}
             style={{
               position: 'absolute',
               right: isMobileUI ? 'max(1.25rem, env(safe-area-inset-right))' : '1.25rem',
@@ -2240,7 +2451,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
               width: '3rem',
               height: '3rem',
               fontSize: '1.5rem',
-              color: 'var(--brand-primary)',
+              color: 'var(--brand-secondary)',
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
@@ -2330,7 +2541,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   onChange={(e) => setCurrentFilters((prev) => ({ ...prev, tag: e.target.value }))}
                   forceOpenUpward
                 >
-                  <option value="">Tag</option>
+                  <option value="">標籤</option>
                   {filterOptions.tags.map((tag) => (
                     <option key={tag} value={tag}>{tag}</option>
                   ))}
@@ -2342,7 +2553,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   onChange={(e) => setCurrentFilters((prev) => ({ ...prev, category: e.target.value }))}
                   forceOpenUpward
                 >
-                  <option value="">Category</option>
+                  <option value="">類別</option>
                   {filterOptions.categories.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
@@ -2354,7 +2565,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   onChange={(e) => setCurrentFilters((prev) => ({ ...prev, creator: e.target.value }))}
                   forceOpenUpward
                 >
-                  <option value="">Creator</option>
+                  <option value="">藝術家</option>
                   {filterOptions.creators.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
@@ -2367,7 +2578,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     onChange={(e) => setCurrentFilters((prev) => ({ ...prev, year: e.target.value, month: "", week: "", day: "" }))}
                     forceOpenUpward
                   >
-                    <option value="">Year</option>
+                    <option value="">年份</option>
                     {filterOptions.years.map((y) => (
                       <option key={y} value={y}>{y}</option>
                     ))}
@@ -2379,32 +2590,30 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     onChange={(e) => setCurrentFilters((prev) => ({ ...prev, month: e.target.value, day: "" }))}
                     forceOpenUpward
                   >
-                    <option value="">Month</option>
+                    <option value="">月份</option>
                     {filterOptions.months.map((m) => {
-                      const label = m.split("-")[1] || m;
-                      return <option key={m} value={m}>{label}</option>;
+                      return <option key={m} value={m}>{m}</option>;
                     })}
                   </CustomSelect>
 
                   <CustomSelect
-                    style={{ background: "transparent", padding: "4px", fontSize: 13, color: "var(--brand-primary)", width: "80px" }}
+                    style={{ background: "transparent", padding: "4px", fontSize: 13, color: "var(--brand-primary)", width: "110px" }}
                     value={currentFilters.day}
                     onChange={(e) => setCurrentFilters((prev) => ({ ...prev, day: e.target.value }))}
                     forceOpenUpward
                   >
-                    <option value="">Day</option>
+                    <option value="">日期</option>
                     {filterOptions.days.map((d) => {
-                      const label = d.split("-")[2] || d;
-                      return <option key={d} value={d}>{label}</option>;
+                      return <option key={d} value={d}>{d}</option>;
                     })}
                   </CustomSelect>
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', color: 'var(--brand-primary)', fontSize: 13 }}>
                   {[
-                    { key: "past", label: "Past" },
-                    { key: "ongoing", label: "Ongoing" },
-                    { key: "future", label: "Future" },
+                    { key: "past", label: "過去" },
+                    { key: "ongoing", label: "進行中" },
+                    { key: "future", label: "未來" },
                   ].map(({ key, label }) => (
                     <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
                       <input
@@ -2496,7 +2705,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
               onChange={(e) => setCurrentFilters((prev) => ({ ...prev, tag: e.target.value }))}
               forceOpenUpward
             >
-              <option value="">Tag</option>
+              <option value="">標籤</option>
               {filterOptions.tags.map((tag) => (
                 <option key={tag} value={tag}>{tag}</option>
               ))}
@@ -2508,7 +2717,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
               onChange={(e) => setCurrentFilters((prev) => ({ ...prev, category: e.target.value }))}
               forceOpenUpward
             >
-              <option value="">Category</option>
+              <option value="">類別</option>
               {filterOptions.categories.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -2520,7 +2729,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
               onChange={(e) => setCurrentFilters((prev) => ({ ...prev, creator: e.target.value }))}
               forceOpenUpward
             >
-              <option value="">Creator</option>
+              <option value="">藝術家</option>
               {filterOptions.creators.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -2533,7 +2742,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                 onChange={(e) => setCurrentFilters((prev) => ({ ...prev, year: e.target.value, month: "", week: "", day: "" }))}
                 forceOpenUpward
               >
-                <option value="">Year</option>
+                <option value="">年份</option>
                 {filterOptions.years.map((y) => (
                   <option key={y} value={y}>{y}</option>
                 ))}
@@ -2545,28 +2754,24 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                 onChange={(e) => setCurrentFilters((prev) => ({ ...prev, month: e.target.value, day: "" }))}
                 forceOpenUpward
               >
-                <option value="">Month</option>
+                <option value="">月份</option>
                 {filterOptions.months.map((m) => {
-                  const parts = m.split("-");
-                  const label = parts[1] || m;
                   return (
-                    <option key={m} value={m}>{label}</option>
+                    <option key={m} value={m}>{m}</option>
                   );
                 })}
               </CustomSelect>
 
               <CustomSelect
-                style={{ background: "transparent", padding: "4px", fontSize: 14, color: "var(--brand-primary)", width: "90px" }}
+                style={{ background: "transparent", padding: "4px", fontSize: 14, color: "var(--brand-primary)", width: "120px" }}
                 value={currentFilters.day}
                 onChange={(e) => setCurrentFilters((prev) => ({ ...prev, day: e.target.value }))}
                 forceOpenUpward
               >
-                <option value="">Day</option>
+                <option value="">日期</option>
                 {filterOptions.days.map((d) => {
-                  const parts = d.split("-");
-                  const label = parts[2] || d;
                   return (
-                    <option key={d} value={d}>{label}</option>
+                    <option key={d} value={d}>{d}</option>
                   );
                 })}
               </CustomSelect>
@@ -2585,7 +2790,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   }
                   style={{ width: 18, height: 18, cursor: "pointer" }}
                 />
-                Past
+                過去
               </label>
 
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
@@ -2600,7 +2805,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   }
                   style={{ width: 18, height: 18, cursor: "pointer" }}
                 />
-                Ongoing
+                進行中
               </label>
 
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
@@ -2615,7 +2820,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   }
                   style={{ width: 18, height: 18, cursor: "pointer" }}
                 />
-                Future
+                未來
               </label>
             </div>
           </div>
@@ -2670,6 +2875,24 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
 
         .city-nav-pulse {
           animation: city-nav-pulse 0.8s ease-in-out infinite;
+        }
+
+        /* Breathing glow effect for city nav arrows */
+        @keyframes city-nav-breathe {
+          0%, 100% {
+            opacity: 0.4;
+            transform: translateY(-50%) scale(1);
+            text-shadow: 0 0 0 transparent;
+          }
+          50% {
+            opacity: 1;
+            transform: translateY(-50%) scale(1.15);
+            text-shadow: 0 0 8px var(--brand-secondary), 0 0 16px var(--brand-secondary);
+          }
+        }
+
+        .city-nav-breathe {
+          animation: city-nav-breathe 2.5s ease-in-out infinite;
         }
       `}</style>
     </div>

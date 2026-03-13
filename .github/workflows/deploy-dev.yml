@@ -32,8 +32,8 @@ jobs:
       SMTP_USER: ${{ vars.SMTP_USER }}
       SMTP_PASS: ${{ secrets.SMTP_PASS }}
       SMTP_FROM: ${{ vars.SMTP_FROM }}
-      SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
-      SENDGRID_FROM_EMAIL: ${{ vars.SENDGRID_FROM_EMAIL }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      RESEND_FROM_EMAIL: ${{ vars.RESEND_FROM_EMAIL }}
       NEXT_PUBLIC_BASE_URL: ${{ vars.NEXT_PUBLIC_BASE_URL }}
       
     steps:
@@ -110,8 +110,8 @@ jobs:
             echo "SMTP_USER=\"${{ vars.SMTP_USER }}\"" >> .env
             echo "SMTP_PASS=\"${{ secrets.SMTP_PASS }}\"" >> .env
             echo "SMTP_FROM=\"${{ vars.SMTP_FROM }}\"" >> .env
-            echo "SENDGRID_API_KEY=\"${{ secrets.SENDGRID_API_KEY }}\"" >> .env
-            echo "SENDGRID_FROM_EMAIL=\"${{ vars.SENDGRID_FROM_EMAIL }}\"" >> .env
+            echo "RESEND_API_KEY=\"${{ secrets.RESEND_API_KEY }}\"" >> .env
+            echo "RESEND_FROM_EMAIL=\"${{ vars.RESEND_FROM_EMAIL }}\"" >> .env
             echo "NEXT_PUBLIC_BASE_URL=\"${{ vars.NEXT_PUBLIC_BASE_URL }}\"" >> .env
             echo "PORT=3002" >> .env
 

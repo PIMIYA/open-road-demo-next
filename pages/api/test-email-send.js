@@ -1,23 +1,24 @@
-async function sendWithSendGrid({ to, subject, html }) {
-  const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+async function sendWithResend({ to, subject, html }) {
+  const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      personalizations: [{ to: [{ email: to }] }],
-      from: { email: process.env.SENDGRID_FROM_EMAIL },
+      from: process.env.RESEND_FROM_EMAIL,
+      to: [to],
       subject,
-      content: [{ type: "text/html", value: html }],
+      html,
     }),
   });
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`SendGrid ${res.status}: ${text}`);
+    throw new Error(`Resend ${res.status}: ${text}`);
   }
-  return { messageId: res.headers.get("x-message-id") };
+  const data = await res.json();
+  return { messageId: data.id };
 }
 
 export default async function handler(req, res) {
@@ -32,15 +33,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const info = await sendWithSendGrid({
+    const info = await sendWithResend({
       to: testEmail,
       subject: "NFT Claim Email Test",
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2>Test email sent successfully</h2>
           <p>Time: ${new Date().toLocaleString("zh-TW")}</p>
-          <p>From: ${process.env.SENDGRID_FROM_EMAIL}</p>
-          <p>Method: SendGrid HTTP API</p>
+          <p>From: ${process.env.RESEND_FROM_EMAIL}</p>
+          <p>Method: Resend API</p>
         </div>
       `,
     });
@@ -50,8 +51,8 @@ export default async function handler(req, res) {
       message: "Test email sent",
       messageId: info.messageId,
       config: {
-        method: "SendGrid HTTP API",
-        from: process.env.SENDGRID_FROM_EMAIL,
+        method: "Resend API",
+        from: process.env.RESEND_FROM_EMAIL,
       },
     });
   } catch (error) {
@@ -59,8 +60,8 @@ export default async function handler(req, res) {
       success: false,
       error: error.message,
       config: {
-        method: "SendGrid HTTP API",
-        from: process.env.SENDGRID_FROM_EMAIL,
+        method: "Resend API",
+        from: process.env.RESEND_FROM_EMAIL,
       },
     });
   }

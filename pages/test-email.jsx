@@ -138,7 +138,7 @@ export default function TestEmail() {
         </Box>
       </Paper>
 
-      {/* Email Content Sample for SendGrid Review */}
+      {/* Email Content Sample for Resend Review */}
       <Paper
         variant="outlined"
         sx={{ mt: 4, overflow: 'hidden', borderRadius: 0 }}
@@ -151,7 +151,7 @@ export default function TestEmail() {
             variant="overline"
             sx={{ letterSpacing: '0.2em' }}
           >
-            Email Content Sample — SendGrid Review
+            Email Content Sample — Resend Review
           </Typography>
         </Box>
 

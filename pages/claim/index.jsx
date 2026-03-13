@@ -144,7 +144,7 @@ export default function NFTPage({ ownersData, data, data_from_pool, nftData, err
 
       // 根據不同的 claim 結果設置狀態
       if (claimResult.isInvalid) {
-        setClaimStatus(`Claim Status: Invalid address or pool`);
+        setClaimStatus(`無法領取，該活動可能已結束，或此地址已領取過。`);
         localStorage.setItem("claimStatus", "invalid");
         // 不跳轉，顯示錯誤信息
       } else if (!claimResult.isEnrolled && claimResult.isSoldOut) {
@@ -250,8 +250,8 @@ export default function NFTPage({ ownersData, data, data_from_pool, nftData, err
                 <KukaiEmbedComponent ref={embedRef} onLoginSuccess={handleClaim} />
               ) : null}
               {claimStatus && (
-                <Box sx={{ mt: 3, border: 1, borderColor: "divider", p: 3 }}>
-                  <Typography variant="caption">{claimStatus}</Typography>
+                <Box sx={{ mt: 3, border: 1, borderColor: "warning.main", p: 3 }}>
+                  <Typography variant="caption" color="warning.main">{claimStatus}</Typography>
                 </Box>
               )}
             </NFTclaim>

@@ -1,24 +1,22 @@
-async function sendWithSendGrid({ to, subject, html, text }) {
-  const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+async function sendWithResend({ to, subject, html, text }) {
+  const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      personalizations: [{ to: [{ email: to }] }],
-      from: { email: process.env.SENDGRID_FROM_EMAIL },
+      from: process.env.RESEND_FROM_EMAIL,
+      to: [to],
       subject,
-      content: [
-        { type: "text/plain", value: text },
-        { type: "text/html", value: html },
-      ],
+      html,
+      text,
     }),
   });
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`SendGrid ${res.status}: ${body}`);
+    throw new Error(`Resend ${res.status}: ${body}`);
   }
 }
 
@@ -87,7 +85,7 @@ async function processEmailInBackground({
   });
 
   try {
-    await sendWithSendGrid({ to: email, subject, html, text });
+    await sendWithResend({ to: email, subject, html, text });
     console.log("Background claim email sent to:", email);
   } catch (error) {
     console.error("Background claim email failed:", error.message);

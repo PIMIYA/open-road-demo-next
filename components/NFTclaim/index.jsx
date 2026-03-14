@@ -18,7 +18,10 @@ import { encrypt } from "@/lib/dummy";
 export default function NFTclaim({ ownersData, data, children }) {
   const router = useRouter();
   const total = ownersData.amount;
-  const collected = ownersData ? Math.max(0, Object.keys(ownersData.owners).length - 2) : 0;
+  const ownerEntries = ownersData ? Object.keys(ownersData.owners) : [];
+  const collected = ownersData
+    ? ownerEntries.filter((addr) => ownersData.owners[addr] > 0 && !addr.startsWith("KT1")).length
+    : 0;
 
   const url = `${router.query.contract}/${router.query.tokenId}`;
   const hash = encrypt(url);

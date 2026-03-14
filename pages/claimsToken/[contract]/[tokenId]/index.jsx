@@ -22,7 +22,7 @@ import {
 
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 
-export default function Id({ ownersData, data, data_from_pool, organizers, artists, events, venueNameMap }) {
+export default function Id({ ownersData, data, data_from_pool, organizers, artists, events, venueNameMap, airdropTransfers }) {
   // console.log("current active claimable token data", data[0].tokenId);
 
   // TODO: remove dummy data after api ready
@@ -104,6 +104,7 @@ export default function Id({ ownersData, data, data_from_pool, organizers, artis
               organizers={organizers}
               artists={artists}
               comments={comments}
+              airdropTransfers={airdropTransfers}
             />
           </div>
         );
@@ -113,7 +114,7 @@ export default function Id({ ownersData, data, data_from_pool, organizers, artis
 }
 
 export async function getServerSideProps(params) {
-  const [ownersData, data, data_from_pool, organizers, artists, events] =
+  const [ownersData, data, data_from_pool, organizers, artists, events, airdropTransfers] =
     await Promise.all([
       MainnetAPI(
         `/fa2tokens/${params.params.contract}/${params.params.tokenId}`
@@ -129,6 +130,9 @@ export async function getServerSideProps(params) {
       FetchDirectusData(`/organizers`),
       FetchDirectusData(`/artists`),
       FetchDirectusData(`/events`),
+      TZKT_API(
+        `/v1/tokens/transfers?token.contract=${params.params.contract}&token.tokenId=${params.params.tokenId}&from=${contractAddress}&limit=10000`
+      ),
     ]);
 
   // Resolve venue name from venue_id for tokens missing event_location
@@ -153,6 +157,6 @@ export async function getServerSideProps(params) {
   }
 
   return {
-    props: { ownersData, data, data_from_pool, organizers, artists, events, venueNameMap },
+    props: { ownersData, data, data_from_pool, organizers, artists, events, venueNameMap, airdropTransfers: airdropTransfers || [] },
   };
 }

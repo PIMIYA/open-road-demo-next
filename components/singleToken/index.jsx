@@ -26,10 +26,18 @@ export default function SingleToken({
   organizers,
   artists,
   comments,
+  airdropTransfers = [],
 }) {
   const total = ownersData?.amount;
-  const collected = ownersData ? Math.max(0, Object.keys(ownersData?.owners).length - 2) : 0;
-  const ownerAddresses = ownersData ? Object.keys(ownersData?.owners) : 0;
+  const creatorAddresses = data.metadata?.creators || [];
+  const collectorAddresses = [
+    ...new Set(
+      airdropTransfers
+        .map((t) => t.to?.address)
+        .filter((addr) => addr && !creatorAddresses.includes(addr))
+    ),
+  ];
+  const collected = collectorAddresses.length;
 
   const mimeType = data.metadata.formats[0].mimeType;
   const src = data.metadata;
@@ -137,11 +145,7 @@ export default function SingleToken({
               <Tab label="Description" />
               <Tab
                 label={<span>Collectors(<i>{collected}</i>)</span>}
-                disabled={
-                  !ownersData ||
-                  ownersData.owners === null ||
-                  ownerAddresses.length === 0
-                }
+                disabled={collected === 0}
               />
               <Tab
                 label={<span>Comments(<i>{comments?.data?.length || 0}</i>)</span>}
@@ -166,10 +170,10 @@ export default function SingleToken({
 
             {/* Collectors tab */}
             <Box sx={{ display: tabValue === 1 ? "block" : "none" }}>
-              {ownerAddresses !== 0 && (
+              {collected > 0 && (
                 <TokenCollectors
                   owners={ownersData.owners}
-                  ownerAddresses={ownerAddresses}
+                  ownerAddresses={collectorAddresses}
                   ownerAliases={ownersData.ownerAliases}
                 />
               )}
@@ -177,10 +181,10 @@ export default function SingleToken({
 
             {/* Comments tab */}
             <Box sx={{ display: tabValue === 2 ? "block" : "none" }}>
-              {ownerAddresses !== 0 && (
+              {comments?.data?.length > 0 && (
                 <TokenComments
                   owners={ownersData.owners}
-                  ownerAddresses={ownerAddresses}
+                  ownerAddresses={collectorAddresses}
                   ownerAliases={ownersData.ownerAliases}
                   comments={comments}
                 />

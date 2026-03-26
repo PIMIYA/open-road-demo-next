@@ -24,7 +24,19 @@ import {
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 
 export default function Id({ ownersData, data, data_from_pool, organizers, artists, events, venueNameMap, airdropTransfers }) {
-  // console.log("current active claimable token data", data[0].tokenId);
+  /* Hooks must be called unconditionally (before any early return) */
+  const [comments, setComments] = useState(null);
+  const tokenId = data?.[0]?.tokenId;
+
+  useEffect(() => {
+    if (!tokenId) return;
+    fetch("/api/get-comments-byTokenID", {
+      method: "POST",
+      body: tokenId,
+    })
+      .then((res) => res.json())
+      .then((res) => setComments(res.data));
+  }, [tokenId]);
 
   if (!data || !Array.isArray(data) || data.length === 0) {
     return (
@@ -87,22 +99,6 @@ export default function Id({ ownersData, data, data_from_pool, organizers, artis
       }
     });
   }
-
-  /* Client fetch comments */
-  const [comments, setComments] = useState(null);
-  /* API route: Client fetch Comments by Token ID at KairosDrop NFT Comments API */
-  useEffect(() => {
-    fetch("/api/get-comments-byTokenID", {
-      method: "POST",
-      body: data[0].tokenId,
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        let data = res.data;
-        setComments(data);
-      });
-  }, []);
-  // console.log("comments", comments);
 
   return (
     <>

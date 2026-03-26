@@ -797,11 +797,13 @@ function SpotlightStack({ nfts, anchors, onClose }) {
             </div>
             {onClose && (
               <button
+                onPointerDown={(e) => { e.stopPropagation(); }}
                 onClick={(e) => { e.stopPropagation(); onClose(); }}
                 style={{
                   background: "transparent", border: "none", cursor: "pointer",
                   color: "var(--brand-secondary)", fontSize: 16, lineHeight: 1,
-                  padding: "0 4px", display: "flex", alignItems: "center", justifyContent: "center",
+                  padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center",
+                  position: "relative", zIndex: 20,
                 }}
                 aria-label="close"
               >

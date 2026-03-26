@@ -106,10 +106,10 @@ export default function MapFrame({ city, cityMap, containerSize, isMobileUI = fa
             <line x1={sx} y1={bottomY} x2={sx} y2={bottomY - len} stroke={stroke} strokeWidth={thin} opacity="0.9" />
             {isMajor && (
               <>
-                <text x={sx} y={topY + len + labelOffset} textAnchor="middle" fontSize={fontSize} fill={textFill} opacity="0.2">
+                <text x={sx} y={topY + len + labelOffset} textAnchor="middle" fontSize={fontSize} fill={textFill} opacity="0.38">
                   {fmtLng(lng)}
                 </text>
-                <text x={sx} y={bottomY - len - 6} textAnchor="middle" fontSize={fontSize} fill={textFill} opacity="0.2">
+                <text x={sx} y={bottomY - len - 6} textAnchor="middle" fontSize={fontSize} fill={textFill} opacity="0.38">
                   {fmtLng(lng)}
                 </text>
               </>
@@ -132,10 +132,10 @@ export default function MapFrame({ city, cityMap, containerSize, isMobileUI = fa
             <line x1={rightX} y1={sy} x2={rightX - len} y2={sy} stroke={stroke} strokeWidth={thin} opacity="0.9" />
             {isMajor && (
               <>
-                <text x={leftX + len + 6} y={sy + 4} textAnchor="start" fontSize={fontSize} fill={textFill} opacity="0.25">
+                <text x={leftX + len + 6} y={sy + 4} textAnchor="start" fontSize={fontSize} fill={textFill} opacity="0.43">
                   {fmtLat(lat)}
                 </text>
-                <text x={rightX - len - 6} y={sy + 4} textAnchor="end" fontSize={fontSize} fill={textFill} opacity="0.25">
+                <text x={rightX - len - 6} y={sy + 4} textAnchor="end" fontSize={fontSize} fill={textFill} opacity="0.43">
                   {fmtLat(lat)}
                 </text>
               </>

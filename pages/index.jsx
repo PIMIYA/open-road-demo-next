@@ -5,8 +5,14 @@ import MapFrame from "@/components/map-frame";
 import MobileGestureTutorial from "@/components/MobileGestureTutorial";
 import { useUIEnvironment } from "@/contexts/UIEnvironmentContext";
 import CustomSelect from "@/components/CustomSelect";
+import LayerToggle from "@/components/LayerToggle";
 import { FetchDirectusData } from "@/lib/api";
 import { fetchCities as fetchCitiesApi, fetchSpotlightNfts as fetchSpotlightNftsApi } from "@/lib/map-api";
+import { drawHeatmapLayer } from "@/lib/overlays/drawHeatmap";
+import { drawCreatorShapesLayer, getCreatorShapeMap } from "@/lib/overlays/drawCreatorShapes";
+import { drawCategoryScatterLayer, getCategoryColorMap } from "@/lib/overlays/drawCategoryScatter";
+import { drawBloomLayer } from "@/lib/overlays/drawBloomLayer";
+import { useNoiseTexture } from "@/hooks/useNoiseTexture";
 
 const nftPointRadius = 20;
 const NFT_CONTRACT = "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW";
@@ -754,13 +760,12 @@ function SpotlightStack({ nfts, anchors, onClose }) {
       <div
         style={{
           position: "absolute",
-          bottom: compact ? 70 : "auto",
-          top: compact ? "auto" : 0,
-          right: compact ? 0 : 0,
-          width: compact ? "100%" : "40%",
-          height: compact ? "auto" : "100%",
+          bottom: compact ? 70 : 80,
+          top: "auto",
+          right: compact ? 0 : 60,
+          width: compact ? "100%" : "38%",
           display: "flex", flexDirection: "column", alignItems: "center",
-          justifyContent: compact ? "flex-end" : "center",
+          justifyContent: "flex-end",
           zIndex: 10, pointerEvents: "none",
         }}
         onPointerDown={(e) => e.stopPropagation()}
@@ -786,8 +791,23 @@ function SpotlightStack({ nfts, anchors, onClose }) {
             padding: "10px 0 8px",
           }}
         >
-          <div style={{ fontSize: 11, color: "var(--brand-secondary)", fontWeight: "bold", padding: "0 12px 6px", pointerEvents: "none" }}>
-            近期活動
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 8px 6px 12px" }}>
+            <div style={{ fontSize: 11, color: "var(--brand-secondary)", fontWeight: "bold", pointerEvents: "none" }}>
+              近期活動
+            </div>
+            {onClose && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onClose(); }}
+                style={{
+                  background: "transparent", border: "none", cursor: "pointer",
+                  color: "var(--brand-secondary)", fontSize: 16, lineHeight: 1,
+                  padding: "0 4px", display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+                aria-label="close"
+              >
+                ×
+              </button>
+            )}
           </div>
 
           {/* Coverflow strip — all positions driven by continuous floatPos */}
@@ -924,7 +944,7 @@ function VenueNftCarousel({ nfts, onClose, compact = false }) {
         position: "absolute",
         top: compact ? 0 : 0,
         left: compact ? 0 : "auto",
-        right: compact ? 0 : 0,
+        right: compact ? 0 : "5%",
         width: compact ? "100%" : "33.33%",
         height: "100%",
         display: "flex",
@@ -1215,6 +1235,7 @@ function BubbleLayoutManager({ containerW, containerH, nfts, anchors, onClose })
 function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = {} }) {
   const router = useRouter();
   const { isMobileUI, isSmallViewport } = useUIEnvironment();
+  const noiseUrl = useNoiseTexture();
 
   // Build wallet address → artist name lookup from Directus artists
   const artistNameMap = useMemo(() => {
@@ -1270,6 +1291,12 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
 
   const containerRefs = useRef({});
   const canvasRefs = useRef({});
+  const overlayCanvasRefs = useRef({ bloom: {}, heatmap: {}, creatorShapes: {}, categoryScatter: {} });
+  const [layerVisibility, setLayerVisibility] = useState({
+    heatmap: true,
+    creatorShapes: true,
+    categoryScatter: true,
+  });
   const [containerSizes, setContainerSizes] = useState({});
 
   // Pure width-based narrow check (≤600px), independent of device detection
@@ -1500,6 +1527,26 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
       days: Array.from(days).sort(sortAlpha),
     };
   }, [currentSlug, cityNfts, selectedVenue, selectedEvent, cityVenues, currentFilters]);
+
+  // Legend data for overlay layers
+  const creatorShapeMap = useMemo(
+    () => (layerVisibility.creatorShapes ? getCreatorShapeMap(filteredNfts, artistNameMap) : new Map()),
+    [filteredNfts, layerVisibility.creatorShapes, artistNameMap]
+  );
+  const categoryColorMap = useMemo(
+    () => (layerVisibility.categoryScatter ? getCategoryColorMap(filteredNfts) : new Map()),
+    [filteredNfts, layerVisibility.categoryScatter]
+  );
+
+  const overlayLayers = useMemo(() => [
+    { key: "heatmap", label: "Popularity", visible: layerVisibility.heatmap },
+    { key: "creatorShapes", label: "Creators", visible: layerVisibility.creatorShapes },
+    { key: "categoryScatter", label: "Categories", visible: layerVisibility.categoryScatter },
+  ], [layerVisibility]);
+
+  const handleLayerToggle = useCallback((key) => {
+    setLayerVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
+  }, []);
 
   // Load cities
   useEffect(() => {
@@ -1827,6 +1874,77 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
       ctx.fill();
     }
   }, [currentSlug, cityMaps, containerSizes, filteredNfts, openBubbleNfts]);
+
+  /**
+   * Draw overlay layers (heatmap, creator shapes, category scatter).
+   * Each layer uses its own canvas for independent toggle.
+   */
+  useEffect(() => {
+    if (!currentSlug) return;
+    const cityMap = cityMaps[currentSlug];
+    if (!cityMap?.viewBox || !cityMap?.mapBounds) return;
+    const size = containerSizes[currentSlug];
+    if (!size?.w || !size?.h) return;
+
+    const pixelW = size.w;
+    const pixelH = size.h;
+    const viewBox = cityMap.viewBox;
+    const meetTransform = getMeetTransform(pixelW, pixelH, viewBox);
+    const dpr = window.devicePixelRatio || 1;
+    const H = cityMap.mapBounds.height;
+
+    const setupCanvas = (canvasEl) => {
+      if (!canvasEl) return null;
+      canvasEl.style.width = `${pixelW}px`;
+      canvasEl.style.height = `${pixelH}px`;
+      canvasEl.width = Math.round(pixelW * dpr);
+      canvasEl.height = Math.round(pixelH * dpr);
+      const ctx = canvasEl.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, pixelW, pixelH);
+      return ctx;
+    };
+
+    const opts = { viewBox, meetTransform, mapBoundsH: H, dpr, pixelW, pixelH };
+
+    // Layer 0: Bloom (edge glow)
+    const bloomCtx = setupCanvas(overlayCanvasRefs.current.bloom[currentSlug]);
+    if (bloomCtx) {
+      drawBloomLayer(bloomCtx, opts);
+    }
+
+    // Layer 1: Heatmap
+    const heatCtx = setupCanvas(overlayCanvasRefs.current.heatmap[currentSlug]);
+    if (heatCtx && layerVisibility.heatmap) {
+      drawHeatmapLayer(heatCtx, filteredNfts, {
+        ...opts,
+        venueSelected: !!selectedVenue?.[currentSlug],
+      });
+    }
+
+    // Layer 2: Creator Shapes
+    const creatorCtx = setupCanvas(overlayCanvasRefs.current.creatorShapes[currentSlug]);
+    if (creatorCtx && layerVisibility.creatorShapes) {
+      const currentCity = cities[currentCityIndex];
+      const venues = cityVenues?.[currentSlug]?.venues || [];
+      const bbox = currentCity?.bbox_wgs84;
+      const mapBounds = cityMap.mapBounds;
+      drawCreatorShapesLayer(creatorCtx, filteredNfts, venues, creatorShapeMap, {
+        ...opts,
+        bbox,
+        mapBounds,
+      });
+    }
+
+    // Layer 3: Category Scatter
+    const catCtx = setupCanvas(overlayCanvasRefs.current.categoryScatter[currentSlug]);
+    if (catCtx && layerVisibility.categoryScatter) {
+      drawCategoryScatterLayer(catCtx, filteredNfts, categoryColorMap, {
+        ...opts,
+        venueSelected: !!selectedVenue?.[currentSlug],
+      });
+    }
+  }, [currentSlug, cityMaps, containerSizes, filteredNfts, layerVisibility, creatorShapeMap, categoryColorMap, cities, currentCityIndex, cityVenues, selectedVenue]);
 
   // Wheel zoom
   useEffect(() => {
@@ -2375,11 +2493,44 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     preserveAspectRatio="xMidYMid meet"
                     dangerouslySetInnerHTML={{ __html: cityMap.svgInner }}
                   />
+                  {/* Bloom edge glow — CSS blur is GPU-composited */}
+                  <canvas
+                    ref={(el) => (overlayCanvasRefs.current.bloom[slug] = el)}
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 1, filter: 'blur(50px)', opacity: 0.75 }}
+                  />
+                  {/* Overlay canvases: heatmap, creator shapes, category scatter */}
+                  <canvas
+                    ref={(el) => (overlayCanvasRefs.current.heatmap[slug] = el)}
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 2, display: layerVisibility.heatmap ? 'block' : 'none' }}
+                  />
+                  <canvas
+                    ref={(el) => (overlayCanvasRefs.current.creatorShapes[slug] = el)}
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 4, display: layerVisibility.creatorShapes ? 'block' : 'none' }}
+                  />
+                  <canvas
+                    ref={(el) => (overlayCanvasRefs.current.categoryScatter[slug] = el)}
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 3, display: layerVisibility.categoryScatter ? 'block' : 'none' }}
+                  />
                   <canvas
                     ref={(el) => (canvasRefs.current[slug] = el)}
                     style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'auto', cursor: 'pointer', zIndex: 5 }}
                     onClick={(e) => handleCanvasClick(e, slug)}
                   />
+
+                  {/* Paper grain noise — tiled PNG, GPU-composited */}
+                  {noiseUrl && (
+                    <div
+                      style={{
+                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                        pointerEvents: 'none',
+                        zIndex: 6,
+                        backgroundImage: `url(${noiseUrl})`,
+                        backgroundRepeat: 'repeat',
+                        mixBlendMode: 'multiply',
+                        opacity: 1,
+                      }}
+                    />
+                  )}
 
                   <MapFrame city={city} cityMap={cityMap} containerSize={containerSizes[slug]} isMobileUI={isMobileUI} hideScaleBar={isSmallViewport && !!selectedVenue?.[slug]} />
                 </>
@@ -2507,6 +2658,31 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
         })}
       </div>
 
+      {/* Overlay layer toggle + legend (desktop only — mobile is in bottom-left FAB row) */}
+      {!isNarrowWidth && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '4.5rem',
+            right: '4.5rem',
+            zIndex: 8,
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <LayerToggle
+            layers={overlayLayers}
+            onToggle={handleLayerToggle}
+            creatorShapeMap={creatorShapeMap}
+            categoryColorMap={categoryColorMap}
+            layerVisibility={layerVisibility}
+            isNarrowWidth={false}
+            filteredNftsCount={filteredNfts.length}
+          />
+        </div>
+      )}
+
       {/* Spotlight bubbles (no venue selected) */}
       {currentSlug && !selectedVenue?.[currentSlug] && (() => {
         const rawBubbleNfts = openBubbleNfts[currentSlug] || [];
@@ -2531,8 +2707,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
           <SpotlightStack
             nfts={rawBubbleNfts}
             anchors={spotlightAnchors}
-            onClose={closeBubble}
-            compact={isSmallViewport}
+            onClose={() => setOpenBubbleNfts((prev) => ({ ...prev, [currentSlug]: [] }))}
           />
         );
       })()}
@@ -2608,8 +2783,14 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                 height: '3rem',
                 fontSize: '1.5rem',
                 color: 'var(--brand-secondary)',
-                background: 'transparent',
+                background: 'rgba(255, 255, 255, 0.5)',
+                backdropFilter: 'blur(4px)',
                 border: 'none',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
                 cursor: 'pointer',
                 zIndex: 20,
               }}
@@ -2628,8 +2809,14 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                 height: '3rem',
                 fontSize: '1.5rem',
                 color: 'var(--brand-secondary)',
-                background: 'transparent',
+                background: 'rgba(255, 255, 255, 0.5)',
+                backdropFilter: 'blur(4px)',
                 border: 'none',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
                 cursor: 'pointer',
                 zIndex: 20,
               }}
@@ -2678,22 +2865,37 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
         </div>
       )}
 
-      {/* Left-bottom filters: only for current city */}
-      {/* On narrow viewports (≤600px): collapsible circular button; on wide: inline */}
-      {currentSlug && currentFilters && (!isNarrowWidth || !!(selectedVenue?.[currentSlug] || selectedEvent?.[currentSlug])) && (
-        isNarrowWidth ? (
-          /* --- Narrow: circular FAB + collapsible panel --- */
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 'max(2.5rem, env(safe-area-inset-bottom))',
-              left: 'max(1.25rem, env(safe-area-inset-left))',
-              zIndex: 20,
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-          >
+      {/* Left-bottom: FAB row (narrow) or inline filters (wide) */}
+      {/* Narrow: layer toggle FAB always visible; filter FAB only when venue/event selected */}
+      {isNarrowWidth && currentSlug && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 'max(2.5rem, env(safe-area-inset-bottom))',
+            left: 'max(1.25rem, env(safe-area-inset-left))',
+            zIndex: 20,
+            display: 'flex',
+            flexDirection: 'column-reverse',
+            gap: '10px',
+            alignItems: 'flex-start',
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Layer toggle FAB (always visible on narrow) */}
+          <LayerToggle
+            layers={overlayLayers}
+            onToggle={handleLayerToggle}
+            creatorShapeMap={creatorShapeMap}
+            categoryColorMap={categoryColorMap}
+            layerVisibility={layerVisibility}
+            isNarrowWidth={true}
+            filteredNftsCount={filteredNfts.length}
+          />
+          {/* Filter FAB (only when venue/event selected) */}
+          {currentFilters && !!(selectedVenue?.[currentSlug] || selectedEvent?.[currentSlug]) && (
+            <div style={{ position: 'relative' }}>
             {/* Collapsible filter panel */}
             {filterMenuOpen && (
               <div
@@ -2859,9 +3061,12 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                 </span>
               )}
             </button>
-          </div>
-        ) : (
-          /* --- Wide: inline filters (unchanged) --- */
+            </div>
+          )}
+        </div>
+      )}
+      {/* Wide: inline filters (unchanged) */}
+      {currentSlug && currentFilters && !isNarrowWidth && (
           <div
             style={{
               position: 'absolute',
@@ -3001,7 +3206,6 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
               </label>
             </div>
           </div>
-        )
       )}
 
       <style jsx global>{`

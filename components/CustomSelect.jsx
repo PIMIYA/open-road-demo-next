@@ -1,9 +1,14 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+
+// Global event bus: when any CustomSelect opens, others close
+const CLOSE_EVENT = "customselect:close";
+let openInstanceId = 0;
 
 /**
  * CustomSelect
  * Brand-consistent dropdown with underline trigger, triangle indicator,
  * keyboard navigation, and directional open (up/down).
+ * Only one dropdown can be open at a time across all instances.
  *
  * Props:
  *   style          – inline styles for the trigger element
@@ -32,6 +37,24 @@ export default function CustomSelect({
   const containerRef = useRef(null);
   const triggerRef = useRef(null);
   const wasOpenRef = useRef(false);
+  const instanceIdRef = useRef(null);
+
+  // Assign a stable instance ID
+  useEffect(() => {
+    instanceIdRef.current = ++openInstanceId;
+  }, []);
+
+  // Listen for close events from other instances
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail !== instanceIdRef.current) {
+        setIsOpen(false);
+        setHoveredIndex(-1);
+      }
+    };
+    document.addEventListener(CLOSE_EVENT, handler);
+    return () => document.removeEventListener(CLOSE_EVENT, handler);
+  }, []);
 
   // Block wheel/gesture events at the native level so they never reach
   // parent native handlers (e.g. map zoom via addEventListener).
@@ -202,7 +225,15 @@ export default function CustomSelect({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         onKeyDown={handleKeyDown}
-        onClick={() => setIsOpen((v) => !v)}
+        onClick={() => {
+          setIsOpen((v) => {
+            if (!v) {
+              // Opening: tell all other instances to close
+              document.dispatchEvent(new CustomEvent(CLOSE_EVENT, { detail: instanceIdRef.current }));
+            }
+            return !v;
+          });
+        }}
         style={{
           ...style,
           border: "none",
@@ -218,6 +249,7 @@ export default function CustomSelect({
           userSelect: "none",
           outline: "none",
           color: isFocused ? "var(--brand-secondary)" : style?.color || "var(--brand-primary)",
+          fontWeight: "bold",
           transition: "border-color 0.2s, color 0.2s",
         }}
       >
@@ -291,6 +323,7 @@ export default function CustomSelect({
                   transition: "background-color 0.12s, color 0.12s",
                   opacity: option.disabled ? 0.5 : 1,
                   fontSize: style?.fontSize || 14,
+                  fontWeight: "bold",
                 }}
                 onMouseEnter={() => !option.disabled && setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(-1)}

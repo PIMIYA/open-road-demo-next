@@ -18,8 +18,10 @@ export function Footer() {
           a: {
             color: "text.primary",
             textDecoration: "none",
-            "&:hover": {
-              textDecoration: "underline",
+            "@media (hover: hover)": {
+              "&:hover": {
+                textDecoration: "underline",
+              },
             },
           },
         }}

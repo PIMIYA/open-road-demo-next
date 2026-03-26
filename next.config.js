@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Disable automatic scroll restoration to prevent scroll jumps
+  // when navigating back from pages with dynamic-height components (e.g. WalletCanvas)
+  experimental: {
+    scrollRestoration: false,
+  },
 
   webpack: (config, { isServer }) => {
     if (!isServer) {

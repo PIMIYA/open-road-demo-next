@@ -17,6 +17,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 import { fetchCities, fetchVenues } from "@/lib/map-api";
+import ButtonSpinner from "@/components/ButtonSpinner";
 
 /* Kairos */
 import { useConnection } from "@/packages/providers";
@@ -355,9 +356,7 @@ export default function Mint({ organizers, artists, cities, events }) {
             category: selectedCategory?.label || "",
             tags: (selectedTags || []).map((t) => t.label),
             creators: [createrAddress, address],
-            thumbnailUri: payload.msg.imageHash
-              ? `ipfs://${payload.msg.imageHash}`
-              : null,
+            thumbnailUri: null, // will be resolved from on-chain metadata by nft-sync
           };
 
           fetch(`${MAP_SERVER}/api/nfts-sync`, {
@@ -705,16 +704,12 @@ export default function Mint({ organizers, artists, cities, events }) {
               size="large"
               onClick={upload}
               disabled={
-                !file || (!!file && !classifyFile(file).isImage && !display)
+                miningInProgress || !file || (!!file && !classifyFile(file).isImage && !display)
               }
             >
-              Mint
+              {miningInProgress && <ButtonSpinner color="#fff" />}
+              {miningInProgress ? "Minting..." : "Mint"}
             </Button>
-            {miningInProgress && (
-              <Typography variant="body2" sx={{ mt: 2 }}>
-                Mining in progress...
-              </Typography>
-            )}
           </Box>
         </Stack>
       </Container>

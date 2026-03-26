@@ -168,8 +168,10 @@ export default function WalletProfile({ address, walletInfo }) {
               "& a": {
                 color: "primary.main",
                 textDecoration: "none",
-                "&:hover": {
-                  textDecoration: "underline",
+                "@media (hover: hover)": {
+                  "&:hover": {
+                    textDecoration: "underline",
+                  },
                 },
               },
             }}
@@ -186,11 +188,13 @@ export default function WalletProfile({ address, walletInfo }) {
                 onClick={() => handleSocialClick(instagram)}
                 sx={{
                   color: "text.secondary",
-                  "&:hover": {
-                    color: "#E4405F", // Instagram brand color
-                    transform: "scale(1.1)",
-                  },
                   transition: "all 0.2s ease-in-out",
+                  "@media (hover: hover)": {
+                    "&:hover": {
+                      color: "#E4405F",
+                      transform: "scale(1.1)",
+                    },
+                  },
                 }}
               >
                 <InstagramIcon />
@@ -203,11 +207,13 @@ export default function WalletProfile({ address, walletInfo }) {
                 onClick={() => handleSocialClick(twitter)}
                 sx={{
                   color: "text.secondary",
-                  "&:hover": {
-                    color: "#1DA1F2", // Twitter brand color
-                    transform: "scale(1.1)",
-                  },
                   transition: "all 0.2s ease-in-out",
+                  "@media (hover: hover)": {
+                    "&:hover": {
+                      color: "#1DA1F2",
+                      transform: "scale(1.1)",
+                    },
+                  },
                 }}
               >
                 <TwitterIcon />
@@ -220,11 +226,13 @@ export default function WalletProfile({ address, walletInfo }) {
                 onClick={() => handleSocialClick(x)}
                 sx={{
                   color: "text.secondary",
-                  "&:hover": {
-                    color: "#000000", // X brand color
-                    transform: "scale(1.1)",
-                  },
                   transition: "all 0.2s ease-in-out",
+                  "@media (hover: hover)": {
+                    "&:hover": {
+                      color: "#000000",
+                      transform: "scale(1.1)",
+                    },
+                  },
                 }}
               >
                 <XIcon />
@@ -237,11 +245,13 @@ export default function WalletProfile({ address, walletInfo }) {
                 onClick={() => handleSocialClick(discord)}
                 sx={{
                   color: "text.secondary",
-                  "&:hover": {
-                    color: "#5865F2", // Discord brand color
-                    transform: "scale(1.1)",
-                  },
                   transition: "all 0.2s ease-in-out",
+                  "@media (hover: hover)": {
+                    "&:hover": {
+                      color: "#5865F2",
+                      transform: "scale(1.1)",
+                    },
+                  },
                 }}
               >
                 <DiscordIcon />
@@ -254,11 +264,13 @@ export default function WalletProfile({ address, walletInfo }) {
                 onClick={() => handleSocialClick(website)}
                 sx={{
                   color: "text.secondary",
-                  "&:hover": {
-                    color: "#007ACC", // Website link color
-                    transform: "scale(1.1)",
-                  },
                   transition: "all 0.2s ease-in-out",
+                  "@media (hover: hover)": {
+                    "&:hover": {
+                      color: "#007ACC",
+                      transform: "scale(1.1)",
+                    },
+                  },
                 }}
               >
                 <WebsiteIcon />

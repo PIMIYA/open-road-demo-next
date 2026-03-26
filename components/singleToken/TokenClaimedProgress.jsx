@@ -1,7 +1,7 @@
 import { LinearProgress, Stack, Typography } from "@mui/material";
 
 export default function TokenClaimedProgress({ collected, total }) {
-  const collectedPercentage = Math.round((collected / total) * 100);
+  const collectedPercentage = total ? Math.round((collected / total) * 100) : 0;
   return (
     <Stack spacing={1}>
       <LinearProgress variant="determinate" value={collectedPercentage} />

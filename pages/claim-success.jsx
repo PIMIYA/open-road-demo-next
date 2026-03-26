@@ -182,8 +182,10 @@ export default function ClaimSuccess() {
             disabled={!tokenId || !contractAddress}
             sx={{
               backgroundColor: "rgba(36, 131, 255, 0.08)",
-              "&:hover": {
-                backgroundColor: "rgba(36, 131, 255, 0.15)",
+              "@media (hover: hover)": {
+                "&:hover": {
+                  backgroundColor: "rgba(36, 131, 255, 0.15)",
+                },
               },
             }}
           >

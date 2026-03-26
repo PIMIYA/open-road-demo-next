@@ -108,7 +108,7 @@ export const Sharer = ({ id = 1, type, useSwapByRoyalties = false, sharers, maxS
                                     size="small"
                                     onClick={() => removeSharer(index)}
                                     disabled={useSwapByRoyalties}
-                                    sx={{ opacity: 0.6, "&:hover": { opacity: 1 } }}
+                                    sx={{ opacity: 0.6, "@media (hover: hover)": { "&:hover": { opacity: 1 } } }}
                                 >
                                     <RemoveCircleOutlineIcon fontSize="small" />
                                 </IconButton>

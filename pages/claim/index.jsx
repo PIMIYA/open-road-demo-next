@@ -1,14 +1,10 @@
 import React, { useState, useRef } from "react";
-import { useRouter } from "next/router";
 import { Box, Container, Typography } from "@mui/material";
 import {
   TZKT_API,
-  MainnetAPI,
   GetClaimablePoolID,
-  postClaimData,
 } from "@/lib/api";
-import { getRandomPlace, getRandomCreator } from "@/lib/dummy";
-import NFTclaim from "@/components/NFTclaim";
+import { getAkaswapAssetUrl } from "@/lib/stringUtils";
 import KukaiEmbedComponent from "../../components/KukaiEmbedComponent";
 
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
@@ -46,18 +42,17 @@ export async function getServerSideProps(context) {
   const [targetContract, tokenId] = nftData.tokens[0].uid.split("-");
 
   // Fetch additional information using targetContract and tokenId
-  const [ownersData, data, data_from_pool] = await Promise.all([
-    await MainnetAPI(`/fa2tokens/${targetContract}/${tokenId}`),
-    await TZKT_API(`/v1/tokens?contract=${targetContract}&tokenId=${tokenId}`),
-    await GetClaimablePoolID(contractAddress, targetContract, tokenId),
+  const [data, data_from_pool] = await Promise.all([
+    TZKT_API(`/v1/tokens?contract=${targetContract}&tokenId=${tokenId}`),
+    GetClaimablePoolID(contractAddress, targetContract, tokenId),
   ]);
 
   return {
-    props: { ownersData, data, data_from_pool, nftData },
+    props: { data, data_from_pool, nftData },
   };
 }
 
-export default function NFTPage({ ownersData, data, data_from_pool, nftData, error }) {
+export default function NFTPage({ data, data_from_pool, nftData, error }) {
   const [claimStatus, setClaimStatus] = useState("");
   const embedRef = useRef(null);
 
@@ -219,44 +214,44 @@ export default function NFTPage({ ownersData, data, data_from_pool, nftData, err
     );
   }
 
-  if (data) {
-    data = data.map((d) => {
-      d.eventPlace = d.metadata.event_location
-        ? d.metadata.event_location
-        : getRandomPlace();
-      d.creator = d.metadata.organizer
-        ? d.metadata.organizer
-        : getRandomCreator();
-      d.start_time = d.metadata.start_time;
-      d.end_time = d.metadata.end_time;
-      if (data_from_pool) {
-        d.poolId = data_from_pool[0].key;
-        d.duration = data_from_pool[0].value.duration;
-      } else {
-        d.poolId = null;
-        d.duration = null;
-      }
-      return d;
-    });
-  }
+  const poolId = data_from_pool?.[0]?.key ?? null;
+  const coverUri = nftData?.coverUri;
+  const imageUrl = coverUri ? getAkaswapAssetUrl(coverUri) : null;
+  const name = nftData?.name || "";
 
   return (
-    <div>
-      {data &&
-        data.map((d, index) => (
-          <div key={index}>
-            <NFTclaim data={d} ownersData={ownersData}>
-              {d.poolId !== null ? (
-                <KukaiEmbedComponent ref={embedRef} onLoginSuccess={handleClaim} />
-              ) : null}
-              {claimStatus && (
-                <Box sx={{ mt: 3, border: 1, borderColor: "warning.main", p: 3 }}>
-                  <Typography variant="caption" color="warning.main">{claimStatus}</Typography>
-                </Box>
-              )}
-            </NFTclaim>
-          </div>
-        ))}
-    </div>
+    <Container maxWidth="sm" sx={{ py: 6, textAlign: "center" }}>
+      {/* Display image */}
+      {imageUrl && (
+        <Box sx={{ mb: 4 }}>
+          <Box
+            component="img"
+            src={imageUrl}
+            alt={name}
+            sx={{ width: "100%", maxWidth: 480, borderRadius: 2 }}
+          />
+        </Box>
+      )}
+
+      {/* NFT name */}
+      <Typography variant="h5" component="h1" sx={{ mb: 4 }}>
+        {name}
+      </Typography>
+
+      {/* Claim button */}
+      {poolId !== null ? (
+        <KukaiEmbedComponent ref={embedRef} onLoginSuccess={handleClaim} />
+      ) : (
+        <Typography variant="caption" color="warning.main">
+          EXPIRED OR NOT ABLE TO CLAIM
+        </Typography>
+      )}
+
+      {claimStatus && (
+        <Box sx={{ mt: 3, border: 1, borderColor: "warning.main", p: 3 }}>
+          <Typography variant="caption" color="warning.main">{claimStatus}</Typography>
+        </Box>
+      )}
+    </Container>
   );
 }

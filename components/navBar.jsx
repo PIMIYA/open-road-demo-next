@@ -75,7 +75,7 @@ export default function NavBar() {
         aria-label="menu"
         className={`
           flex items-center justify-center w-10 h-10 rounded-full
-          border border-[var(--brand-secondary)] text-[var(--brand-secondary)] bg-transparent cursor-pointer
+          border border-[var(--brand-secondary)] text-[var(--brand-secondary)] bg-white/20 backdrop-blur-md cursor-pointer
           [touch-action:manipulation] [-webkit-tap-highlight-color:transparent]
         `}
       >
@@ -152,8 +152,8 @@ export default function NavBar() {
           sx={{
             cursor: "pointer",
             position: "relative",
-            width: { xs: "100px", sm: "120px", md: "130px" },
-            height: { xs: "50px", sm: "60px", md: "65px" },
+            width: { xs: "60px", sm: "60px", md: "60px" },
+            height: { xs: "30px", sm: "30px", md: "30px" },
             transition: "width .5s, height .5s",
           }}
         >
@@ -174,7 +174,7 @@ export default function NavBar() {
                 onClick={connect}
                 className={`
                   flex items-center gap-1.5 px-4 py-2 rounded-full
-                  border border-[var(--brand-primary)] text-[var(--brand-primary)] bg-transparent
+                  border border-[var(--brand-primary)] text-[var(--brand-primary)] bg-white/20 backdrop-blur-md
                   text-sm font-medium cursor-pointer
                   [touch-action:manipulation] [-webkit-tap-highlight-color:transparent]
                 `}

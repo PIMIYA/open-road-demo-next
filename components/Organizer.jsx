@@ -4,26 +4,32 @@ import Link from "next/link";
 export default function Organizer({ organizer, artists, organizers }) {
   if (!organizer) return null;
 
+  const normalize = (s) => s.replace(/\s+/g, "").toLowerCase();
+
   const names = organizer.split(" x ").map((n) => n.trim()).filter(Boolean);
-  const artistSet = new Set((artists?.data || []).map((a) => a.name));
-  const organizerSet = new Set((organizers?.data || []).map((o) => o.name));
-  const allPeople = [...(organizers?.data || []), ...(artists?.data || [])];
+  const artistList = (artists?.data || []);
+  const organizerList = (organizers?.data || []);
+  const allPeople = [...organizerList, ...artistList];
+
+  const artistNorm = new Set(artistList.map((a) => normalize(a.name)));
+  const organizerNorm = new Set(organizerList.map((o) => normalize(o.name)));
 
   const resolve = (name) => {
-    const match = allPeople.find((p) => p.name === name);
-    return match ? { name, wallet: match.address } : { name, wallet: null };
+    const match = allPeople.find((p) => normalize(p.name) === normalize(name));
+    return match ? { name: match.name, wallet: match.address } : { name, wallet: null };
   };
 
   const grouped = { artist: [], organizer: [] };
   names.forEach((name) => {
     const person = resolve(name);
-    if (artistSet.has(name)) {
+    const norm = normalize(name);
+    if (artistNorm.has(norm)) {
       grouped.artist.push(person);
-    } else if (organizerSet.has(name)) {
+    } else if (organizerNorm.has(norm)) {
       grouped.organizer.push(person);
     } else {
-      // fallback: treat as artist
-      grouped.artist.push(person);
+      // fallback: treat as organizer (unknown names are more likely organizers)
+      grouped.organizer.push(person);
     }
   });
 

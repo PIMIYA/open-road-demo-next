@@ -95,9 +95,11 @@ export default function WalletCanvas({ canvasData, address }) {
           border: "1px solid",
           borderColor: "primary.main",
           lineHeight: 0,
-          "&:hover": {
-            ".info-sketch-wrapper, .info-chip": {
-              opacity: 1,
+          "@media (hover: hover)": {
+            "&:hover": {
+              ".info-sketch-wrapper, .info-chip": {
+                opacity: 1,
+              },
             },
           },
           ".react-p5-wrapper": {

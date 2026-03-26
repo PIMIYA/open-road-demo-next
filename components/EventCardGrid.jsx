@@ -60,8 +60,10 @@ export default function EventCardGrid(props) {
                   img: {
                     transform: "perspective(1000px) translateY(0px)",
                     transition: "transform 0.3s",
-                    "&:hover": {
-                      transform: "perspective(1000px) translateZ(100px)",
+                    "@media (hover: hover)": {
+                      "&:hover": {
+                        transform: "perspective(1000px) translateZ(100px)",
+                      },
                     },
                   },
                 }}

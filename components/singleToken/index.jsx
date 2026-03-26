@@ -46,7 +46,7 @@ export default function SingleToken({
 
   return (
     <Box sx={{ px: { xs: 2, md: 3 }, py: 6 }}>
-      <Stack direction={{ xs: "column", lg: "row" }} spacing={8}>
+<Stack direction={{ xs: "column", lg: "row" }} spacing={8}>
         {/* Media */}
         <Box sx={{ width: { xs: "100%", lg: "55%" }, flexShrink: 0 }}>
           <RenderMedia mimeType={mimeType} src={src} />
@@ -103,7 +103,15 @@ export default function SingleToken({
             <Typography variant="overline" color="text.secondary">
               LOCATION
             </Typography>
-            <Typography variant="body1">{data.eventPlace}</Typography>
+            {data.eventPlace && data.metadata?.venue_id && data.metadata?.city_slug ? (
+              <Typography variant="body1">
+                <Link href={`/?venue=${data.metadata.venue_id}&city=${data.metadata.city_slug}`}>
+                  {data.eventPlace}
+                </Link>
+              </Typography>
+            ) : (
+              <Typography variant="body1">{data.eventPlace}</Typography>
+            )}
           </Box>
 
           {/* Format */}

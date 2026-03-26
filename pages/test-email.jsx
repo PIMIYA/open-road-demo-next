@@ -275,9 +275,11 @@ export default function TestEmail() {
                     letterSpacing: '0.05em',
                     textTransform: 'uppercase',
                     boxShadow: 'none',
-                    '&:hover': {
-                      backgroundColor: '#1a6fd6',
-                      boxShadow: 'none',
+                    '@media (hover: hover)': {
+                      '&:hover': {
+                        backgroundColor: '#1a6fd6',
+                        boxShadow: 'none',
+                      },
                     },
                   }}
                 >

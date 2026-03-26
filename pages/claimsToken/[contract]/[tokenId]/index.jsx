@@ -10,6 +10,7 @@ import {
 } from "@/lib/api";
 import { fetchCities, fetchVenues } from "@/lib/map-api";
 /* Components */
+import { Box, Typography } from "@mui/material";
 import SingleToken from "@/components/singleToken";
 /* Routing */
 import { useRouter } from "next/router";
@@ -24,6 +25,16 @@ const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 
 export default function Id({ ownersData, data, data_from_pool, organizers, artists, events, venueNameMap, airdropTransfers }) {
   // console.log("current active claimable token data", data[0].tokenId);
+
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return (
+      <Box sx={{ px: 3, py: 10, textAlign: "center" }}>
+        <Typography variant="overline" color="error.main">
+          Unable to load token data. Please try again later.
+        </Typography>
+      </Box>
+    );
+  }
 
   // TODO: remove dummy data after api ready
   if (data) {

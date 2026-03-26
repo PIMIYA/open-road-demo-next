@@ -8,6 +8,7 @@ import {
 } from "react";
 import { KukaiEmbed, Networks } from "kukai-embed";
 import { Button } from "@mui/material";
+import ButtonSpinner from "@/components/ButtonSpinner";
 
 /**（可選）在模組層做單例，避免多次掛載頁面時重複 new */
 let singletonEmbed = null;
@@ -142,9 +143,10 @@ const KukaiEmbedComponent = forwardRef(({ onLoginSuccess }, ref) => {
           px: 2,
           py: 1,
           borderRadius: "4px",
-          "&:hover": { backgroundColor: "#0056b3" },
+          "@media (hover: hover)": { "&:hover": { backgroundColor: "#0056b3" } },
         }}
       >
+        {busy && <ButtonSpinner color="#fff" />}
         {isLoggedIn ? "Logout" : busy ? "Connecting..." : "click to claim NFT"}
       </Button>
 

@@ -259,7 +259,7 @@ export default function PDFViewer({ src }) {
                   justifyContent: "center",
                   cursor: "pointer",
                   transition: "border-color 0.15s, background-color 0.15s",
-                  "&:hover": { borderColor: currentPage === page ? BRAND : "text.secondary" },
+                  "@media (hover: hover)": { "&:hover": { borderColor: currentPage === page ? BRAND : "text.secondary" } },
                 }}
               >
                 <Typography sx={{ fontSize: "10px", opacity: currentPage === page ? 1 : 0.5, color: currentPage === page ? BRAND : "inherit", fontWeight: currentPage === page ? 700 : 400 }}>

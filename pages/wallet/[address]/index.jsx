@@ -221,33 +221,33 @@ export default function Wallet({
   }, [createdPoolURL]);
   // console.log("createdData", createdData);
 
-  /* Tab: Claimed and Ctreated */
+  /* Tab: Claimed and Created */
   const [value, setValue] = useState(0);
-  // const handleChange = useMemo(
-  //   () => (event, newValue) => {
-  //     setValue(newValue);
-  //     setFilteredData(newValue === 0 ? claimData : createdData);
-  //   },
-  //   [claimData, createdData]
-  // );
-  const handleClaimed = async () => {
+  const [tabInitialized, setTabInitialized] = useState(false);
+
+  const handleClaimed = () => {
     setValue(0);
-    setFilteredData(await claimData);
+    setFilteredData(claimData);
   };
-  const handleCreated = async () => {
+  const handleCreated = () => {
     setValue(1);
-    setFilteredData(await createdData);
+    setFilteredData(createdData);
   };
 
+  // Auto-select the initial tab only once when data first arrives
   useEffect(() => {
-    setTimeout(() => {
-      if (claimData === null) {
-        handleCreated();
-      } else {
-        handleClaimed();
-      }
-    }, 3000); //miliseconds
-  }, [createdData, claimData]);
+    if (tabInitialized) return;
+    // Wait until at least one dataset has loaded (non-null)
+    if (claimData === null && createdData === null) return;
+
+    if (claimData && claimData.length > 0) {
+      setValue(0);
+      setTabInitialized(true);
+    } else if (createdData && createdData.length > 0) {
+      setValue(1);
+      setTabInitialized(true);
+    }
+  }, [claimData, createdData, tabInitialized]);
 
   // console.log("filteredData", filteredData);
 

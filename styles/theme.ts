@@ -171,16 +171,20 @@ const theme = createTheme({
         outlined: {
           borderColor: `${brandColors.primary}${borderOpacity.medium}`,
           color: brandColors.primary,
-          '&:hover': {
-            backgroundColor: `${brandColors.primary}0D`,
-            borderColor: brandColors.primary,
+          '@media (hover: hover)': {
+            '&:hover': {
+              backgroundColor: `${brandColors.primary}0D`,
+              borderColor: brandColors.primary,
+            },
           },
         },
         filled: {
           backgroundColor: brandColors.primary,
           color: brandColors.background,
-          '&:hover': {
-            backgroundColor: brandColors.secondary,
+          '@media (hover: hover)': {
+            '&:hover': {
+              backgroundColor: brandColors.secondary,
+            },
           },
         },
       },
@@ -201,16 +205,20 @@ const theme = createTheme({
           minHeight: '36px',
           padding: '8px 16px',
           transition: 'all 0.15s ease',
-          '&:hover': {
-            boxShadow: 'none',
+          '@media (hover: hover)': {
+            '&:hover': {
+              boxShadow: 'none',
+            },
           },
         },
         contained: {
           backgroundColor: brandColors.primary,
           color: brandColors.background,
-          '&:hover': {
-            backgroundColor: brandColors.secondary,
-            color: brandColors.background,
+          '@media (hover: hover)': {
+            '&:hover': {
+              backgroundColor: brandColors.secondary,
+              color: brandColors.background,
+            },
           },
         },
         outlined: {
@@ -218,16 +226,20 @@ const theme = createTheme({
           borderColor: `${brandColors.primary}${borderOpacity.medium}`,
           color: brandColors.primary,
           backgroundColor: 'transparent',
-          '&:hover': {
-            borderWidth: '1px',
-            borderColor: brandColors.primary,
-            backgroundColor: `${brandColors.primary}0D`,
+          '@media (hover: hover)': {
+            '&:hover': {
+              borderWidth: '1px',
+              borderColor: brandColors.primary,
+              backgroundColor: `${brandColors.primary}0D`,
+            },
           },
         },
         text: {
           color: brandColors.primary,
-          '&:hover': {
-            backgroundColor: `${brandColors.primary}0D`,
+          '@media (hover: hover)': {
+            '&:hover': {
+              backgroundColor: `${brandColors.primary}0D`,
+            },
           },
         },
         sizeSmall: {
@@ -255,9 +267,11 @@ const theme = createTheme({
           style: {
             color: brandColors.primary,
             borderColor: brandColors.primary,
-            '&:hover': {
-              borderColor: brandColors.secondary,
-              backgroundColor: `${brandColors.secondary}1A`,
+            '@media (hover: hover)': {
+              '&:hover': {
+                borderColor: brandColors.secondary,
+                backgroundColor: `${brandColors.secondary}1A`,
+              },
             },
           },
         },
@@ -278,8 +292,10 @@ const theme = createTheme({
               borderColor: `${brandColors.primary}${borderOpacity.medium}`,
               borderWidth: '1px',
             },
-            '&:hover fieldset': {
-              borderColor: brandColors.primary,
+            '@media (hover: hover)': {
+              '&:hover fieldset': {
+                borderColor: brandColors.primary,
+              },
             },
             '&.Mui-focused fieldset': {
               borderColor: brandColors.primary,
@@ -335,8 +351,10 @@ const theme = createTheme({
             borderColor: `${brandColors.primary}${borderOpacity.medium}`,
             borderWidth: '1px',
           },
-          '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: brandColors.primary,
+          '@media (hover: hover)': {
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: brandColors.primary,
+            },
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
             borderColor: brandColors.primary,
@@ -351,13 +369,17 @@ const theme = createTheme({
           fontSize: '12px',
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
-          '&:hover': {
-            backgroundColor: `${brandColors.primary}0D`,
+          '@media (hover: hover)': {
+            '&:hover': {
+              backgroundColor: `${brandColors.primary}0D`,
+            },
           },
           '&.Mui-selected': {
             backgroundColor: `${brandColors.primary}1A`,
-            '&:hover': {
-              backgroundColor: `${brandColors.primary}26`,
+            '@media (hover: hover)': {
+              '&:hover': {
+                backgroundColor: `${brandColors.primary}26`,
+              },
             },
           },
         },
@@ -371,8 +393,10 @@ const theme = createTheme({
           boxShadow: 'none',
           backgroundColor: 'transparent',
           transition: 'border-color 0.15s ease',
-          '&:hover': {
-            borderColor: `${brandColors.primary}${borderOpacity.medium}`,
+          '@media (hover: hover)': {
+            '&:hover': {
+              borderColor: `${brandColors.primary}${borderOpacity.medium}`,
+            },
           },
         },
       },
@@ -495,8 +519,13 @@ const theme = createTheme({
           width: 12,
           height: 12,
           backgroundColor: brandColors.primary,
-          '&:hover, &.Mui-focusVisible': {
+          '&.Mui-focusVisible': {
             boxShadow: 'none',
+          },
+          '@media (hover: hover)': {
+            '&:hover': {
+              boxShadow: 'none',
+            },
           },
         },
         track: {

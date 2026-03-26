@@ -96,8 +96,10 @@ export default function GeneralTokenCardGrid(props) {
                   img: {
                     transform: "perspective(1000px) translateY(0px)",
                     transition: "transform 0.3s",
-                    "&:hover": {
-                      transform: "perspective(1000px) translateZ(100px)",
+                    "@media (hover: hover)": {
+                      "&:hover": {
+                        transform: "perspective(1000px) translateZ(100px)",
+                      },
                     },
                   },
                 }}
@@ -106,7 +108,7 @@ export default function GeneralTokenCardGrid(props) {
                   sx={{
                     border: "1px solid var(--brand-secondary)",
                     borderRadius: "10px",
-                    p: 2,
+                    p: 3,
                   }}
                 >
                   <Link

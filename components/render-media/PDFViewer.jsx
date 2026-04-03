@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Box, IconButton, TextField, Typography } from "@mui/material";
+import { useT } from "@/lib/i18n/useT";
 
 const BRAND = "#ed5024";
 const BRAND_BG = "rgba(237, 80, 36, 0.08)";
@@ -49,6 +50,7 @@ const btnSx = {
 const BASE_WIDTH = 595;
 
 export default function PDFViewer({ src }) {
+  const t = useT();
   const [totalPages, setTotalPages] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(100);
@@ -128,16 +130,19 @@ export default function PDFViewer({ src }) {
       const page = await pdf.getPage(currentPage);
       if (cancelled) return;
 
-      const scale = (BASE_WIDTH / page.getViewport({ scale: 1 }).width) * (zoom / 100);
-      const viewport = page.getViewport({ scale });
+      const dpr = window.devicePixelRatio || 1;
+      const baseScale = (BASE_WIDTH / page.getViewport({ scale: 1 }).width) * (zoom / 100);
+      // Render at device-pixel resolution for sharp output on Retina screens
+      const renderViewport = page.getViewport({ scale: baseScale * dpr });
+      const displayViewport = page.getViewport({ scale: baseScale });
 
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      canvas.style.width = `${viewport.width}px`;
-      canvas.style.height = `${viewport.height}px`;
+      canvas.width = renderViewport.width;
+      canvas.height = renderViewport.height;
+      canvas.style.width = `${displayViewport.width}px`;
+      canvas.style.height = `${displayViewport.height}px`;
 
       const ctx = canvas.getContext("2d");
-      const renderTask = page.render({ canvasContext: ctx, viewport });
+      const renderTask = page.render({ canvasContext: ctx, viewport: renderViewport });
       renderTaskRef.current = renderTask;
 
       try {
@@ -241,7 +246,7 @@ export default function PDFViewer({ src }) {
       {/* Thumbnail strip */}
       {totalPages && (
         <Box sx={{ borderTop: "1px solid", borderColor: "divider", px: 1.5, py: 1, bgcolor: "action.hover" }}>
-          <Typography sx={{ ...labelSx, mb: 0.5 }}>PAGES</Typography>
+          <Typography sx={{ ...labelSx, mb: 0.5 }}>{t.nft.pages}</Typography>
           <Box sx={{ display: "flex", gap: 0.5, overflowX: "auto", pb: 0.5 }}>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <Box
@@ -273,8 +278,8 @@ export default function PDFViewer({ src }) {
 
       {/* Info bar */}
       <Box sx={{ borderTop: "1px solid", borderColor: "divider", px: 1.5, py: 0.5, display: "flex", justifyContent: "space-between" }}>
-        <Typography sx={labelSx}>FORMAT: PDF</Typography>
-        <Typography sx={labelSx}>PAGES: {totalPages || "..."}</Typography>
+        <Typography sx={labelSx}>{t.nft.format}: PDF</Typography>
+        <Typography sx={labelSx}>{t.nft.pages}: {totalPages || "..."}</Typography>
       </Box>
     </Box>
   );

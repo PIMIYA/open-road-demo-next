@@ -6,8 +6,10 @@ import { Box, Button, Container, Divider, Stack, Typography } from "@mui/materia
 import { MainnetURL } from "@/lib/api";
 import { decrypt } from "@/lib/dummy";
 import { getAkaswapAssetUrl } from "@/lib/stringUtils";
+import { useT } from "@/lib/i18n/useT";
 
 export default function Claim({ apiEndPoint }) {
+  const t = useT();
   const [data, setData] = useState(null);
   const [isLogin, setIsLogin] = useState(false);
   const [isClaimed, setIsClaimed] = useState(false);
@@ -32,7 +34,7 @@ export default function Claim({ apiEndPoint }) {
   function LoginActions() {
     return (
       <Button variant="contained" size="large" fullWidth onClick={() => setIsLogin(true)}>
-        SIGN IN WITH GOOGLE
+        {t.claim.signInGoogle}
       </Button>
     );
   }
@@ -47,10 +49,10 @@ export default function Claim({ apiEndPoint }) {
           fullWidth
           onClick={() => setIsClaimed(true)}
         >
-          CLAIM NFT
+          {t.claim.claimNft}
         </Button>
         <Button variant="ghost" size="sm" onClick={() => setIsLogin(false)}>
-          SIGN OUT
+          {t.claim.signOut}
         </Button>
       </Stack>
     );
@@ -59,7 +61,7 @@ export default function Claim({ apiEndPoint }) {
   function ClaimedActions() {
     return (
       <Button variant="outlined" size="large" fullWidth>
-        VIEW WALLET
+        {t.claim.viewWallet}
       </Button>
     );
   }

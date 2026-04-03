@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 /* Fetch data */
 import { WalletRoleAPI, AkaDropAPI, FetchDirectusData } from "@/lib/api";
+import { fetchCities, fetchVenues } from "@/lib/map-api";
 /* Sub Components */
 import TwoColumnLayout, {
   Side,
@@ -30,6 +31,7 @@ import WalletCanvas from "@/components/wallet/WalletCanvas";
 import CustomSelect from "@/components/CustomSelect";
 
 import { useRouter } from "next/router";
+import { useT } from "@/lib/i18n/useT";
 
 export default function Wallet({
   role,
@@ -40,8 +42,10 @@ export default function Wallet({
   organizers,
   artists,
   walletInfo,
+  venueNameMap = {},
 }) {
   const router = useRouter();
+  const t = useT();
   /* Connected wallet */
   const { address, connect, disconnect } = useConnection();
 
@@ -251,31 +255,57 @@ export default function Wallet({
 
   // console.log("filteredData", filteredData);
 
-  /* Locations : get all locations from data */
+  // Build event lookup map from Directus events
+  const eventById = useMemo(() => {
+    const map = {};
+    (events?.data || []).forEach((ev) => {
+      if (ev.id) map[ev.id] = ev;
+    });
+    return map;
+  }, [events]);
+
+  // Resolve a card's location to venue name:
+  // New NFTs: event_id → event.venue_id → venueNameMap
+  // Or: metadata.venue_id → venueNameMap
+  // Legacy NFTs: event_location (raw string)
+  const resolveLocation = (card) => {
+    const meta = card.metadata;
+
+    // Try venue_id directly from NFT metadata
+    if (meta.venue_id && venueNameMap[meta.venue_id]) {
+      return venueNameMap[meta.venue_id];
+    }
+
+    // Try event_id → event.venue_id → venue name
+    if (meta.event_id && eventById[meta.event_id]) {
+      const ev = eventById[meta.event_id];
+      if (ev.venue_id && venueNameMap[ev.venue_id]) {
+        return venueNameMap[ev.venue_id];
+      }
+    }
+
+    // Legacy fallback: event_location string
+    return meta.event_location || "";
+  };
+
+  /* Locations : merge event_location (legacy) and event_id (new) */
   const locations = useMemo(() => {
     const data = value === 0 ? claimData : createdData;
-    // if data && createdData is not null
-    if (data) {
-      const locations = [];
-      data.forEach((c) => {
-        if (!locations.includes(c.metadata.event_location)) {
-          locations.push(c.metadata.event_location);
-        }
-      });
-      return locations;
-    }
-  }, [value, claimData, createdData]);
+    if (!data) return [];
+    const locs = new Set();
+    data.forEach((c) => {
+      const loc = resolveLocation(c);
+      if (loc) locs.add(loc);
+    });
+    return [...locs].sort();
+  }, [value, claimData, createdData, eventById, venueNameMap]);
   // console.log("locations", locations);
 
-  /* Categories : get all categories from data */
+  /* Categories : get all categories from data (filter out empty values) */
   const categories = useMemo(() => {
     const data = value === 0 ? claimData : createdData;
-    if (data) {
-      const categories = [
-        ...new Set(data.map((item) => item.metadata.category)),
-      ];
-      return categories;
-    }
+    if (!data) return [];
+    return [...new Set(data.map((item) => item.metadata.category).filter(Boolean))];
   }, [value, claimData, createdData]);
   // console.log("categories", categories);
 
@@ -288,14 +318,14 @@ export default function Wallet({
     const dataToFilter = value === 0 ? claimData : createdData;
     if (!dataToFilter) return;
     const filtered = dataToFilter.filter((c) => {
-      const eventLocation = c.metadata.event_location || "";
+      const loc = resolveLocation(c);
       return (
-        (!locValue || eventLocation.includes(locValue)) &&
-        (!catValue || c.metadata.category.includes(catValue))
+        (!locValue || loc.includes(locValue)) &&
+        (!catValue || (c.metadata.category || "").includes(catValue))
       );
     });
     setFilteredData(filtered);
-  }, [catValue, locValue, value, claimData, createdData]);
+  }, [catValue, locValue, value, claimData, createdData, eventById, venueNameMap]);
 
   /* API route: Client fetch Comments by WALLET ADDRESS at KairosDrop NFT Comments API */
   useEffect(() => {
@@ -314,7 +344,7 @@ export default function Wallet({
   /* console log filtered data */
   // console.log("filteredData", filteredData);
   if (router.isFallback) {
-    return <div>Loading...</div>;
+    return <div>{t.common.loading}</div>;
   }
 
   return (
@@ -351,11 +381,11 @@ export default function Wallet({
           }}
         >
           <Tab
-            label="Claimed"
+            label={t.wallet.claimed}
             disabled={claimData === null || claimData.length === 0}
           />
           <Tab
-            label="Created"
+            label={t.wallet.created}
             disabled={createdData === null || createdData.length === 0}
           />
         </Tabs>
@@ -372,7 +402,7 @@ export default function Wallet({
             value={locValue}
             onChange={(e) => setLocValue(e.target.value)}
           >
-            <option value="">Location</option>
+            <option value="">{t.wallet.location}</option>
             {locations && locations.map((loc) => (
               <option key={loc} value={loc}>{loc}</option>
             ))}
@@ -389,7 +419,7 @@ export default function Wallet({
             value={catValue}
             onChange={(e) => setCatValue(e.target.value)}
           >
-            <option value="">Category</option>
+            <option value="">{t.wallet.category}</option>
             {categories && categories.map((cat) => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
@@ -404,7 +434,7 @@ export default function Wallet({
             display: filteredData && filteredData.length > 0 ? "none" : "block",
           }}
         >
-          No Token
+          {t.wallet.noToken}
         </Box>
         <Box
           sx={{
@@ -425,6 +455,7 @@ export default function Wallet({
               myWalletAddress={address}
               organizers={organizers}
               artists={artists}
+              commentTokenId={router.query.comment || ""}
             />
           </Box>
         </Stack>
@@ -497,6 +528,18 @@ export async function getStaticProps({ params }) {
   else if (userWalletsData?.data?.length > 0)
     walletInfo = userWalletsData.data[0];
 
+  // Build venue name map (venue_id → venue name) from PostGIS server
+  let venueNameMap = {};
+  try {
+    const cities = await fetchCities();
+    const allVenues = (await Promise.all(cities.map((c) => fetchVenues(c.slug)))).flat();
+    for (const v of allVenues) {
+      venueNameMap[v.id] = v.name;
+    }
+  } catch (err) {
+    console.error("Failed to fetch venues for wallet page:", err);
+  }
+
   return {
     props: {
       role,
@@ -507,6 +550,7 @@ export async function getStaticProps({ params }) {
       organizers,
       artists,
       walletInfo,
+      venueNameMap,
     },
     revalidate: 10,
   };

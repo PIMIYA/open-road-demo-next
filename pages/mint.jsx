@@ -18,6 +18,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 import { fetchCities, fetchVenues } from "@/lib/map-api";
 import ButtonSpinner from "@/components/ButtonSpinner";
+import { useT } from "@/lib/i18n/useT";
 
 /* Kairos */
 import { useConnection } from "@/packages/providers";
@@ -27,8 +28,6 @@ import { Sharer } from "@/components/sharer";
 
 // List value of categories, tags, and licenses
 import {
-  categories,
-  tags,
   licenses,
   VisuallyHiddenInput,
 } from "@/components/mint/const";
@@ -42,6 +41,8 @@ const ACCEPT_EXTS =
   ".glb,.gltf," +
   ".mp3,.oga," +
   ".pdf,.zip";
+
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
 
 function classifyFile(file) {
   if (!file) return {};
@@ -73,6 +74,7 @@ function classifyFile(file) {
 /* ------------------------------------------------ */
 
 export default function Mint({ organizers, artists, cities, events }) {
+  const t = useT();
   const router = useRouter();
 
   // Event selection
@@ -115,6 +117,7 @@ export default function Mint({ organizers, artists, cities, events }) {
   const [file, setFile] = useState(undefined);
   const [display, setDisplay] = useState(undefined);
   const [fileKind, setFileKind] = useState(null);
+  const [fileSizeError, setFileSizeError] = useState(null);
   const [isXDirectory, setIsXDirectory] = useState(true); // ZIP 預設視為 x-directory
 
   const [miningInProgress, setMiningInProgress] = useState(false);
@@ -161,7 +164,7 @@ export default function Mint({ organizers, artists, cities, events }) {
       });
   }, [address]);
 
-  if (isLoadingRole) return <p>Loading...</p>;
+  if (isLoadingRole) return <p>{t.common.loading}</p>;
   if (!roleData) return <p>No role data</p>;
   if (roleData.data.length === 0 || !address) {
     router.push("/cannotMint");
@@ -174,6 +177,14 @@ export default function Mint({ organizers, artists, cities, events }) {
   const handleFileUpload = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
+    if (f.size > MAX_FILE_SIZE) {
+      setFileSizeError(t.mint.fileTooLarge || `File exceeds 100 MB limit (${(f.size / 1024 / 1024).toFixed(1)} MB)`);
+      setFile(undefined);
+      setFileKind(null);
+      e.target.value = "";
+      return;
+    }
+    setFileSizeError(null);
     const kind = classifyFile(f);
     setFile(f);
     setFileKind(kind);
@@ -400,19 +411,19 @@ export default function Mint({ organizers, artists, cities, events }) {
             value={selectedEvent}
             onChange={(e, v) => setSelectedEvent(v)}
             renderInput={(params) => (
-              <TextField {...params} label="Event" />
+              <TextField {...params} label={t.mint.event} />
             )}
           />
           <TextField
             inputRef={titleRef}
             id="title"
-            label="Title"
+            label={t.mint.title}
             fullWidth
           />
           <TextField
             id="description"
             inputRef={descriptionRef}
-            label="Description"
+            label={t.mint.description}
             multiline
             maxRows={4}
             fullWidth
@@ -425,7 +436,7 @@ export default function Mint({ organizers, artists, cities, events }) {
             fullWidth
             onChange={(e, v) => setSelectedOrganizer(v)}
             renderInput={(params) => (
-              <TextField {...params} label="Organizer" />
+              <TextField {...params} label={t.mint.organizer} />
             )}
           />
           <Autocomplete
@@ -446,24 +457,24 @@ export default function Mint({ organizers, artists, cities, events }) {
               ))
             }
             renderInput={(params) => (
-              <TextField {...params} label="Artists" />
+              <TextField {...params} label={t.mint.artists} />
             )}
           />
           <Autocomplete
             id="categoriy"
-            options={categories}
+            options={t.mintCategories}
             getOptionLabel={(o) => o.label}
             isOptionEqualToValue={(o, v) => o.label === v.label}
             fullWidth
             onChange={(e, v) => setSelectedCategory(v)}
             renderInput={(params) => (
-              <TextField {...params} label="Category" />
+              <TextField {...params} label={t.mint.category} />
             )}
           />
           <Autocomplete
             multiple
             id="tag"
-            options={tags}
+            options={t.mintTags}
             getOptionLabel={(o) => o.label}
             fullWidth
             onChange={(e, v) => setSelectedTags(v)}
@@ -478,7 +489,7 @@ export default function Mint({ organizers, artists, cities, events }) {
               ))
             }
             renderInput={(params) => (
-              <TextField {...params} label="Tag" />
+              <TextField {...params} label={t.mint.tag} />
             )}
           />
           {/* Location: city → venue progressive disclosure */}
@@ -496,7 +507,7 @@ export default function Mint({ organizers, artists, cities, events }) {
               setSelectedVenue(null);
             }}
             renderInput={(params) => (
-              <TextField {...params} label="City" />
+              <TextField {...params} label={t.mint.city} />
             )}
           />
           <Autocomplete
@@ -507,10 +518,10 @@ export default function Mint({ organizers, artists, cities, events }) {
             fullWidth
             value={selectedVenue}
             disabled={!selectedCity}
-            noOptionsText={selectedCity ? "No venues" : "Select a city first"}
+            noOptionsText={selectedCity ? t.mint.noVenues : t.mint.selectCityFirst}
             onChange={(e, v) => setSelectedVenue(v)}
             renderInput={(params) => (
-              <TextField {...params} label="Venue" />
+              <TextField {...params} label={t.mint.venue} />
             )}
           />
 
@@ -527,7 +538,7 @@ export default function Mint({ organizers, artists, cities, events }) {
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Stack direction="row" spacing={4}>
               <DatePicker
-                label="Start time"
+                label={t.mint.startTime}
                 slotProps={{
                   textField: { fullWidth: true },
                   popper: {
@@ -543,7 +554,7 @@ export default function Mint({ organizers, artists, cities, events }) {
                 onChange={(v) => setStartTime(v)}
               />
               <DatePicker
-                label="End time"
+                label={t.mint.endTime}
                 slotProps={{
                   textField: { fullWidth: true },
                   popper: {
@@ -570,7 +581,7 @@ export default function Mint({ organizers, artists, cities, events }) {
             fullWidth
             onChange={(e, v) => setSelectedLicense(v)}
             renderInput={(params) => (
-              <TextField {...params} label="License" />
+              <TextField {...params} label={t.mint.license} />
             )}
           />
 
@@ -578,7 +589,7 @@ export default function Mint({ organizers, artists, cities, events }) {
           <Stack direction="row" spacing={4}>
             <TextField
               id="mintingTokenQty"
-              label="Editions"
+              label={t.mint.editions}
               type="number"
               fullWidth
               InputLabelProps={{ shrink: true }}
@@ -588,7 +599,7 @@ export default function Mint({ organizers, artists, cities, events }) {
             />
             <TextField
               id="royalty"
-              label="Royalty (10-25%)"
+              label={t.mint.royalty}
               type="number"
               fullWidth
               InputLabelProps={{ shrink: true }}
@@ -615,7 +626,7 @@ export default function Mint({ organizers, artists, cities, events }) {
                   value={useRoyaltiesShare}
                 />
               }
-              label="Apply royalty sharing"
+              label={t.mint.applyRoyalty}
             />
           </Box>
           {useRoyaltiesShare && (
@@ -631,7 +642,7 @@ export default function Mint({ organizers, artists, cities, events }) {
           <TextField
             inputRef={walletRef}
             id="walletAddress"
-            label="Wallet Address"
+            label={t.mint.walletAddress}
             fullWidth
             value={address}
           />
@@ -644,7 +655,7 @@ export default function Mint({ organizers, artists, cities, events }) {
               variant="outlined"
               tabIndex={-1}
             >
-              Upload file
+              {t.mint.uploadFile}
               <VisuallyHiddenInput
                 type="file"
                 accept={ACCEPT_EXTS}
@@ -654,7 +665,12 @@ export default function Mint({ organizers, artists, cities, events }) {
 
             {file && (
               <Typography variant="body2" sx={{ mt: 2, opacity: 0.6 }}>
-                {file.name}
+                {file.name} ({(file.size / 1024 / 1024).toFixed(1)} MB)
+              </Typography>
+            )}
+            {fileSizeError && (
+              <Typography variant="body2" sx={{ mt: 1, color: "var(--brand-secondary)" }}>
+                {fileSizeError}
               </Typography>
             )}
 
@@ -668,7 +684,7 @@ export default function Mint({ organizers, artists, cities, events }) {
                     onChange={(e) => setIsXDirectory(e.target.checked)}
                   />
                 }
-                label="This ZIP is an HTML site (x-directory)"
+                label={t.mint.zipIsHtml}
               />
             )}
 
@@ -681,7 +697,7 @@ export default function Mint({ organizers, artists, cities, events }) {
                   variant="outlined"
                   tabIndex={-1}
                 >
-                  Upload display
+                  {t.mint.uploadDisplay}
                   <VisuallyHiddenInput
                     type="file"
                     accept=".png,.jpg,.jpeg,.webp"
@@ -708,7 +724,7 @@ export default function Mint({ organizers, artists, cities, events }) {
               }
             >
               {miningInProgress && <ButtonSpinner color="#fff" />}
-              {miningInProgress ? "Minting..." : "Mint"}
+              {miningInProgress ? t.mint.minting : t.mint.mintButton}
             </Button>
           </Box>
         </Stack>

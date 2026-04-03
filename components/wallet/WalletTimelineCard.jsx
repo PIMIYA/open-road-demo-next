@@ -8,11 +8,9 @@ import {
   Typography,
   Chip,
   CardMedia,
-  Input,
 } from "@mui/material";
 import Tags from "@/components/Tags";
 
-// Add these imports for the dialog
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -20,8 +18,12 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
+import ButtonSpinner from "@/components/ButtonSpinner";
 
 import Organizer from "@/components/Organizer";
+import { useT } from "@/lib/i18n/useT";
+
+const BRAND = "var(--brand-secondary)";
 
 export default function WalletTimelineCard({
   data,
@@ -30,122 +32,80 @@ export default function WalletTimelineCard({
   myWalletAddress,
   organizers,
   artists,
+  autoOpenComment = false,
 }) {
-  // const { contract, tokenId } = data;
-  const contract = data.contract.address;
-  const tokenId = data.tokenId;
+  const t = useT();
+  const contract = data?.contract?.address;
+  const tokenId = data?.tokenId;
 
   const [messageStatus, setMessageStatus] = useState(false);
-  // Add states for the dialog
-  const [openDialog, setOpenDialog] = useState(false);
+  const [openDialog, setOpenDialog] = useState(autoOpenComment);
   const [userMessage, setUserMessage] = useState("");
-  const [tokenID, setTokenID] = useState("");
-  const [userAddress, setUserAddress] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitDone, setSubmitDone] = useState(false);
 
-  // Keep watching the message status, if the message is sent successfully, then hide .addComment and display the userMessage to the #tokenId
+  // Watch message status to update UI
   useEffect(() => {
     if (messageStatus) {
       const addCommentElement = document.getElementById(tokenId + `addComment`);
-      if (addCommentElement) {
-        addCommentElement.style.display = "none";
-      }
+      if (addCommentElement) addCommentElement.style.display = "none";
       const tokenIdElement = document.getElementById(tokenId + `thisComment`);
-      if (tokenIdElement) {
-        tokenIdElement.innerHTML = userMessage;
-      }
+      if (tokenIdElement) tokenIdElement.innerHTML = userMessage;
     }
     if (!messageStatus) {
       const addCommentElement = document.getElementById(tokenId + `addComment`);
-      if (addCommentElement) {
-        addCommentElement.style.display = "block";
-      }
+      if (addCommentElement) addCommentElement.style.display = "block";
       const tokenIdElement = document.getElementById(tokenId + `thisComment`);
-      if (tokenIdElement) {
-        tokenIdElement.innerHTML = "";
-      }
+      if (tokenIdElement) tokenIdElement.innerHTML = "";
     }
   }, [userMessage, tokenId, messageStatus]);
 
-  // Handle dialog open
   const handleClickOpen = () => {
     setOpenDialog(true);
   };
-  // Handle dialog close
+
   const handleCloseDialog = () => {
-    setOpenDialog(false);
+    if (!submitting) setOpenDialog(false);
   };
-  // Handle message submission
+
   const handleSubmitMessage = async () => {
+    if (!userMessage.trim()) return;
+    setSubmitting(true);
+    setSubmitError("");
     try {
       const response = await fetch("/api/post-comment", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tokenID: tokenId,
           walletAddress: myWalletAddress,
+          contractAddress: contract,
           message: userMessage,
         }),
       });
 
-      // Handle different status codes
-      let statusMessage = "";
-
-      switch (response.status) {
-        case 200:
-          statusMessage = "200 OK: The message was received successfully.";
-          break;
-        case 201:
-          statusMessage = "201 Created: Your message was successfully created.";
-          break;
-        case 400:
-          statusMessage =
-            "400 Bad Request: Invalid message format or missing required information.";
-          break;
-        case 403:
-          statusMessage =
-            "403 Forbidden: You don't have permission to leave a message.";
-          break;
-        case 500:
-          statusMessage =
-            "500 Internal Server Error: An error occurred on the server.";
-          break;
-        default:
-          statusMessage = `Unexpected status code: ${response.status}`;
-      }
-
       if (!response.ok) {
-        throw new Error(`${statusMessage}`);
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || `Error ${response.status}`);
       }
 
-      const result = await response.json();
-      console.log("Message submission result:", result);
+      await response.json();
       setMessageStatus(true);
+      setSubmitDone(true);
     } catch (error) {
       console.error("Error submitting message:", error);
-      setMessageStatus(false);
-      // setClaimStatus((prevStatus) => prevStatus + " • Error: " + error.message);
+      setSubmitError(error.message);
     } finally {
-      setOpenDialog(false);
+      setSubmitting(false);
     }
   };
+
   if (!data) {
     return (
       <Box mb={10}>
-        <Stack
-          direction={{
-            xs: "column",
-            md: "row",
-          }}
-          spacing={2}
-        >
-          <Box
-            width={{
-              xs: 100,
-              md: 200,
-            }}
-          >
+        <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+          <Box width={{ xs: 100, md: 200 }}>
             <Skeleton width="50%" />
             <Skeleton />
           </Box>
@@ -160,108 +120,112 @@ export default function WalletTimelineCard({
       </Box>
     );
   }
-  const tokenImageUrl = `https://assets.akaswap.com/ipfs/${data.metadata.thumbnailUri.replace(
-    "ipfs://",
-    ""
-  )}`;
+
+  const tokenImageUrl = `https://assets.akaswap.com/ipfs/${data.metadata.thumbnailUri.replace("ipfs://", "")}`;
+  const displayImageUrl = data.metadata.displayUri
+    ? `https://assets.akaswap.com/ipfs/${data.metadata.displayUri.replace("ipfs://", "")}`
+    : tokenImageUrl;
 
   return (
     <Box mb={10}>
-      <Stack
-        direction={{
-          xs: "column",
-          md: "row",
-        }}
-        spacing={2}
-      >
-        <Box width={200}>
-          <Typography variant="body1">{data.cliamDate}</Typography>
-          <Typography variant="body1">{data.claimTime}</Typography>
-          <Typography variant="body2">
+      <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+        <Box width={200} sx={{ fontWeight: 300 }}>
+          <Typography variant="body1" sx={{ fontWeight: 300 }}>{data.cliamDate}</Typography>
+          <Typography variant="body1" sx={{ fontWeight: 300 }}>{data.claimTime}</Typography>
+          <Typography variant="body2" sx={{ fontWeight: 300 }}>
             {data.metadata.event_location}
           </Typography>
         </Box>
-        <Box width={"100%"}>
-          <Box
-            sx={{
-              width: {
-                md: "100%",
-                lg: "30vw",
-              },
-              maxWidth: "400px",
-            }}
+        <Box width="100%">
+          <Link
+            href="/claimsToken/[contract]/[tokenId]"
+            as={`/claimsToken/${contract}/${tokenId}`}
           >
-            <Link
-              href={{
-                pathname: `/claimsToken/[contract]/[tokenId]`,
-                query: { contract, tokenId },
+            <CardMedia
+              sx={{
+                height: 300,
+                mb: 1.5,
+                backgroundSize: "contain",
+                backgroundPosition: "left center",
+                backgroundColor: "transparent",
               }}
-            >
-              <Box
-                sx={{
-                  bgcolor: "transparent",
-                  height: 280,
-                  mb: 1.5,
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  alt="thumbnail"
-                  sx={{
-                    objectFit: "contain",
-                    height: "100%",
-                    width: "100%",
-                    margin: "auto",
-                  }}
-                  image={tokenImageUrl}
-                />
-              </Box>
-            </Link>
-          </Box>
-          <Box mt={1} mb={2} sx={{ maxWidth: '65ch' }}>
-            <Typography variant="h6">
-              <Link
-                href={{
-                  pathname: `/claimsToken/[contract]/[tokenId]`,
-                  query: { contract, tokenId },
-                }}
-              >
-                {data.metadata.name}
-              </Link>
+              image={tokenImageUrl}
+            />
+          </Link>
+          <Box>
+            {/* Category — small text above name */}
+            {data.metadata.category && (
+              <Typography variant="caption" sx={{ opacity: 0.8, display: "block", lineHeight: 1.2 }}>
+                {t.categoryMap?.[data.metadata.category] || data.metadata.category}
+              </Typography>
+            )}
+            {/* NFT name — bold */}
+            <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+              {data.metadata.name}
             </Typography>
-            <Box>
-              <Link
-                href="/events/[id]"
-                as={`/events/${data.metadata.projectId}`}
-              >
-                {data.metadata.projectName}
-              </Link>
-            </Box>
+            {data.metadata.projectName && (
+              <Box sx={{ mb: 1 }}>
+                <Link
+                  href="/events/[id]"
+                  as={`/events/${data.metadata.projectId}`}
+                >
+                  <Typography variant="body2" sx={{ textDecoration: "underline" }}>
+                    {data.metadata.projectName}
+                  </Typography>
+                </Link>
+              </Box>
+            )}
             <Organizer
               organizer={data.metadata.organizer}
               artists={artists ? artists : null}
               organizers={organizers ? organizers : null}
             />
-            {/* <Typography variant="body1">{data.metadata.organizer}</Typography> */}
+            {/* Tags — outlined chips below */}
+            {data.metadata.tags && data.metadata.tags.length > 0 && (
+              <Box sx={{ mt: 1 }}>
+                {data.metadata.tags.map((tag, i) => (
+                  <Chip key={i} label={tag} variant="outlined" size="small" sx={{ mr: 1, mb: 0.5, cursor: "default" }} />
+                ))}
+              </Box>
+            )}
           </Box>
-          {/* <Tags tags={data.token.metadata.tags} /> */}
-          <Chip label={data.metadata.category} size="small" />
+
           {/* COMMENTS */}
           {addressFromURL === myWalletAddress ? (
-            <Box mt={1} mb={2} sx={{ color: "text.secondary" }}>
+            <Box mt={3} mb={2} sx={{ color: "text.secondary" }}>
               {data.comment ? (
-                <Box dangerouslySetInnerHTML={{ __html: data.comment }}></Box>
+                <Box>
+                  <Typography variant="caption" sx={{ opacity: 0.8, display: "block", lineHeight: 1.2, color: "text.primary" }}>
+                    {t.nft.comments}
+                  </Typography>
+                  <Box dangerouslySetInnerHTML={{ __html: data.comment }}></Box>
+                </Box>
               ) : (
                 <>
-                  <Box
-                    id={tokenId + `thisComment`}
-                    sx={{ paddingTop: "14px" }}
-                  ></Box>
-                  <Input
+                  <Box id={tokenId + `thisComment`} sx={{ paddingTop: "14px" }}>
+                  </Box>
+                  <Button
                     id={tokenId + `addComment`}
-                    placeholder="Add a comment"
+                    variant="outlined"
+                    size="small"
                     onClick={handleClickOpen}
-                  />
+                    sx={{
+                      color: BRAND,
+                      borderColor: BRAND,
+                      fontSize: 11,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      mt: 1,
+                      "@media (hover: hover)": {
+                        "&:hover": {
+                          borderColor: BRAND,
+                          backgroundColor: "rgba(237, 80, 36, 0.05)",
+                        },
+                      },
+                    }}
+                  >
+                    {t.comment.addComment}
+                  </Button>
                 </>
               )}
             </Box>
@@ -277,6 +241,8 @@ export default function WalletTimelineCard({
           <Dialog
             open={openDialog}
             onClose={handleCloseDialog}
+            maxWidth="sm"
+            fullWidth
             slotProps={{
               backdrop: {
                 sx: {
@@ -289,40 +255,132 @@ export default function WalletTimelineCard({
               sx: {
                 bgcolor: "#fff",
                 boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
+                border: "1px solid",
+                borderColor: BRAND,
+                borderRadius: "10px",
               },
             }}
           >
-            <DialogTitle>Leave a Message</DialogTitle>
+            {/* NFT Image in dialog */}
+            {displayImageUrl && (
+              <Box sx={{ px: 3, pt: 4, textAlign: "center" }}>
+                <Box
+                  component="img"
+                  src={displayImageUrl}
+                  alt={data.metadata.name || "NFT"}
+                  sx={{
+                    width: "100%",
+                    maxHeight: 240,
+                    objectFit: "contain",
+                    display: "block",
+                    mx: "auto",
+                    borderRadius: 1,
+                  }}
+                />
+              </Box>
+            )}
+
+            <DialogTitle sx={{ color: BRAND, fontSize: 14, fontWeight: "bold", pb: 0 }}>
+              {data.metadata.name || t.comment.leaveMessage}
+            </DialogTitle>
+
             <DialogContent>
-              <DialogContentText>
-                Congratulations on your successful claim! Would you like to
-                leave a message for Artist or Publisher?
-              </DialogContentText>
-              <TextField
-                autoFocus
-                margin="dense"
-                id="message"
-                label="Your Message"
-                type="text"
-                fullWidth
-                multiline
-                rows={4}
-                variant="outlined"
-                value={userMessage}
-                onChange={(e) => setUserMessage(e.target.value)}
-              />
+              {submitDone ? (
+                /* Success state */
+                <>
+                  <Typography sx={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: "success.main", mt: 1, mb: 0.5 }}>
+                    {t.comment.messageSent}
+                  </Typography>
+                  <Typography sx={{ fontSize: 13, color: "text.primary", whiteSpace: "pre-wrap", mt: 1 }}>
+                    {userMessage}
+                  </Typography>
+                </>
+              ) : (
+                /* Input state */
+                <>
+                  <DialogContentText sx={{ fontSize: 12, color: "text.secondary", mb: 1 }}>
+                    {t.comment.leaveMessageDesc}
+                  </DialogContentText>
+                  <TextField
+                    autoFocus
+                    margin="dense"
+                    placeholder={t.comment.placeholder}
+                    type="text"
+                    fullWidth
+                    multiline
+                    rows={3}
+                    variant="outlined"
+                    value={userMessage}
+                    onChange={(e) => setUserMessage(e.target.value)}
+                    disabled={submitting}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        fontSize: 13,
+                        "& fieldset": { borderColor: BRAND },
+                        "&.Mui-focused fieldset": { borderColor: BRAND },
+                      },
+                    }}
+                  />
+                  {submitError && (
+                    <Typography variant="caption" color="error.main" sx={{ mt: 1, display: "block" }}>
+                      {submitError}
+                    </Typography>
+                  )}
+                </>
+              )}
             </DialogContent>
-            <DialogActions>
-              <Button variant="outlined" onClick={handleCloseDialog}>
-                Skip
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleSubmitMessage}
-                disabled={!userMessage.trim()}
-              >
-                Submit
-              </Button>
+
+            <DialogActions sx={{ px: 3, pb: 4 }}>
+              {submitDone ? (
+                <Button
+                  variant="outlined"
+                  onClick={handleCloseDialog}
+                  sx={{
+                    color: BRAND,
+                    borderColor: BRAND,
+                    fontSize: 11,
+                    "@media (hover: hover)": {
+                      "&:hover": { borderColor: BRAND, backgroundColor: "rgba(237, 80, 36, 0.05)" },
+                    },
+                  }}
+                >
+                  {t.common.close}
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="outlined"
+                    onClick={handleCloseDialog}
+                    disabled={submitting}
+                    sx={{
+                      color: BRAND,
+                      borderColor: BRAND,
+                      fontSize: 11,
+                      "@media (hover: hover)": {
+                        "&:hover": { borderColor: BRAND, backgroundColor: "rgba(237, 80, 36, 0.05)" },
+                      },
+                    }}
+                  >
+                    {t.common.skip}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={handleSubmitMessage}
+                    disabled={!userMessage.trim() || submitting}
+                    sx={{
+                      color: BRAND,
+                      borderColor: BRAND,
+                      fontSize: 11,
+                      "@media (hover: hover)": {
+                        "&:hover": { borderColor: BRAND, backgroundColor: "rgba(237, 80, 36, 0.05)" },
+                      },
+                    }}
+                  >
+                    {submitting && <ButtonSpinner color="var(--brand-secondary)" />}
+                    {submitting ? t.common.sending : t.common.submit}
+                  </Button>
+                </>
+              )}
             </DialogActions>
           </Dialog>
         </Box>

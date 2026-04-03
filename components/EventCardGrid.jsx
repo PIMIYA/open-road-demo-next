@@ -6,9 +6,11 @@ import Grid from "@mui/material/Unstable_Grid2";
 import { formatDateRange } from "@/lib/stringUtils";
 import FadeOnScroll from "./fadeOnScroll";
 import DirectusImage from "./DirectusImage";
+import { useT } from "@/lib/i18n/useT";
 
 export default function EventCardGrid(props) {
   const router = useRouter();
+  const t = useT();
 
   const data = props.data;
   const pageSize = props.pageSize || 6;
@@ -79,7 +81,7 @@ export default function EventCardGrid(props) {
                       {cover_url ? (
                         <CardMedia
                           component="img"
-                          alt={name || "Event cover"}
+                          alt={name || t.events.eventCover}
                           sx={{
                             objectFit: "contain",
                             height: "100%",
@@ -118,7 +120,7 @@ export default function EventCardGrid(props) {
                         : "TBD"}
                     </Typography>
                     <Typography variant="body2">
-                      {venue_name || "Location TBD"}
+                      {venue_name || t.events.locationTbd}
                     </Typography>
                   </Box>
 

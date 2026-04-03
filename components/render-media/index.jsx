@@ -1,12 +1,44 @@
 import Image from "next/image";
 import { Box } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getAkaswapAssetUrl } from "@/lib/stringUtils";
 import dynamic from "next/dynamic";
 import VideoViewer from "./VideoViewer";
 import AudioViewer from "./AudioViewer";
+import { useT } from "@/lib/i18n/useT";
 
 const PDFViewer = dynamic(() => import("./PDFViewer"), { ssr: false });
+
+/**
+ * ModelViewer wrapper: mounts the <model-viewer> element once via ref
+ * so React re-renders don't destroy and recreate the web component.
+ */
+function ModelViewer({ src, poster, alt }) {
+  const containerRef = useRef(null);
+  const mountedRef = useRef(false);
+
+  useEffect(() => {
+    if (mountedRef.current) return; // only mount once
+    mountedRef.current = true;
+
+    import("@google/model-viewer").then(() => {
+      if (!containerRef.current) return;
+      const el = document.createElement("model-viewer");
+      el.setAttribute("src", src);
+      if (poster) el.setAttribute("poster", poster);
+      if (alt) el.setAttribute("alt", alt);
+      el.setAttribute("camera-controls", "");
+      el.setAttribute("autoplay", "");
+      el.setAttribute("auto-rotate", "");
+      el.style.width = "100%";
+      el.style.height = "100%";
+      containerRef.current.appendChild(el);
+    }).catch(console.error);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount — src/poster/alt are stable from SSR props
+
+  return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />;
+}
 
 /**
  * For x-directory IPFS content, the gateway may show a directory listing
@@ -46,6 +78,7 @@ function useResolvedXdirUrl(baseUrl, mimeType) {
 }
 
 export default function RenderMedia({ mimeType, src }) {
+  const t = useT();
   const tokenImageUrl = getAkaswapAssetUrl(src.displayUri);
   const artifactUrl = getAkaswapAssetUrl(src.artifactUri);
   const gltfUrl = artifactUrl;
@@ -67,27 +100,10 @@ export default function RenderMedia({ mimeType, src }) {
       objectFit: "contain",
       objectPosition: "top",
     },
-    alt: "display image",
+    alt: t.nft.displayImage,
     sizes: "(max-width: 600px) 100vw, 600px",
   };
 
-  const modelProps = {
-    "camera-controls": true,
-    autoplay: true,
-    "auto-rotate": true,
-    poster: tokenImageUrl,
-    src: gltfUrl,
-    alt: "3d model",
-    style: {
-      width: "100%",
-      height: "100%",
-      //   backgroundColor: "transparent",
-    },
-  };
-
-  useEffect(() => {
-    import("@google/model-viewer").catch(console.error);
-  }, []);
 
   switch (mimeType) {
     /* IMAGES */
@@ -108,17 +124,15 @@ export default function RenderMedia({ mimeType, src }) {
     case "model/gltf+json":
     case "model/gltf-binary":
       return (
-        <>
-          <Box
-            sx={{
-              width: { xs: "100%", md: "100%" },
-              height: { xs: "100vw", md: "70vh" },
-              position: "sticky",
-            }}
-          >
-            <model-viewer {...modelProps}></model-viewer>
-          </Box>
-        </>
+        <Box
+          sx={{
+            width: { xs: "100%", md: "100%" },
+            height: { xs: "100vw", md: "70vh" },
+            position: "sticky",
+          }}
+        >
+          <ModelViewer src={gltfUrl} poster={tokenImageUrl} alt={t.nft.model3d} />
+        </Box>
       );
 
     /* VIDEO */
@@ -141,7 +155,7 @@ export default function RenderMedia({ mimeType, src }) {
     case "audio/oga":
       return (
         <Box sx={{ width: "100%" }}>
-          <AudioViewer src={artifactUrl} title={src.name || "UNTITLED"} />
+          <AudioViewer src={artifactUrl} title={src.name || t.nft.untitled} />
         </Box>
       );
 
@@ -151,7 +165,7 @@ export default function RenderMedia({ mimeType, src }) {
         return (
           <Box {...boxProps}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-              Loading...
+              {t.common.loading}
             </div>
           </Box>
         );
@@ -166,7 +180,7 @@ export default function RenderMedia({ mimeType, src }) {
               border: "none",
             }}
             sandbox="allow-scripts allow-same-origin"
-            title="HTML Preview"
+            title={t.nft.htmlPreview}
           />
         </Box>
       );

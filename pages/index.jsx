@@ -12,7 +12,9 @@ import { drawHeatmapLayer } from "@/lib/overlays/drawHeatmap";
 import { drawCreatorShapesLayer, getCreatorShapeMap } from "@/lib/overlays/drawCreatorShapes";
 import { drawCategoryScatterLayer, getCategoryColorMap } from "@/lib/overlays/drawCategoryScatter";
 import { drawBloomLayer } from "@/lib/overlays/drawBloomLayer";
-import { useNoiseTexture } from "@/hooks/useNoiseTexture";
+
+import { useT } from "@/lib/i18n/useT";
+import LanguageToggle from "@/components/LanguageToggle";
 
 const nftPointRadius = 20;
 const NFT_CONTRACT = "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW";
@@ -283,6 +285,7 @@ function computeBubblePlacements({ containerW, containerH, anchors, bubbleSizes,
  */
 function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
   const router = useRouter();
+  const t = useT();
   if (!placement) return null;
 
   const { x, y, w, h } = placement;
@@ -384,21 +387,21 @@ function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {nft?.event_title && (
             <div>
-              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>活動</div>
+              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>{t.map.allEvents}</div>
               <div style={{ fontSize: 14 }}>{nft.event_title}</div>
             </div>
           )}
 
-          {Array.isArray(nft?.creators) && nft.creators.length > 0 && (
+          {(() => { const a = filterArtistOnly(nft?.creators); return a.length > 0 ? (
             <div>
-              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>藝術家</div>
-              <div style={{ fontSize: 14 }}>{nft.creators.join(", ")}</div>
+              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>{t.map.artist}</div>
+              <div style={{ fontSize: 14 }}>{a.join(", ")}</div>
             </div>
-          )}
+          ) : null; })()}
 
           {nft?.venue && (
             <div>
-              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>場館</div>
+              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>{t.map.venue}</div>
               <div style={{ fontSize: 14 }}>{nft.venue}</div>
               {(nft?.start_time || nft?.end_time) && (
                 <div style={{ fontSize: 12, opacity: 0.8, marginTop: 2 }}>
@@ -410,7 +413,7 @@ function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
 
           {nft?.category && (
             <div>
-              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>類別</div>
+              <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>{t.map.category}</div>
               <div style={{ fontSize: 14 }}>{nft.category}</div>
             </div>
           )}
@@ -442,6 +445,7 @@ function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
  * Hidden bubble for measuring size
  */
 function BubbleMeasurer({ nft, onMeasure }) {
+  const t = useT();
   const ref = useRef(null);
 
   useLayoutEffect(() => {
@@ -483,19 +487,19 @@ function BubbleMeasurer({ nft, onMeasure }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {nft?.event_title && (
           <div>
-            <div style={{ fontSize: 10, marginBottom: 4 }}>活動</div>
+            <div style={{ fontSize: 10, marginBottom: 4 }}>{t.map.allEvents}</div>
             <div style={{ fontSize: 14 }}>{nft.event_title}</div>
           </div>
         )}
-        {Array.isArray(nft?.creators) && nft.creators.length > 0 && (
+        {(() => { const a = filterArtistOnly(nft?.creators); return a.length > 0 ? (
           <div>
-            <div style={{ fontSize: 10, marginBottom: 4 }}>藝術家</div>
-            <div style={{ fontSize: 14 }}>{nft.creators.join(", ")}</div>
+            <div style={{ fontSize: 10, marginBottom: 4 }}>{t.map.artist}</div>
+            <div style={{ fontSize: 14 }}>{a.join(", ")}</div>
           </div>
-        )}
+        ) : null; })()}
         {nft?.venue && (
           <div>
-            <div style={{ fontSize: 10, marginBottom: 4 }}>場館</div>
+            <div style={{ fontSize: 10, marginBottom: 4 }}>{t.map.venue}</div>
             <div style={{ fontSize: 14 }}>{nft.venue}</div>
             {(nft?.start_time || nft?.end_time) && (
               <div style={{ fontSize: 12, marginTop: 2 }}>
@@ -506,7 +510,7 @@ function BubbleMeasurer({ nft, onMeasure }) {
         )}
         {nft?.category && (
           <div>
-            <div style={{ fontSize: 10, marginBottom: 4 }}>類別</div>
+            <div style={{ fontSize: 10, marginBottom: 4 }}>{t.map.category}</div>
             <div style={{ fontSize: 14 }}>{nft.category}</div>
           </div>
         )}
@@ -539,6 +543,7 @@ function shortestWrap(from, to, len) {
 
 function SpotlightStack({ nfts, anchors, onClose }) {
   const router = useRouter();
+  const t = useT();
   const widgetRef = useRef(null);
   const svgRef = useRef(null);
   const [widgetRect, setWidgetRect] = useState(null);
@@ -793,7 +798,7 @@ function SpotlightStack({ nfts, anchors, onClose }) {
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 8px 6px 12px" }}>
             <div style={{ fontSize: 11, color: "var(--brand-secondary)", fontWeight: "bold", pointerEvents: "none" }}>
-              近期活動
+              {t.map.recentEvents}
             </div>
             {onClose && (
               <button
@@ -889,6 +894,7 @@ function SpotlightStack({ nfts, anchors, onClose }) {
  */
 function VenueNftCarousel({ nfts, onClose, compact = false }) {
   const router = useRouter();
+  const t = useT();
   const [currentIndex, setCurrentIndex] = useState(0);
   const touchRef = useRef({ startX: 0, startY: 0, swiping: false });
   const modalRef = useRef(null);
@@ -1034,18 +1040,21 @@ function VenueNftCarousel({ nfts, onClose, compact = false }) {
             <div style={{ fontSize: 12, lineHeight: 1.6 }}>{formatDateRange(nft.start_time, nft.end_time)}</div>
           )}
 
-          {/* Creators */}
-          {Array.isArray(nft?.creators) && nft.creators.length > 0 && (
-            <div style={{ fontSize: 12, lineHeight: 1.6 }}>
-              <span style={{ color: "var(--brand-secondary)", marginRight: 6 }}>藝術家</span>
-              {nft.creators.join(", ")}
-            </div>
-          )}
+          {/* Creators (artists only, exclude organizer addresses) */}
+          {(() => {
+            const a = (nft?.creators || []).filter((c) => !c.startsWith("tz"));
+            return a.length > 0 ? (
+              <div style={{ fontSize: 12, lineHeight: 1.6 }}>
+                <span style={{ color: "var(--brand-secondary)", marginRight: 6 }}>{t.map.artist}</span>
+                {a.join(", ")}
+              </div>
+            ) : null;
+          })()}
 
           {/* Venue */}
           {nft?.venue && (
             <div style={{ fontSize: 12, lineHeight: 1.6 }}>
-              <span style={{ color: "var(--brand-secondary)", marginRight: 6 }}>場館</span>
+              <span style={{ color: "var(--brand-secondary)", marginRight: 6 }}>{t.map.venue}</span>
               {nft.venue}
             </div>
           )}
@@ -1053,7 +1062,7 @@ function VenueNftCarousel({ nfts, onClose, compact = false }) {
           {/* Category */}
           {nft?.category && (
             <div style={{ fontSize: 12, lineHeight: 1.6 }}>
-              <span style={{ color: "var(--brand-secondary)", marginRight: 6 }}>類別</span>
+              <span style={{ color: "var(--brand-secondary)", marginRight: 6 }}>{t.map.category}</span>
               {nft.category}
             </div>
           )}
@@ -1097,7 +1106,7 @@ function VenueNftCarousel({ nfts, onClose, compact = false }) {
               marginLeft: "auto",
             }}
           >
-            [ 閱讀更多 ]
+            {t.map.readMore}
           </button>
         )}
 
@@ -1237,7 +1246,7 @@ function BubbleLayoutManager({ containerW, containerH, nfts, anchors, onClose })
 function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = {} }) {
   const router = useRouter();
   const { isMobileUI, isSmallViewport } = useUIEnvironment();
-  const noiseUrl = useNoiseTexture();
+  const t = useT();
 
   // Build wallet address → artist name lookup from Directus artists
   const artistNameMap = useMemo(() => {
@@ -1253,6 +1262,15 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
   // Resolve creator addresses to artist names
   const resolveCreatorName = useCallback(
     (address) => artistNameMap.get(address) || address,
+    [artistNameMap]
+  );
+
+  // Filter creators to only show artists (exclude organizer addresses)
+  const filterArtistOnly = useCallback(
+    (creators) => {
+      if (!Array.isArray(creators)) return [];
+      return creators.filter((c) => artistNameMap.has(c)).map((c) => artistNameMap.get(c));
+    },
     [artistNameMap]
   );
 
@@ -1541,10 +1559,10 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
   );
 
   const overlayLayers = useMemo(() => [
-    { key: "heatmap", label: "Popularity", visible: layerVisibility.heatmap },
-    { key: "creatorShapes", label: "Creators", visible: layerVisibility.creatorShapes },
-    { key: "categoryScatter", label: "Categories", visible: layerVisibility.categoryScatter },
-  ], [layerVisibility]);
+    { key: "heatmap", label: t.map.popularity, visible: layerVisibility.heatmap },
+    { key: "creatorShapes", label: t.map.creators, visible: layerVisibility.creatorShapes },
+    { key: "categoryScatter", label: t.map.categories, visible: layerVisibility.categoryScatter },
+  ], [layerVisibility, t]);
 
   const handleLayerToggle = useCallback((key) => {
     setLayerVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -2435,7 +2453,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
   };
 
   if (cities.length === 0) {
-    return <div style={{ padding: '1rem', backgroundColor: 'var(--brand-bg)', color: 'var(--brand-primary)' }}>Loading cities...</div>;
+    return <div style={{ padding: '1rem', backgroundColor: 'var(--brand-bg)', color: 'var(--brand-primary)' }}>{t.common.loading}</div>;
   }
 
   return (
@@ -2443,6 +2461,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
       style={{ position: 'relative', width: '100%', height: '100dvh', overflow: 'hidden', backgroundColor: 'var(--brand-bg)' }}
       onClick={() => currentSlug && setOpenBubbleNfts((prev) => ({ ...prev, [currentSlug]: [] }))}
     >
+      <LanguageToggle />
       <MobileGestureTutorial onAnimationStateChange={setIsTutorialAnimating} />
       <div
         style={{
@@ -2519,26 +2538,11 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     onClick={(e) => handleCanvasClick(e, slug)}
                   />
 
-                  {/* Paper grain noise — tiled PNG, GPU-composited */}
-                  {noiseUrl && (
-                    <div
-                      style={{
-                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                        pointerEvents: 'none',
-                        zIndex: 6,
-                        backgroundImage: `url(${noiseUrl})`,
-                        backgroundRepeat: 'repeat',
-                        mixBlendMode: 'multiply',
-                        opacity: 1,
-                      }}
-                    />
-                  )}
-
                   <MapFrame city={city} cityMap={cityMap} containerSize={containerSizes[slug]} isMobileUI={isMobileUI} hideScaleBar={isSmallViewport && !!selectedVenue?.[slug]} />
                 </>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--brand-primary)' }}>
-                  Loading {city.name_en || city.slug} map...
+                  {t.common.loading}
                 </div>
               )}
 
@@ -2551,6 +2555,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '0.5rem',
+                  maxWidth: isMobileUI ? 'calc(100vw - 6rem)' : '320px',
                 }}
                 onPointerDown={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
@@ -2570,7 +2575,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     restoreSpotlightNfts(slug);
                   }}
                   style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--brand-primary)', padding: '0.5rem 0', cursor: 'pointer' }}
-                >{city.name_zh || city.name_en || city.slug}</div>
+                >{(router.locale === "en" ? city.name_en : city.name_zh) || city.name_en || city.slug}</div>
 
                 <CustomSelect
                   style={{
@@ -2585,7 +2590,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   onChange={(e) => {
                     const vKey = e.target.value;
                     setSelectedVenue((prev) => ({ ...prev, [slug]: vKey }));
-                    setCarouselOpen((prev) => ({ ...prev, [slug]: !!vKey }));
+                    setCarouselOpen((prev) => ({ ...prev, [slug]: false })); // Don't open modal on venue select
                     setSelectedEvent((prev) => ({ ...prev, [slug]: "" }));
 
                     if (vKey) {
@@ -2593,7 +2598,6 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                       const venue = venues.find((v) => venueKey(v) === vKey);
                       if (venue) {
                         zoomToVenue(slug, venue);
-                        // Use venue.id (UUID) for API call
                         fetchVenueNfts(slug, venue.id);
                       }
                     } else {
@@ -2603,7 +2607,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     }
                   }}
                 >
-                  <option value="">所有場館</option>
+                  <option value="">{t.map.allVenues}</option>
                   {venues.map((venue, index) => (
                     <option key={`${venueKey(venue)}-${index}`} value={venueKey(venue)}>
                       {venue.name}
@@ -2623,15 +2627,34 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   }}
                   value={activeEventId}
                   onChange={(e) => {
-                    setSelectedEvent((prev) => ({ ...prev, [slug]: e.target.value }));
+                    const eventId = e.target.value;
+                    setSelectedEvent((prev) => ({ ...prev, [slug]: eventId }));
                     setOpenBubbleNfts((prev) => ({ ...prev, [slug]: [] }));
-                    // Reopen carousel if a venue is selected so filtered results show
-                    if (selectedVenue?.[slug]) {
+
+                    if (eventId) {
+                      // Find the event and its parent venue
+                      const ev = events.find((x) => x.id === eventId);
+                      if (ev?.venue_id) {
+                        const venue = venues.find((v) => v.id === ev.venue_id);
+                        if (venue) {
+                          const vKey = venueKey(venue);
+                          // Auto-select the parent venue if not already selected
+                          if (selectedVenue?.[slug] !== vKey) {
+                            setSelectedVenue((prev) => ({ ...prev, [slug]: vKey }));
+                            zoomToVenue(slug, venue);
+                            fetchVenueNfts(slug, venue.id);
+                          }
+                        }
+                      }
+                      // Open carousel to show filtered event NFTs
+                      setCarouselOpen((prev) => ({ ...prev, [slug]: true }));
+                    } else if (selectedVenue?.[slug]) {
+                      // "All Events" but venue still selected: reopen carousel
                       setCarouselOpen((prev) => ({ ...prev, [slug]: true }));
                     }
                   }}
                 >
-                  <option value="">所有活動</option>
+                  <option value="">{t.map.allEvents}</option>
                   {eventsForThisCity.map((ev, index) => (
                     <option key={`${ev.id}-${index}`} value={ev.id}>
                       {ev.name}
@@ -2653,7 +2676,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     restoreSpotlightNfts(slug);
                   }}
                   style={{ fontSize: 14, color: 'var(--brand-primary)', marginTop: '0.25rem', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline', textAlign: 'left' }}
-                >重置</button>
+                >{t.common.reset}</button>
               </div>
             </div>
           );
@@ -2922,7 +2945,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   onChange={(e) => setCurrentFilters((prev) => ({ ...prev, tag: e.target.value }))}
                   forceOpenUpward
                 >
-                  <option value="">標籤</option>
+                  <option value="">{t.filter.tag}</option>
                   {filterOptions.tags.map((tag) => (
                     <option key={tag} value={tag}>{tag}</option>
                   ))}
@@ -2934,7 +2957,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   onChange={(e) => setCurrentFilters((prev) => ({ ...prev, category: e.target.value }))}
                   forceOpenUpward
                 >
-                  <option value="">類別</option>
+                  <option value="">{t.map.category}</option>
                   {filterOptions.categories.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
@@ -2946,7 +2969,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   onChange={(e) => setCurrentFilters((prev) => ({ ...prev, creator: e.target.value }))}
                   forceOpenUpward
                 >
-                  <option value="">藝術家</option>
+                  <option value="">{t.map.artist}</option>
                   {filterOptions.creators.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
@@ -2959,7 +2982,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     onChange={(e) => setCurrentFilters((prev) => ({ ...prev, year: e.target.value, month: "", week: "", day: "" }))}
                     forceOpenUpward
                   >
-                    <option value="">年</option>
+                    <option value="">{t.map.year}</option>
                     {filterOptions.years.map((y) => (
                       <option key={y} value={y}>{y}</option>
                     ))}
@@ -2971,7 +2994,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     onChange={(e) => setCurrentFilters((prev) => ({ ...prev, month: e.target.value, day: "" }))}
                     forceOpenUpward
                   >
-                    <option value="">月</option>
+                    <option value="">{t.map.month}</option>
                     {filterOptions.months.map((m) => {
                       return <option key={m} value={m}>{m}</option>;
                     })}
@@ -2983,7 +3006,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     onChange={(e) => setCurrentFilters((prev) => ({ ...prev, day: e.target.value }))}
                     forceOpenUpward
                   >
-                    <option value="">日</option>
+                    <option value="">{t.map.day}</option>
                     {filterOptions.days.map((d) => {
                       return <option key={d} value={d}>{d}</option>;
                     })}
@@ -2992,9 +3015,9 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
 
                 <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', color: 'var(--brand-primary)', fontSize: 13 }}>
                   {[
-                    { key: "past", label: "過去" },
-                    { key: "ongoing", label: "進行中" },
-                    { key: "future", label: "未來" },
+                    { key: "past", label: t.map.activityPast },
+                    { key: "ongoing", label: t.map.activityOngoing },
+                    { key: "future", label: t.map.activityFuture },
                   ].map(({ key, label }) => (
                     <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
                       <input
@@ -3089,7 +3112,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
               onChange={(e) => setCurrentFilters((prev) => ({ ...prev, tag: e.target.value }))}
               forceOpenUpward
             >
-              <option value="">標籤</option>
+              <option value="">{t.filter.tag}</option>
               {filterOptions.tags.map((tag) => (
                 <option key={tag} value={tag}>{tag}</option>
               ))}
@@ -3101,7 +3124,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
               onChange={(e) => setCurrentFilters((prev) => ({ ...prev, category: e.target.value }))}
               forceOpenUpward
             >
-              <option value="">類別</option>
+              <option value="">{t.map.category}</option>
               {filterOptions.categories.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -3113,7 +3136,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
               onChange={(e) => setCurrentFilters((prev) => ({ ...prev, creator: e.target.value }))}
               forceOpenUpward
             >
-              <option value="">藝術家</option>
+              <option value="">{t.map.artist}</option>
               {filterOptions.creators.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -3126,7 +3149,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                 onChange={(e) => setCurrentFilters((prev) => ({ ...prev, year: e.target.value, month: "", week: "", day: "" }))}
                 forceOpenUpward
               >
-                <option value="">年</option>
+                <option value="">{t.map.year}</option>
                 {filterOptions.years.map((y) => (
                   <option key={y} value={y}>{y}</option>
                 ))}
@@ -3138,7 +3161,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                 onChange={(e) => setCurrentFilters((prev) => ({ ...prev, month: e.target.value, day: "" }))}
                 forceOpenUpward
               >
-                <option value="">月</option>
+                <option value="">{t.map.month}</option>
                 {filterOptions.months.map((m) => {
                   return (
                     <option key={m} value={m}>{m}</option>
@@ -3152,7 +3175,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                 onChange={(e) => setCurrentFilters((prev) => ({ ...prev, day: e.target.value }))}
                 forceOpenUpward
               >
-                <option value="">日</option>
+                <option value="">{t.map.day}</option>
                 {filterOptions.days.map((d) => {
                   return (
                     <option key={d} value={d}>{d}</option>
@@ -3174,7 +3197,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   }
                   style={{ width: 18, height: 18, cursor: "pointer" }}
                 />
-                過去
+                {t.map.activityPast}
               </label>
 
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
@@ -3189,7 +3212,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   }
                   style={{ width: 18, height: 18, cursor: "pointer" }}
                 />
-                進行中
+                {t.map.activityOngoing}
               </label>
 
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
@@ -3204,7 +3227,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   }
                   style={{ width: 18, height: 18, cursor: "pointer" }}
                 />
-                未來
+                {t.map.activityFuture}
               </label>
             </div>
           </div>

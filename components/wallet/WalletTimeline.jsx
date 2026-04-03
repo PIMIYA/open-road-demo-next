@@ -24,6 +24,7 @@ export default function WalletTimeline({
   myWalletAddress,
   organizers,
   artists,
+  commentTokenId = "",
 }) {
   /* combine commets with cardData if tokenId is the same */
   const combinedData = useMemo(() => {
@@ -71,6 +72,7 @@ export default function WalletTimeline({
                 myWalletAddress={myWalletAddress}
                 organizers={organizers}
                 artists={artists}
+                autoOpenComment={commentTokenId && card.tokenId === commentTokenId}
               />
             </TimelineContent>
           </TimelineItem>

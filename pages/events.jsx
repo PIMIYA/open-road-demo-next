@@ -17,8 +17,10 @@ import TwoColumnLayout, {
 import EventCardGrid from "@/components/EventCardGrid";
 import SidePaper from "@/components/SidePaper";
 import CustomSelect from "@/components/CustomSelect";
+import { useT } from "@/lib/i18n/useT";
 
 export default function Events({ events }) {
+  const t = useT();
   // Filter only published events and add computed status (memoized to avoid infinite re-render)
   const eventsWithStatus = useMemo(() => {
     const published =
@@ -172,10 +174,10 @@ export default function Events({ events }) {
                 setStatusValue(e.target.value);
               }}
             >
-              <option value="">活動狀態</option>
-              <option value="upcoming">即將舉行</option>
-              <option value="current">進行中</option>
-              <option value="archived">已結束</option>
+              <option value="">{t.events.status}</option>
+              <option value="upcoming">{t.events.upcoming}</option>
+              <option value="current">{t.events.current}</option>
+              <option value="archived">{t.events.archived}</option>
             </CustomSelect>
 
             <CustomSelect
@@ -189,14 +191,14 @@ export default function Events({ events }) {
               value={sortOrder}
               onChange={(e) => handleSortChange(e.target.value)}
             >
-              <option value="newest">最新優先</option>
-              <option value="oldest">最舊優先</option>
+              <option value="newest">{t.events.newest}</option>
+              <option value="oldest">{t.events.oldest}</option>
             </CustomSelect>
           </Box>
         </SidePaper>
       </Side>
       <Main>
-        <Box>{filteredData.length == 0 ? "no data" : ""}</Box>
+        <Box>{filteredData.length == 0 ? t.common.noData : ""}</Box>
         <EventCardGrid
           data={paginateAppend(filteredData, currentPage, pageSize)}
         />
@@ -210,7 +212,7 @@ export default function Events({ events }) {
               color: "text.secondary",
             }}
           >
-            {hasMore ? "Loading..." : ""}
+            {hasMore ? t.common.loading : ""}
           </Box>
         )}
       </Main>

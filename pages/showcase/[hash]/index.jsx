@@ -6,6 +6,7 @@ import { Box, Container, Divider, Typography } from "@mui/material";
 
 import { MainnetURL } from "@/lib/api";
 import { decrypt } from "@/lib/dummy";
+import { useT } from "@/lib/i18n/useT";
 
 const qrcodeOpts = {
   errorCorrectionLevel: 'H',
@@ -20,6 +21,7 @@ const qrcodeOpts = {
 };
 
 export default function ShowCase({ hash, apiEndPoint }) {
+  const t = useT();
   const [data, setData] = useState(null);
   const [codeImage, setCodeImage] = useState(null);
 
@@ -83,13 +85,13 @@ export default function ShowCase({ hash, apiEndPoint }) {
           />
         </Box>
         <Typography variant="caption" sx={{ mt: 2, display: "block", opacity: 0.6 }}>
-          SCAN TO CLAIM
+          {t.claim.scanToClaim}
         </Typography>
       </Box>
 
       <Divider sx={{ mb: 3 }} />
       <Typography variant="caption" sx={{ opacity: 0.6 }}>
-        KAIROS © 2024
+        {t.showcase.copyright}
       </Typography>
     </Container>
   )

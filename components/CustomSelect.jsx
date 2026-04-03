@@ -253,7 +253,7 @@ export default function CustomSelect({
           transition: "border-color 0.2s, color 0.2s",
         }}
       >
-        <span style={{ paddingRight: 20 }}>{selectedOption?.label ?? ""}</span>
+        <span style={{ paddingRight: 20, wordBreak: "break-word", whiteSpace: "normal", lineHeight: 1.4 }}>{selectedOption?.label ?? ""}</span>
 
         <span
           aria-hidden="true"

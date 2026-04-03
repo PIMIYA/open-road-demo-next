@@ -8,12 +8,14 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { FetchDirectusData } from "@/lib/api";
+import { useT } from "@/lib/i18n/useT";
 
 export default function Faq({ faqData }) {
+  const t = useT();
   return (
     <Box sx={{ p: 4, maxWidth: "100%", margin: "auto" }}>
       <Typography variant="h1" component="h1" gutterBottom>
-        {faqData?.title || "Frequently Asked Questions"}
+        {faqData?.title || t.faq.title}
       </Typography>
 
       {faqData?.content && (

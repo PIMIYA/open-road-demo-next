@@ -1,15 +1,16 @@
 /* MUI */
 import { Box, Typography } from "@mui/material";
 import { FetchDirectusData } from "@/lib/api";
+import { useT } from "@/lib/i18n/useT";
 
 export default function TermsofService({ termsData }) {
-  console.log("termsData", termsData);
+  const t = useT();
   return (
     <Box sx={{ p: 4, maxWidth: "100%", margin: "auto" }}>
       {termsData && (
         <>
           <Typography variant="h1" component="h1" gutterBottom>
-            {"Terms of Service"}
+            {t.legal.terms}
           </Typography>
           <Box sx={{ mt: 4, mb: 2 }}>
             <Box

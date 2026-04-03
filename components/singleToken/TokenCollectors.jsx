@@ -37,7 +37,7 @@ export default function TokenCollectors({
               breakInside: "avoid",
             }}
           >
-            <Avatar>
+            <Avatar src={`https://services.tzkt.io/v1/avatars/${address}`}>
               {(ownerAliases[address] || truncateAddress(address)).slice(0, 2)}
             </Avatar>
             <Box width="60%">

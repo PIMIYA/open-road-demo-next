@@ -6,6 +6,7 @@ import {
   Typography,
 } from "@mui/material";
 import { truncateAddress } from "@/lib/stringUtils";
+import { useT } from "@/lib/i18n/useT";
 
 export default function TokenComments({
   owners,
@@ -13,6 +14,7 @@ export default function TokenComments({
   ownerAliases = [],
   comments,
 }) {
+  const t = useT();
   const commentList = comments && Array.isArray(comments.data) ? comments.data : [];
 
   return (
@@ -20,7 +22,7 @@ export default function TokenComments({
         {commentList.map((comment, index) => {
           const address = comment.walletAddress;
           const alias = ownerAliases?.[address];
-          const displayName = alias || (address ? truncateAddress(address) : "Anonymous");
+          const displayName = alias || (address ? truncateAddress(address) : t.common.anonymous);
           return (
             <Link
               key={index}
@@ -39,7 +41,7 @@ export default function TokenComments({
                   padding: 1,
                 }}
               >
-                <Avatar>
+                <Avatar src={address ? `https://services.tzkt.io/v1/avatars/${address}` : undefined}>
                   {displayName.slice(0, 2)}
                 </Avatar>
                 <Box sx={{ paddingLeft: 2 }}>

@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useConnection } from "@/packages/providers";
 import { useTheme } from "@mui/material/styles";
 import { useGlobalContext } from "@/contexts/GlobalContext";
+import { useT } from "@/lib/i18n/useT";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -12,6 +13,7 @@ import { Stack, Box } from "@mui/material";
 import logo from "/public/logo.svg";
 
 export default function NavBar() {
+  const t = useT();
   const { isLanded } = useGlobalContext();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -32,6 +34,7 @@ export default function NavBar() {
 
   const router = useRouter();
   const theme = useTheme();
+  const { locale } = router;
 
   const gotohome = () => router.push("/");
 
@@ -93,36 +96,59 @@ export default function NavBar() {
             rounded-lg border border-[var(--brand-primary)] bg-white
             shadow-[0_4px_20px_rgba(0,0,0,0.12)] overflow-hidden"
         >
-          <Link href="/" onClick={() => handleItemClick()} className="block px-5 py-3 text-sm text-[var(--brand-primary)] no-underline hover:bg-[var(--brand-primary)]/5">
-            Home
+          {/* Language toggle — top of menu */}
+          <div className="flex items-center gap-1 px-5 py-3 text-sm">
+            <Link
+              href={router.asPath}
+              locale="en"
+              onClick={() => handleItemClick()}
+              className="no-underline font-medium"
+              style={{ color: locale === "en" ? "var(--brand-secondary)" : "var(--brand-primary)", opacity: locale === "en" ? 1 : 0.4 }}
+            >
+              EN
+            </Link>
+            <span style={{ color: "var(--brand-primary)", opacity: 0.3 }}>|</span>
+            <Link
+              href={router.asPath}
+              locale="zh"
+              onClick={() => handleItemClick()}
+              className="no-underline font-medium"
+              style={{ color: locale === "zh" ? "var(--brand-secondary)" : "var(--brand-primary)", opacity: locale === "zh" ? 1 : 0.4 }}
+            >
+              中文
+            </Link>
+          </div>
+          <div className="h-px bg-[var(--brand-primary)]/15" />
+
+          <Link href="/" onClick={() => handleItemClick()} style={{ display: "block", padding: "12px 20px", fontSize: 14, color: "var(--brand-primary)", textDecoration: "none", fontWeight: 300 }}>
+            {t.nav.home}
           </Link>
-          <Link href="/events" onClick={() => handleItemClick()} className="block px-5 py-3 text-sm text-[var(--brand-primary)] no-underline hover:bg-[var(--brand-primary)]/5">
-            Events
+          <Link href="/events" onClick={() => handleItemClick()} style={{ display: "block", padding: "12px 20px", fontSize: 14, color: "var(--brand-primary)", textDecoration: "none", fontWeight: 300 }}>
+            {t.nav.events}
           </Link>
 
           {address && (
             <>
               <div className="h-px bg-[var(--brand-primary)]/15" />
-              <Link href={`/wallet/${address}`} onClick={() => handleItemClick()} className="block px-5 py-3 text-sm text-[var(--brand-primary)] no-underline hover:bg-[var(--brand-primary)]/5">
-                My Wallet
+              <Link href={`/wallet/${address}`} onClick={() => handleItemClick()} style={{ display: "block", padding: "12px 20px", fontSize: 14, color: "var(--brand-primary)", textDecoration: "none", fontWeight: 300 }}>
+                {t.nav.myWallet}
               </Link>
               {hasCreatorRole && (
-                <Link href="/mint" onClick={() => handleItemClick()} className="block px-5 py-3 text-sm text-[var(--brand-primary)] no-underline hover:bg-[var(--brand-primary)]/5">
-                  Mint
+                <Link href="/mint" onClick={() => handleItemClick()} style={{ display: "block", padding: "12px 20px", fontSize: 14, color: "var(--brand-primary)", textDecoration: "none", fontWeight: 300 }}>
+                  {t.nav.mint}
                 </Link>
               )}
               <div className="h-px bg-[var(--brand-primary)]/15" />
               <button
                 onClick={() => handleItemClick(disconnect)}
-                className="flex items-center gap-2 w-full px-5 py-3 text-sm text-[var(--brand-primary)]
-                  bg-transparent border-none cursor-pointer text-left font-[inherit] hover:bg-[var(--brand-primary)]/5"
+                style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "12px 20px", fontSize: 14, color: "var(--brand-primary)", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", fontFamily: "inherit", fontWeight: 300 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                   <polyline points="16 17 21 12 16 7" />
                   <line x1="21" y1="12" x2="9" y2="12" />
                 </svg>
-                Disconnect
+                {t.common.disconnect}
               </button>
             </>
           )}
@@ -184,7 +210,7 @@ export default function NavBar() {
                   <polyline points="10 17 15 12 10 7" />
                   <line x1="15" y1="12" x2="3" y2="12" />
                 </svg>
-                Connect
+                {t.common.connect}
               </button>
             )}
             {router.pathname !== "/claim" && menuComponent}

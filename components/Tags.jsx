@@ -1,8 +1,6 @@
 import Chip from "@mui/material/Chip";
-import { useRouter } from "next/router";
 
-export default function ({ tags }) {
-  const router = useRouter();
+export default function Tags({ tags }) {
   return (
     <>
       {tags &&
@@ -15,12 +13,7 @@ export default function ({ tags }) {
             sx={{
               mr: 1,
               mb: 1,
-            }}
-            onClick={() => {
-              router.push({
-                pathname: "/events",
-                query: { tag: tag },
-              });
+              cursor: "default",
             }}
           />
         ))}

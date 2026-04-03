@@ -86,7 +86,10 @@ const formatTime = (seconds) => {
   return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 };
 
+import { useT } from "@/lib/i18n/useT";
+
 export default function AudioViewer({ src, title = "UNTITLED", artist = "" }) {
+  const t = useT();
   const containerRef = useRef(null);
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -312,8 +315,8 @@ export default function AudioViewer({ src, title = "UNTITLED", artist = "" }) {
 
       {/* Info Bar */}
       <Box sx={{ borderTop: "1px solid", borderColor: "divider", px: 1.5, py: 0.5, display: "flex", justifyContent: "space-between" }}>
-        <Typography sx={labelSx}>FORMAT: AUDIO</Typography>
-        <Typography sx={labelSx}>DURATION: {formatTime(duration)}</Typography>
+        <Typography sx={labelSx}>{t.nft.format}: AUDIO</Typography>
+        <Typography sx={labelSx}>{t.nft.duration}: {formatTime(duration)}</Typography>
       </Box>
 
       <audio ref={audioRef} src={src} />

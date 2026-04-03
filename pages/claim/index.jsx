@@ -6,6 +6,8 @@ import {
 } from "@/lib/api";
 import { getAkaswapAssetUrl } from "@/lib/stringUtils";
 import KukaiEmbedComponent from "../../components/KukaiEmbedComponent";
+import LanguageToggle from "@/components/LanguageToggle";
+import { useT } from "@/lib/i18n/useT";
 
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 const AkaDropAPI = "https://mars.akaswap.com/drop/api/pools";
@@ -53,6 +55,7 @@ export async function getServerSideProps(context) {
 }
 
 export default function NFTPage({ data, data_from_pool, nftData, error }) {
+  const t = useT();
   const [claimStatus, setClaimStatus] = useState("");
   const embedRef = useRef(null);
 
@@ -66,7 +69,7 @@ export default function NFTPage({ data, data_from_pool, nftData, error }) {
     console.log(`email is : ${email}`);
 
     if (!address || !email) {
-      setClaimStatus("Wallet not connected or email not available.");
+      setClaimStatus(t.claim.walletNotConnected);
       return;
     }
 
@@ -89,7 +92,7 @@ export default function NFTPage({ data, data_from_pool, nftData, error }) {
       const lookup_address = lookupResult.address;
 
       if (lookupResult.isInvalid) {
-        setClaimStatus("Invalid address.");
+        setClaimStatus(t.claim.invalidAddress);
         return;
       }
 
@@ -139,21 +142,21 @@ export default function NFTPage({ data, data_from_pool, nftData, error }) {
 
       // 根據不同的 claim 結果設置狀態
       if (claimResult.isInvalid) {
-        setClaimStatus(`無法領取，該活動可能已結束，或此地址已領取過。`);
+        setClaimStatus(t.claim.expired);
         localStorage.setItem("claimStatus", "invalid");
         // 不跳轉，顯示錯誤信息
       } else if (!claimResult.isEnrolled && claimResult.isSoldOut) {
-        setClaimStatus(`Claim Status: Sold out`);
+        setClaimStatus(t.claim.claimStatusSoldOut);
         localStorage.setItem("claimStatus", "soldOut");
         // 不跳轉，顯示錯誤信息
       } else if (!claimResult.isEnrolled && !claimResult.isSoldOut) {
-        setClaimStatus(`Claim Status: Already claimed`);
+        setClaimStatus(t.claim.claimStatusAlready);
         localStorage.setItem("claimStatus", "alreadyClaimed");
         // 已領取過，跳轉到成功頁面
         console.log("🚀 Redirecting to claim-success page (already claimed)");
         window.location.href = "/claim-success";
       } else if (claimResult.isEnrolled && !claimResult.isSoldOut) {
-        setClaimStatus(`Claim successful`);
+        setClaimStatus(t.claim.claimSuccessful);
         localStorage.setItem("claimStatus", "success");
 
         // 只有成功領取時才嘗試添加到數據庫
@@ -186,7 +189,7 @@ export default function NFTPage({ data, data_from_pool, nftData, error }) {
       }
     } catch (error) {
       console.error("Error claiming NFT:", error);
-      setClaimStatus(`Error claiming NFT: ${error.message}`);
+      setClaimStatus(`${t.claim.errorClaiming}${error.message}`);
       localStorage.setItem("claimStatus", "error");
       // 不跳轉，顯示錯誤信息
     } finally {
@@ -209,7 +212,7 @@ export default function NFTPage({ data, data_from_pool, nftData, error }) {
   if (!nftData) {
     return (
       <Container maxWidth="sm" sx={{ py: 10, textAlign: "center" }}>
-        <Typography variant="overline" color="error.main">ERROR FETCHING NFT DATA</Typography>
+        <Typography variant="overline" color="error.main">{t.claim.errorFetching}</Typography>
       </Container>
     );
   }
@@ -220,7 +223,8 @@ export default function NFTPage({ data, data_from_pool, nftData, error }) {
   const name = nftData?.name || "";
 
   return (
-    <Container maxWidth="sm" sx={{ py: 6, textAlign: "center" }}>
+    <Container maxWidth="sm" sx={{ py: 6, textAlign: "center", position: "relative" }}>
+      <LanguageToggle style={{ position: "absolute", top: 16, right: 16 }} />
       {/* Display image */}
       {imageUrl && (
         <Box sx={{ mb: 4 }}>
@@ -243,7 +247,7 @@ export default function NFTPage({ data, data_from_pool, nftData, error }) {
         <KukaiEmbedComponent ref={embedRef} onLoginSuccess={handleClaim} />
       ) : (
         <Typography variant="caption" color="warning.main">
-          EXPIRED OR NOT ABLE TO CLAIM
+          {t.claim.expired}
         </Typography>
       )}
 

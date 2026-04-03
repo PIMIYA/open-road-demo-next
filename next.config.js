@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  i18n: {
+    locales: ["zh", "en"],
+    defaultLocale: "zh",
+  },
   // Disable automatic scroll restoration to prevent scroll jumps
   // when navigating back from pages with dynamic-height components (e.g. WalletCanvas)
   experimental: {

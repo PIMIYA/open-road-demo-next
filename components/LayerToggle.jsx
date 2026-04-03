@@ -6,6 +6,7 @@
  *   matching the filter FAB style (brand-secondary outlined, white bg).
  */
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useT } from "@/lib/i18n/useT";
 
 const EyeOpen = ({ color = "currentColor" }) => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -86,6 +87,7 @@ function ShapeIcon({ shapeName, color, size = 12 }) {
 
 /** Shared layer toggles + legend content (used in both desktop and mobile panel) */
 function LayerContent({ layers, onToggle, creatorShapeMap, categoryColorMap, layerVisibility }) {
+  const t = useT();
   const showCreators = layerVisibility.creatorShapes && creatorShapeMap.size > 0;
   const showCategories = layerVisibility.categoryScatter && categoryColorMap.size > 0;
 
@@ -123,7 +125,7 @@ function LayerContent({ layers, onToggle, creatorShapeMap, categoryColorMap, lay
         <>
           <div style={{ borderTop: "1px solid rgba(0,0,0,0.1)", margin: "4px 0" }} />
           <div style={{ fontSize: "10px", color: "var(--brand-secondary)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            Creators
+            {t.map.creators}
           </div>
           {[...creatorShapeMap.values()].map((info) => (
             <div
@@ -151,7 +153,7 @@ function LayerContent({ layers, onToggle, creatorShapeMap, categoryColorMap, lay
         <>
           <div style={{ borderTop: "1px solid rgba(0,0,0,0.1)", margin: "4px 0" }} />
           <div style={{ fontSize: "10px", color: "var(--brand-secondary)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            Categories
+            {t.map.categories}
           </div>
           {[...categoryColorMap.entries()].map(([cat, color]) => (
             <div

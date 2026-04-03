@@ -3,11 +3,13 @@ import Image from "next/image";
 
 import { Box, Container, List, ListItem, Typography } from "@mui/material";
 import { useGlobalContext } from "@/contexts/GlobalContext";
+import { useT } from "@/lib/i18n/useT";
 
 import logo from "/public/logo.svg";
 
 export function Footer() {
   const { isLanded } = useGlobalContext();
+  const t = useT();
 
   function FooterLink({ href, label }) {
     return (
@@ -57,12 +59,12 @@ export function Footer() {
 
           <List>
             {/* <FooterLink href="/about" label="About" /> */}
-            <FooterLink href="/faq" label="FAQ" />
-            <FooterLink href="/privacy_policy" label="Privacy Policy" />
+            <FooterLink href="/faq" label={t.footer.faq} />
+            <FooterLink href="/privacy_policy" label={t.footer.privacy} />
             {/* <FooterLink href="/press_kit" label="Press Kit" /> */}
-            <FooterLink href="/terms_of_service" label="Terms of Service" />
+            <FooterLink href="/terms_of_service" label={t.footer.terms} />
           </List>
-          <Typography variant="smallest">Copyright © 2024 Kairos</Typography>
+          <Typography variant="smallest">{t.footer.copyright}</Typography>
         </Box>
       </Container>
     </Box>

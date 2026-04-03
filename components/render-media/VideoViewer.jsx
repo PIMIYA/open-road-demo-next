@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Box, IconButton, Typography, Slider } from "@mui/material";
+import { useT } from "@/lib/i18n/useT";
 
 const BRAND = "#ed5024";
 
@@ -70,6 +71,7 @@ const formatTime = (seconds) => {
 };
 
 export default function VideoViewer({ src, mimeType, poster }) {
+  const t = useT();
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -88,7 +90,7 @@ export default function VideoViewer({ src, mimeType, poster }) {
     const onPause = () => setIsPlaying(false);
     const onError = () => {
       const e = video.error;
-      setError(e?.message || "This format is not supported by your browser.");
+      setError(e?.message || t.nft.videoNotSupported);
     };
     video.addEventListener("timeupdate", onTime);
     video.addEventListener("loadedmetadata", onMeta);
@@ -109,7 +111,7 @@ export default function VideoViewer({ src, mimeType, poster }) {
   const togglePlay = useCallback(() => {
     const v = videoRef.current;
     if (!v) return;
-    if (v.paused) v.play().catch((err) => setError(err.message || "This video format is not supported by your browser.")); else v.pause();
+    if (v.paused) v.play().catch((err) => setError(err.message || t.nft.videoNotSupported)); else v.pause();
   }, []);
 
   const handleSeek = useCallback((_, val) => {
@@ -221,8 +223,8 @@ export default function VideoViewer({ src, mimeType, poster }) {
 
       {/* Info Bar */}
       <Box sx={{ borderTop: "1px solid", borderColor: "divider", px: 1.5, py: 0.5, display: "flex", justifyContent: "space-between" }}>
-        <Typography sx={labelSx}>FORMAT: {(mimeType || "").split("/")[1]?.toUpperCase() || "VIDEO"}</Typography>
-        <Typography sx={labelSx}>DURATION: {formatTime(duration)}</Typography>
+        <Typography sx={labelSx}>{t.nft.format}: {(mimeType || "").split("/")[1]?.toUpperCase() || "VIDEO"}</Typography>
+        <Typography sx={labelSx}>{t.nft.duration}: {formatTime(duration)}</Typography>
       </Box>
     </Box>
   );

@@ -9,12 +9,14 @@ import {
 import { KukaiEmbed, Networks } from "kukai-embed";
 import { Button } from "@mui/material";
 import ButtonSpinner from "@/components/ButtonSpinner";
+import { useT } from "@/lib/i18n/useT";
 
 /**（可選）在模組層做單例，避免多次掛載頁面時重複 new */
 let singletonEmbed = null;
 let singletonInitPromise = null;
 
 const KukaiEmbedComponent = forwardRef(({ onLoginSuccess }, ref) => {
+  const t = useT();
   const containerRef = useRef(null); // 直接抓 DOM，不用靠 id 查
   const embedRef = useRef(null); // 保存 KukaiEmbed 實例
   const initPromiseRef = useRef(null); // 保存 init() 的 Promise，避免並發
@@ -147,7 +149,7 @@ const KukaiEmbedComponent = forwardRef(({ onLoginSuccess }, ref) => {
         }}
       >
         {busy && <ButtonSpinner color="#fff" />}
-        {isLoggedIn ? "Logout" : busy ? "Connecting..." : "click to claim NFT"}
+        {isLoggedIn ? t.claim.logout : busy ? t.claim.connecting : t.claim.clickToClaim}
       </Button>
 
       {/* 關鍵：容器永遠存在（但不一定要可見） */}

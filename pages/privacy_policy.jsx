@@ -1,14 +1,16 @@
 /* MUI */
 import { Box, Typography } from "@mui/material";
 import { FetchDirectusData } from "@/lib/api";
+import { useT } from "@/lib/i18n/useT";
 
 export default function PrivacyPolicy({ policyData }) {
+  const t = useT();
   return (
     <Box sx={{ p: 4, maxWidth: "100%", margin: "auto" }}>
       {policyData && (
         <Box sx={{ mt: 4, mb: 2 }}>
           <Typography variant="h1" component="h1" gutterBottom>
-            {policyData.title || "Privacy Policy"}
+            {policyData.title || t.legal.privacy}
           </Typography>
           {policyData.last_updated && (
             <Typography variant="h3" component="h3" sx={{ mt: 2, mb: 2 }}>

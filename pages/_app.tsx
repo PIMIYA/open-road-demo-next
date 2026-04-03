@@ -16,9 +16,24 @@ import theme from "@/styles/theme";
 import { Footer } from "@/components/footer";
 import NavBar from "@/components/navBar";
 import RouteLoadingOverlay from "@/components/RouteLoadingOverlay";
+import PaperOverlay from "@/components/PaperOverlay";
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
+
+  // Auto-detect browser language on claim pages and redirect if needed.
+  // Ensures foreign users scanning a Chinese QR code get English UI automatically.
+  useEffect(() => {
+    if (
+      (router.pathname === "/claim" || router.pathname === "/claim-success") &&
+      router.locale === "zh"
+    ) {
+      const lang = navigator.language?.toLowerCase() || "";
+      if (lang && !lang.startsWith("zh")) {
+        router.replace(router.asPath, router.asPath, { locale: "en" });
+      }
+    }
+  }, [router.pathname]);
 
   // Prevent scroll jumps during route transitions:
   // When navigation starts, freeze the page at its current scroll position
@@ -80,8 +95,9 @@ export default function App({ Component, pageProps }: AppProps) {
       // Only act on quick taps (not scrolls or long-presses)
       if (dx > 10 || dy > 10 || elapsed > 300) return;
 
-      // Walk up from the target to find the nearest HTMLElement with .click()
-      let el = e.target as HTMLElement;
+      // Use composedPath to pierce shadow DOM (e.g. Beacon wallet modal),
+      // falling back to e.target for normal DOM elements.
+      let el = (e.composedPath?.()[0] ?? e.target) as HTMLElement;
       if (!(el instanceof HTMLElement)) {
         el = (el as any).parentElement;
       }
@@ -129,6 +145,7 @@ export default function App({ Component, pageProps }: AppProps) {
             <ThemeProvider theme={theme}>
               <CssBaseline />
               <RouteLoadingOverlay />
+              <PaperOverlay />
               {!isMinimal && <NavBar />}
               {isMinimal ? (
                 <Component {...pageProps} />

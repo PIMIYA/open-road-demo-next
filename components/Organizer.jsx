@@ -1,7 +1,9 @@
 import { Box, Typography } from "@mui/material";
 import Link from "next/link";
+import { useT } from "@/lib/i18n/useT";
 
 export default function Organizer({ organizer, artists, organizers }) {
+  const t = useT();
   if (!organizer) return null;
 
   const normalize = (s) => s.replace(/\s+/g, "").toLowerCase();
@@ -51,18 +53,18 @@ export default function Organizer({ organizer, artists, organizers }) {
     <div>
       {grouped.artist.length > 0 && (
         <Box>
-          <Typography variant="caption" sx={{ opacity: 0.8 }}>
-            藝術家
+          <Typography variant="caption" sx={{ opacity: 0.8, display: "block", lineHeight: 1.2 }}>
+            {t.role.artist}
           </Typography>
-          <Box sx={{ fontSize: "inherit" }}>{renderNames(grouped.artist)}</Box>
+          <Box sx={{ fontSize: "inherit", fontWeight: 300 }}>{renderNames(grouped.artist)}</Box>
         </Box>
       )}
       {grouped.organizer.length > 0 && (
         <Box sx={{ mt: grouped.artist.length > 0 ? 0.5 : 0 }}>
-          <Typography variant="caption" sx={{ opacity: 0.8 }}>
-            主辦方
+          <Typography variant="caption" sx={{ opacity: 0.8, display: "block", lineHeight: 1.2 }}>
+            {t.role.organizer}
           </Typography>
-          <Box sx={{ fontSize: "inherit" }}>{renderNames(grouped.organizer)}</Box>
+          <Box sx={{ fontSize: "inherit", fontWeight: 300 }}>{renderNames(grouped.organizer)}</Box>
         </Box>
       )}
     </div>

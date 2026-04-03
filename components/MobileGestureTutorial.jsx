@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useUIEnvironment } from '@/contexts/UIEnvironmentContext';
+import { useT } from '@/lib/i18n/useT';
 
 const STORAGE_KEY = 'kairos_mobile_gesture_tutorial_seen_v1';
 const AUTO_DISMISS_MS = 10000;
@@ -21,6 +22,7 @@ const AUTO_DISMISS_MS = 10000;
  * @param {Function} props.onAnimationStateChange - Callback to notify parent of animation state
  */
 export function MobileGestureTutorial({ onAnimationStateChange }) {
+  const t = useT();
   const { isMobileUI } = useUIEnvironment();
   const [isVisible, setIsVisible] = useState(false);
   const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
@@ -107,7 +109,7 @@ export function MobileGestureTutorial({ onAnimationStateChange }) {
             textAlign: 'center',
           }}
         >
-          Map Gestures
+          {t.map.gestureTitle}
         </h2>
 
         <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', color: '#374151' }}>
@@ -130,7 +132,7 @@ export function MobileGestureTutorial({ onAnimationStateChange }) {
               </svg>
             </span>
             <span style={{ paddingTop: '0.25rem' }}>
-              <strong style={{ fontWeight: 500 }}>Single finger drag:</strong> Pan the map
+              <strong style={{ fontWeight: 500 }}>{t.map.gestureDrag}</strong> {t.map.gestureDragDesc}
             </span>
           </li>
 
@@ -153,7 +155,7 @@ export function MobileGestureTutorial({ onAnimationStateChange }) {
               </svg>
             </span>
             <span style={{ paddingTop: '0.25rem' }}>
-              <strong style={{ fontWeight: 500 }}>Two fingers:</strong> Pinch to zoom
+              <strong style={{ fontWeight: 500 }}>{t.map.gesturePinch}</strong> {t.map.gesturePinchDesc}
             </span>
           </li>
 
@@ -176,7 +178,7 @@ export function MobileGestureTutorial({ onAnimationStateChange }) {
               </svg>
             </span>
             <span style={{ paddingTop: '0.25rem' }}>
-              <strong style={{ fontWeight: 500 }}>Change city:</strong> Use on-screen buttons
+              <strong style={{ fontWeight: 500 }}>{t.map.gestureCity}</strong> {t.map.gestureCityDesc}
             </span>
           </li>
         </ul>
@@ -189,7 +191,7 @@ export function MobileGestureTutorial({ onAnimationStateChange }) {
             textAlign: 'center',
           }}
         >
-          Tap anywhere to continue
+          {t.map.gestureTap}
         </p>
       </div>
     </div>

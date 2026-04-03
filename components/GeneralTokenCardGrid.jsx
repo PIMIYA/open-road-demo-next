@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { useT } from "@/lib/i18n/useT";
 
 import {
   Box,
@@ -17,7 +17,7 @@ import { getRandomObjectType, getRandomPeriod } from "@/lib/dummy";
 import Organizer from "@/components/Organizer";
 
 export default function GeneralTokenCardGrid(props) {
-  const router = useRouter();
+  const t = useT();
 
   const data = props.data;
   const pageSize = props.pageSize || 6;
@@ -138,22 +138,14 @@ export default function GeneralTokenCardGrid(props) {
                   <Box id="primary-info" mb={1}>
                     <Typography
                       variant="caption"
-                      sx={{ opacity: 0.9 }}
-                      onClick={() => {
-                        router.push({
-                          pathname: "/events",
-                          query: { cat: metadata.category },
-                        });
-                      }}
-                      style={{ cursor: "pointer" }}
+                      sx={{ opacity: 0.8, display: "block", lineHeight: 1.2 }}
                     >
-                      {metadata.category}
+                      {t.categoryMap?.[metadata.category] || metadata.category}
                     </Typography>
                     <Typography
                       variant="cardTitle"
                       component="h6"
-                      gutterBottom
-                      sx={{ fontWeight: 500 }}
+                      sx={{ fontWeight: 500, mb: 1 }}
                     >
                       {metadata.name}
                     </Typography>

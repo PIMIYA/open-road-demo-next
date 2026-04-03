@@ -1,11 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 
 const TILE_SIZE = 128;
 
-/**
- * Generate a 128×128 grayscale noise tile once, return its data URL.
- * The result is cached across all component instances via module-level variable.
- */
 let cachedDataUrl = null;
 
 function generateNoiseTile() {
@@ -23,7 +19,7 @@ function generateNoiseTile() {
     data[i] = v;       // R
     data[i + 1] = v;   // G
     data[i + 2] = v;   // B
-    data[i + 3] = 12;  // A — 50% lighter
+    data[i + 3] = 12;  // A — subtle grain
   }
 
   ctx.putImageData(imageData, 0, 0);
@@ -32,20 +28,16 @@ function generateNoiseTile() {
 }
 
 /**
- * Hook that returns a stable noise texture data URL.
- * Generated once on first mount, cached permanently.
+ * Returns a stable noise texture data URL.
+ * Generated once on first client mount — returns null during SSR
+ * and initial hydration to avoid mismatch.
  */
 export function useNoiseTexture() {
-  const urlRef = useRef(cachedDataUrl);
+  const [url, setUrl] = useState(null);
 
   useEffect(() => {
-    if (!urlRef.current) {
-      urlRef.current = generateNoiseTile();
-    }
+    setUrl(generateNoiseTile());
   }, []);
 
-  // On server, return null; on client, return cached or freshly generated
-  if (typeof window === "undefined") return null;
-  if (!urlRef.current) urlRef.current = generateNoiseTile();
-  return urlRef.current;
+  return url;
 }

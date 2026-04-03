@@ -19,6 +19,7 @@ import Organizer from "@/components/Organizer";
 import TokenComments from "./TokenComments";
 
 import { useState } from "react";
+import { useT } from "@/lib/i18n/useT";
 
 export default function SingleToken({
   ownersData,
@@ -42,6 +43,7 @@ export default function SingleToken({
   const mimeType = data.metadata.formats[0].mimeType;
   const src = data.metadata;
 
+  const t = useT();
   const [tabValue, setTabValue] = useState(0);
 
   return (
@@ -89,7 +91,7 @@ export default function SingleToken({
           {/* Time */}
           <Box sx={{ mb: 3 }}>
             <Typography variant="overline" color="text.secondary">
-              TIME
+              {t.nft.time}
             </Typography>
             <Typography variant="body2">
               {data.metadata.start_time
@@ -101,7 +103,7 @@ export default function SingleToken({
           {/* Location */}
           <Box sx={{ mb: 3 }}>
             <Typography variant="overline" color="text.secondary">
-              LOCATION
+              {t.nft.location}
             </Typography>
             {data.eventPlace && data.metadata?.venue_id && data.metadata?.city_slug ? (
               <Typography variant="body1">
@@ -117,7 +119,7 @@ export default function SingleToken({
           {/* Format */}
           <Box sx={{ mb: 3 }}>
             <Typography variant="overline" color="text.secondary">
-              FORMAT
+              {t.nft.format}
             </Typography>
             <Typography variant="body2">{mimeType}</Typography>
           </Box>
@@ -150,13 +152,13 @@ export default function SingleToken({
                 },
               }}
             >
-              <Tab label="Description" />
+              <Tab label={t.nft.description} />
               <Tab
-                label={<span>Collectors(<i>{collected}</i>)</span>}
+                label={<span>{t.nft.collectors}(<i>{collected}</i>)</span>}
                 disabled={collected === 0}
               />
               <Tab
-                label={<span>Comments(<i>{comments?.data?.length || 0}</i>)</span>}
+                label={<span>{t.nft.comments}(<i>{comments?.data?.length || 0}</i>)</span>}
                 disabled={
                   !comments ||
                   comments.data === null ||

@@ -16,8 +16,10 @@ import CustomSelect from "@/components/CustomSelect";
 import { TZKT_API, GetClaimablePoolIDBatch, FetchDirectusData } from "@/lib/api";
 import { fetchCities, fetchVenues } from "@/lib/map-api";
 import { formatDateRange } from "@/lib/stringUtils";
+import { useT } from "@/lib/i18n/useT";
 
 export default function Project({ event, organizers, artists, tokens }) {
+  const t = useT();
   // format event.start_time to GMT timezone, and subtract 8 hours
   const formattedStartTime = event.start_time
     ? new Date(
@@ -157,7 +159,7 @@ export default function Project({ event, organizers, artists, tokens }) {
               value={catValue}
               onChange={(e) => setCatValue(e.target.value)}
             >
-              <option value="">類別</option>
+              <option value="">{t.events.categoryLabel}</option>
               {categories.map((cat) => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
@@ -174,7 +176,7 @@ export default function Project({ event, organizers, artists, tokens }) {
               value={tagValue}
               onChange={(e) => setTagValue(e.target.value)}
             >
-              <option value="">標籤</option>
+              <option value="">{t.events.tagLabel}</option>
               {tags.map((tag) => (
                 <option key={tag} value={tag}>{tag}</option>
               ))}
@@ -191,7 +193,7 @@ export default function Project({ event, organizers, artists, tokens }) {
               value={creatorValue}
               onChange={(e) => setCreatorValue(e.target.value)}
             >
-              <option value="">創作者 / 主辦方</option>
+              <option value="">{t.events.creatorOrganizer}</option>
               {allCreators.map((name) => (
                 <option key={name} value={name}>{name}</option>
               ))}
@@ -206,7 +208,7 @@ export default function Project({ event, organizers, artists, tokens }) {
           <Box sx={{ width: "100%", mb: 3, paddingTop: "33.33%", position: "relative", overflow: "hidden", borderRadius: "8px" }}>
             <img
               src={event.banner_url}
-              alt={event.name || "Event banner"}
+              alt={event.name || t.events.eventCover}
               style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "100%", height: "100%", objectFit: "cover", display: "block" }}
             />
           </Box>
@@ -214,31 +216,31 @@ export default function Project({ event, organizers, artists, tokens }) {
 
         <Box sx={{ mb: 6, maxWidth: "70ch" }}>
           <Box sx={{ mb: 2 }}>
-            <Typography variant="caption" sx={{ opacity: 0.8 }}>
-              活動名稱
+            <Typography variant="caption" sx={{ opacity: 0.8, display: "block", lineHeight: 1.2 }}>
+              {t.mint.event}
             </Typography>
-            <Typography variant="h2" sx={{ mt: 0.5 }}>
+            <Typography variant="h2">
               {event.name}
             </Typography>
           </Box>
 
           <Box sx={{ mb: 2 }}>
-            <Typography variant="caption" sx={{ opacity: 0.8 }}>
-              地點
+            <Typography variant="caption" sx={{ opacity: 0.8, display: "block", lineHeight: 1.2 }}>
+              {t.wallet.location}
             </Typography>
-            <Typography variant="body1" sx={{ mt: 0.5 }}>
-              {event.venue_name || "Location TBD"}
+            <Typography variant="body1">
+              {event.venue_name || t.events.locationTbd}
             </Typography>
           </Box>
 
           <Box sx={{ mb: 2 }}>
-            <Typography variant="caption" sx={{ opacity: 0.8 }}>
-              時間
+            <Typography variant="caption" sx={{ opacity: 0.8, display: "block", lineHeight: 1.2 }}>
+              {t.nft.time}
             </Typography>
-            <Typography variant="body1" sx={{ mt: 0.5 }}>
+            <Typography variant="body1">
               {event.start_time
                 ? formatDateRange(formattedStartTime, formattedEndTime)
-                : "TBD"}
+                : t.events.tbd}
             </Typography>
           </Box>
 
@@ -255,7 +257,7 @@ export default function Project({ event, organizers, artists, tokens }) {
             />
           )}
         </Box>
-        <Box>{filteredData.length == 0 ? "no data" : ""}</Box>
+        <Box>{filteredData.length == 0 ? t.common.noData : ""}</Box>
         <GeneralTokenCardGrid
           data={paginateAppend(filteredData, currentPage, pageSize)}
           organizers={organizers}
@@ -271,7 +273,7 @@ export default function Project({ event, organizers, artists, tokens }) {
               color: "text.secondary",
             }}
           >
-            {hasMore ? "Loading..." : ""}
+            {hasMore ? t.common.loading : ""}
           </Box>
         )}
         </Box>
@@ -288,7 +290,7 @@ export async function getStaticPaths() {
 
   return {
     paths,
-    fallback: false,
+    fallback: "blocking",
   };
 }
 

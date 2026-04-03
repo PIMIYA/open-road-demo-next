@@ -161,7 +161,7 @@ export default function Project({ event, organizers, artists, tokens }) {
             >
               <option value="">{t.events.categoryLabel}</option>
               {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat}>{t.categoryMap?.[cat] || cat}</option>
               ))}
             </CustomSelect>
 
@@ -178,7 +178,7 @@ export default function Project({ event, organizers, artists, tokens }) {
             >
               <option value="">{t.events.tagLabel}</option>
               {tags.map((tag) => (
-                <option key={tag} value={tag}>{tag}</option>
+                <option key={tag} value={tag}>{t.tagMap?.[tag] || tag}</option>
               ))}
             </CustomSelect>
 

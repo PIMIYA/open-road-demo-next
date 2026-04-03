@@ -90,7 +90,7 @@ export default function SingleToken({
 
           {/* Time */}
           <Box sx={{ mb: 3 }}>
-            <Typography variant="overline" color="text.secondary">
+            <Typography variant="caption" sx={{ opacity: 0.8, display: "block", lineHeight: 1.2 }}>
               {t.nft.time}
             </Typography>
             <Typography variant="body2">
@@ -102,7 +102,7 @@ export default function SingleToken({
 
           {/* Location */}
           <Box sx={{ mb: 3 }}>
-            <Typography variant="overline" color="text.secondary">
+            <Typography variant="caption" sx={{ opacity: 0.8, display: "block", lineHeight: 1.2 }}>
               {t.nft.location}
             </Typography>
             {data.eventPlace && data.metadata?.venue_id && data.metadata?.city_slug ? (
@@ -118,7 +118,7 @@ export default function SingleToken({
 
           {/* Format */}
           <Box sx={{ mb: 3 }}>
-            <Typography variant="overline" color="text.secondary">
+            <Typography variant="caption" sx={{ opacity: 0.8, display: "block", lineHeight: 1.2 }}>
               {t.nft.format}
             </Typography>
             <Typography variant="body2">{mimeType}</Typography>

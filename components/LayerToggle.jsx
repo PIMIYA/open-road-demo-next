@@ -23,8 +23,8 @@ const EyeClosed = ({ color = "currentColor" }) => (
   </svg>
 );
 
-/** SVG mini-shape for legend */
-function ShapeIcon({ shapeName, color, size = 12 }) {
+/** SVG mini-shape for legend — supports rotation, sizeScale, fillMode */
+function ShapeIcon({ shapeName, color, size = 12, rotation = 0, sizeScale = 1, fillMode = "fill" }) {
   const cx = size / 2;
   const cy = size / 2;
   const r = size / 2 - 1;
@@ -71,14 +71,48 @@ function ShapeIcon({ shapeName, color, size = 12 }) {
             points={`${cx},${cy - r} ${cx + r * 0.7},${cy} ${cx},${cy + r} ${cx - r * 0.7},${cy}`}
           />
         );
+      case "cross": {
+        const w = r * 0.35;
+        return (
+          <polygon points={`${cx-w},${cy-r} ${cx+w},${cy-r} ${cx+w},${cy-w} ${cx+r},${cy-w} ${cx+r},${cy+w} ${cx+w},${cy+w} ${cx+w},${cy+r} ${cx-w},${cy+r} ${cx-w},${cy+w} ${cx-r},${cy+w} ${cx-r},${cy-w} ${cx-w},${cy-w}`} />
+        );
+      }
+      case "arrow":
+        return (
+          <polygon points={`${cx},${cy-r} ${cx+r*0.7},${cy} ${cx+r*0.3},${cy} ${cx+r*0.3},${cy+r} ${cx-r*0.3},${cy+r} ${cx-r*0.3},${cy} ${cx-r*0.7},${cy}`} />
+        );
+      case "crescent":
+        return (
+          <path d={`M${cx+r},${cy} A${r},${r} 0 1,0 ${cx-r},${cy} A${r*0.8},${r*0.8} 0 1,1 ${cx+r},${cy}`} />
+        );
+      case "bowtie":
+        return (
+          <polygon points={`${cx-r},${cy-r*0.7} ${cx+r},${cy+r*0.7} ${cx+r},${cy-r*0.7} ${cx-r},${cy+r*0.7}`} />
+        );
+      case "octagon": {
+        const pts = [0,1,2,3,4,5,6,7].map((i) => {
+          const a = (Math.PI * 2 * i) / 8 - Math.PI / 8;
+          return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
+        });
+        return <polygon points={pts.join(" ")} />;
+      }
+      case "semicircle":
+        return (
+          <path d={`M${cx-r},${cy} A${r},${r} 0 0,1 ${cx+r},${cy} Z`} />
+        );
       default:
         return <circle cx={cx} cy={cy} r={r} />;
     }
   })();
 
+  const rotDeg = (rotation || 0) * (180 / Math.PI);
+  const fillProps = fillMode === "stroke"
+    ? { fill: "none", stroke: color, strokeWidth: 1 }
+    : { fill: color, stroke: "none" };
+
   return (
-    <svg width={size} height={size} style={{ flexShrink: 0 }}>
-      <g fill={color} stroke="none">
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0, overflow: "visible" }}>
+      <g {...fillProps} transform={`translate(${cx}, ${cy}) rotate(${rotDeg}) scale(${sizeScale}) translate(${-cx}, ${-cy})`}>
         {shapeEl}
       </g>
     </svg>
@@ -108,6 +142,7 @@ function LayerContent({ layers, onToggle, creatorShapeMap, categoryColorMap, lay
             cursor: "pointer",
             color: "var(--brand-primary)",
             fontSize: "12px",
+            fontFamily: '"Manrope", ui-sans-serif, system-ui, sans-serif',
             textAlign: "left",
             opacity: layer.visible ? 1 : 0.4,
             transition: "opacity 0.2s",
@@ -139,9 +174,9 @@ function LayerContent({ layers, onToggle, creatorShapeMap, categoryColorMap, lay
                 color: "var(--brand-primary)",
               }}
             >
-              <ShapeIcon shapeName={info.shapeName} color={info.color} />
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {info.name}
+              <ShapeIcon shapeName={info.shapeName} color={info.color} rotation={info.rotation} sizeScale={info.sizeScale} fillMode={info.fillMode} />
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: '"Manrope", ui-sans-serif, system-ui, sans-serif' }}>
+                {t.artistMap?.[info.name] || t.organizerMap?.[info.name] || info.name}
               </span>
             </div>
           ))}
@@ -177,7 +212,7 @@ function LayerContent({ layers, onToggle, creatorShapeMap, categoryColorMap, lay
                   border: "none",
                 }}
               />
-              <span>{cat}</span>
+              <span style={{ fontFamily: '"Manrope", ui-sans-serif, system-ui, sans-serif' }}>{t.categoryMap?.[cat] || cat}</span>
             </div>
           ))}
         </>

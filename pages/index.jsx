@@ -15,6 +15,7 @@ import { drawBloomLayer } from "@/lib/overlays/drawBloomLayer";
 
 import { useT } from "@/lib/i18n/useT";
 import LanguageToggle from "@/components/LanguageToggle";
+import DateRangePicker from "@/components/DateRangePicker";
 
 const nftPointRadius = 20;
 const NFT_CONTRACT = "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW";
@@ -402,7 +403,7 @@ function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
           {nft?.venue && (
             <div>
               <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>{t.map.venue}</div>
-              <div style={{ fontSize: 14 }}>{nft.venue}</div>
+              <div style={{ fontSize: 14 }}>{t.venueMap?.[nft.venue] || nft.venue}</div>
               {(nft?.start_time || nft?.end_time) && (
                 <div style={{ fontSize: 12, opacity: 0.8, marginTop: 2 }}>
                   {formatDateRange(nft.start_time, nft.end_time)}
@@ -500,7 +501,7 @@ function BubbleMeasurer({ nft, onMeasure }) {
         {nft?.venue && (
           <div>
             <div style={{ fontSize: 10, marginBottom: 4 }}>{t.map.venue}</div>
-            <div style={{ fontSize: 14 }}>{nft.venue}</div>
+            <div style={{ fontSize: 14 }}>{t.venueMap?.[nft.venue] || nft.venue}</div>
             {(nft?.start_time || nft?.end_time) && (
               <div style={{ fontSize: 12, marginTop: 2 }}>
                 {formatDateRange(nft.start_time, nft.end_time)}
@@ -1055,7 +1056,7 @@ function VenueNftCarousel({ nfts, onClose, compact = false }) {
           {nft?.venue && (
             <div style={{ fontSize: 12, lineHeight: 1.6 }}>
               <span style={{ color: "var(--brand-secondary)", marginRight: 6 }}>{t.map.venue}</span>
-              {nft.venue}
+              {t.venueMap?.[nft.venue] || nft.venue}
             </div>
           )}
 
@@ -1360,10 +1361,8 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
         tag: "",
         category: "",
         creator: "",
-        year: "",
-        month: "",
-        week: "",
-        day: "",
+        dateStart: null,
+        dateEnd: null,
         activityStatus: { past: true, ongoing: true, future: true },
       }
     );
@@ -1376,9 +1375,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
     if (currentFilters.tag) count++;
     if (currentFilters.category) count++;
     if (currentFilters.creator) count++;
-    if (currentFilters.year) count++;
-    if (currentFilters.month) count++;
-    if (currentFilters.day) count++;
+    if (currentFilters.dateStart) count++;
     if (!currentFilters.activityStatus.past) count++;
     if (!currentFilters.activityStatus.ongoing) count++;
     if (!currentFilters.activityStatus.future) count++;
@@ -1393,10 +1390,8 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
           tag: "",
           category: "",
           creator: "",
-          year: "",
-          month: "",
-          week: "",
-          day: "",
+          dateStart: null,
+          dateEnd: null,
           activityStatus: { past: true, ongoing: true, future: true },
         };
       const next = typeof updater === "function" ? updater(base) : updater;
@@ -1448,27 +1443,21 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
       const from = nft?.start_time ? new Date(nft.start_time) : null;
       const to = nft?.end_time ? new Date(nft.end_time) : null;
 
+      // Date range filter: selected range must be within event duration (day-level).
+      // Both event times and user picks use local timezone (data is Asia/Taipei encoded).
+      if (currentFilters.dateStart && from) {
+        const toDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+
+        const rangeStart = toDay(new Date(currentFilters.dateStart));
+        const rangeEnd = toDay(currentFilters.dateEnd ? new Date(currentFilters.dateEnd) : new Date(currentFilters.dateStart));
+
+        const eventStart = toDay(from);
+        const eventEnd = toDay(to || from);
+
+        if (rangeStart < eventStart || rangeEnd > eventEnd) return false;
+      }
+
       if (from && to) {
-        if (currentFilters.year && from.getFullYear().toString() !== currentFilters.year) return false;
-
-        if (currentFilters.month) {
-          const monthKey = `${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, "0")}`;
-          if (monthKey !== currentFilters.month) return false;
-        }
-
-        if (currentFilters.week) {
-          const wkStart = getWeekStart(from);
-          const wkKey = `${wkStart.getFullYear()}-W${getWeekNumber(wkStart)}`;
-          if (wkKey !== currentFilters.week) return false;
-        }
-
-        if (currentFilters.day) {
-          const dayKey = `${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, "0")}-${String(
-            from.getDate()
-          ).padStart(2, "0")}`;
-          if (dayKey !== currentFilters.day) return false;
-        }
-
         const isPast = to < now;
         const isOngoing = from <= now && to >= now;
         const isFuture = from > now;
@@ -1484,7 +1473,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
 
   const filterOptions = useMemo(() => {
     if (!currentSlug) {
-      return { tags: [], categories: [], creators: [], years: [], months: [], weeks: [], days: [] };
+      return { tags: [], categories: [], creators: [] };
     }
 
     // Use city NFTs filtered only by venue/event (structural selection),
@@ -1502,38 +1491,11 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
     const tags = new Set();
     const categories = new Set();
     const creators = new Set();
-    const years = new Set();
-    const months = new Set();
-    const weeks = new Set();
-    const days = new Set();
-
-    const selectedYear = currentFilters?.year ? parseInt(currentFilters.year, 10) : null;
-    const selectedMonth = currentFilters?.month || null;
 
     for (const nft of base) {
       if (Array.isArray(nft.tags)) nft.tags.forEach((t) => tags.add(t));
       if (nft.category) categories.add(nft.category);
       if (Array.isArray(nft.creators)) nft.creators.forEach((c) => creators.add(resolveCreatorName(c)));
-
-      if (nft?.start_time) {
-        const d = new Date(nft.start_time);
-        const y = d.getFullYear();
-        years.add(String(y));
-
-        if (!selectedYear || y === selectedYear) {
-          const monthKey = `${y}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-          months.add(monthKey);
-
-          const wkStart = getWeekStart(d);
-          const wkKey = `${wkStart.getFullYear()}-W${getWeekNumber(wkStart)}`;
-          weeks.add(wkKey);
-
-          if (!selectedMonth || monthKey === selectedMonth) {
-            const dayKey = `${y}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-            days.add(dayKey);
-          }
-        }
-      }
     }
 
     const sortAlpha = (a, b) => String(a).localeCompare(String(b));
@@ -1541,10 +1503,6 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
       tags: Array.from(tags).sort(sortAlpha),
       categories: Array.from(categories).sort(sortAlpha),
       creators: Array.from(creators).sort(sortAlpha),
-      years: Array.from(years).sort(sortAlpha),
-      months: Array.from(months).sort(sortAlpha),
-      weeks: Array.from(weeks).sort(sortAlpha),
-      days: Array.from(days).sort(sortAlpha),
     };
   }, [currentSlug, cityNfts, selectedVenue, selectedEvent, cityVenues, currentFilters]);
 
@@ -2549,7 +2507,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
               <div
                 style={{
                   position: 'absolute',
-                  top: isMobileUI ? 'max(1.25rem, env(safe-area-inset-top))' : '1.25rem',
+                  top: isMobileUI ? 'max(2.5rem, calc(env(safe-area-inset-top) + 1.25rem))' : '2.5rem',
                   left: isMobileUI ? 'max(1.25rem, env(safe-area-inset-left))' : '1.25rem',
                   zIndex: 50,
                   display: 'flex',
@@ -2569,13 +2527,16 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     setOpenBubbleNfts((prev) => ({ ...prev, [slug]: [] }));
                     setFiltersByCity((prev) => ({
                       ...prev,
-                      [slug]: { tag: "", category: "", creator: "", year: "", month: "", week: "", day: "", activityStatus: { past: true, ongoing: true, future: true } },
+                      [slug]: { tag: "", category: "", creator: "", dateStart: null, dateEnd: null, activityStatus: { past: true, ongoing: true, future: true } },
                     }));
                     resetZoom(slug);
                     restoreSpotlightNfts(slug);
                   }}
-                  style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--brand-primary)', padding: '0.5rem 0', cursor: 'pointer' }}
-                >{(router.locale === "en" ? city.name_en : city.name_zh) || city.name_en || city.slug}</div>
+                  style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--brand-primary)', padding: '0.5rem 0', cursor: 'pointer', fontFamily: '"Fraunces", "Noto Sans TC", "PingFang TC", ui-sans-serif, system-ui, sans-serif', whiteSpace: 'nowrap' }}
+                >{router.locale === "en"
+                  ? <>{t.map.whatsOnIn} <em style={{ fontStyle: 'italic' }}>{city.name_en || city.slug}</em></>
+                  : (city.name_zh || city.name_en || city.slug)
+                }</div>
 
                 <CustomSelect
                   style={{
@@ -2610,7 +2571,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   <option value="">{t.map.allVenues}</option>
                   {venues.map((venue, index) => (
                     <option key={`${venueKey(venue)}-${index}`} value={venueKey(venue)}>
-                      {venue.name}
+                      {t.venueMap?.[venue.name] || venue.name}
                       {Number.isFinite(venue.count) ? ` (${venue.count})` : ""}
                     </option>
                   ))}
@@ -2657,7 +2618,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   <option value="">{t.map.allEvents}</option>
                   {eventsForThisCity.map((ev, index) => (
                     <option key={`${ev.id}-${index}`} value={ev.id}>
-                      {ev.name}
+                      {t.eventMap?.[ev.name] || ev.name}
                     </option>
                   ))}
                 </CustomSelect>
@@ -2670,7 +2631,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     setOpenBubbleNfts((prev) => ({ ...prev, [slug]: [] }));
                     setFiltersByCity((prev) => ({
                       ...prev,
-                      [slug]: { tag: "", category: "", creator: "", year: "", month: "", week: "", day: "", activityStatus: { past: true, ongoing: true, future: true } },
+                      [slug]: { tag: "", category: "", creator: "", dateStart: null, dateEnd: null, activityStatus: { past: true, ongoing: true, future: true } },
                     }));
                     resetZoom(slug);
                     restoreSpotlightNfts(slug);
@@ -2947,7 +2908,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                 >
                   <option value="">{t.filter.tag}</option>
                   {filterOptions.tags.map((tag) => (
-                    <option key={tag} value={tag}>{tag}</option>
+                    <option key={tag} value={tag}>{t.tagMap?.[tag] || tag}</option>
                   ))}
                 </CustomSelect>
 
@@ -2959,7 +2920,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                 >
                   <option value="">{t.map.category}</option>
                   {filterOptions.categories.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                    <option key={c} value={c}>{t.categoryMap?.[c] || c}</option>
                   ))}
                 </CustomSelect>
 
@@ -2971,47 +2932,18 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                 >
                   <option value="">{t.map.artist}</option>
                   {filterOptions.creators.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                    <option key={c} value={c}>{t.artistMap?.[c] || c}</option>
                   ))}
                 </CustomSelect>
 
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <CustomSelect
-                    style={{ background: "transparent", padding: "4px", fontSize: 13, color: "var(--brand-primary)", width: "80px" }}
-                    value={currentFilters.year}
-                    onChange={(e) => setCurrentFilters((prev) => ({ ...prev, year: e.target.value, month: "", week: "", day: "" }))}
-                    forceOpenUpward
-                  >
-                    <option value="">{t.map.year}</option>
-                    {filterOptions.years.map((y) => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </CustomSelect>
-
-                  <CustomSelect
-                    style={{ background: "transparent", padding: "4px", fontSize: 13, color: "var(--brand-primary)", width: "90px" }}
-                    value={currentFilters.month}
-                    onChange={(e) => setCurrentFilters((prev) => ({ ...prev, month: e.target.value, day: "" }))}
-                    forceOpenUpward
-                  >
-                    <option value="">{t.map.month}</option>
-                    {filterOptions.months.map((m) => {
-                      return <option key={m} value={m}>{m}</option>;
-                    })}
-                  </CustomSelect>
-
-                  <CustomSelect
-                    style={{ background: "transparent", padding: "4px", fontSize: 13, color: "var(--brand-primary)", width: "110px" }}
-                    value={currentFilters.day}
-                    onChange={(e) => setCurrentFilters((prev) => ({ ...prev, day: e.target.value }))}
-                    forceOpenUpward
-                  >
-                    <option value="">{t.map.day}</option>
-                    {filterOptions.days.map((d) => {
-                      return <option key={d} value={d}>{d}</option>;
-                    })}
-                  </CustomSelect>
-                </div>
+                <DateRangePicker
+                  startDate={currentFilters.dateStart}
+                  endDate={currentFilters.dateEnd}
+                  onChange={({ start, end }) => setCurrentFilters((prev) => ({ ...prev, dateStart: start, dateEnd: end }))}
+                  locale={router.locale}
+                  placeholder={t.nft.time}
+                  forceOpenUpward
+                />
 
                 <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', color: 'var(--brand-primary)', fontSize: 13 }}>
                   {[
@@ -3090,8 +3022,8 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
           )}
         </div>
       )}
-      {/* Wide: inline filters (unchanged) */}
-      {currentSlug && currentFilters && !isNarrowWidth && (
+      {/* Wide: inline filters — only in venue mode (venue or event selected) */}
+      {currentSlug && currentFilters && !isNarrowWidth && !!(selectedVenue?.[currentSlug] || selectedEvent?.[currentSlug]) && (
           <div
             style={{
               position: 'absolute',
@@ -3114,7 +3046,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
             >
               <option value="">{t.filter.tag}</option>
               {filterOptions.tags.map((tag) => (
-                <option key={tag} value={tag}>{tag}</option>
+                <option key={tag} value={tag}>{t.tagMap?.[tag] || tag}</option>
               ))}
             </CustomSelect>
 
@@ -3126,7 +3058,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
             >
               <option value="">{t.map.category}</option>
               {filterOptions.categories.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>{t.categoryMap?.[c] || c}</option>
               ))}
             </CustomSelect>
 
@@ -3138,51 +3070,18 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
             >
               <option value="">{t.map.artist}</option>
               {filterOptions.creators.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>{t.artistMap?.[c] || c}</option>
               ))}
             </CustomSelect>
 
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              <CustomSelect
-                style={{ background: "transparent", padding: "4px", fontSize: 14, color: "var(--brand-primary)", width: "90px" }}
-                value={currentFilters.year}
-                onChange={(e) => setCurrentFilters((prev) => ({ ...prev, year: e.target.value, month: "", week: "", day: "" }))}
-                forceOpenUpward
-              >
-                <option value="">{t.map.year}</option>
-                {filterOptions.years.map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </CustomSelect>
-
-              <CustomSelect
-                style={{ background: "transparent", padding: "4px", fontSize: 14, color: "var(--brand-primary)", width: "110px" }}
-                value={currentFilters.month}
-                onChange={(e) => setCurrentFilters((prev) => ({ ...prev, month: e.target.value, day: "" }))}
-                forceOpenUpward
-              >
-                <option value="">{t.map.month}</option>
-                {filterOptions.months.map((m) => {
-                  return (
-                    <option key={m} value={m}>{m}</option>
-                  );
-                })}
-              </CustomSelect>
-
-              <CustomSelect
-                style={{ background: "transparent", padding: "4px", fontSize: 14, color: "var(--brand-primary)", width: "120px" }}
-                value={currentFilters.day}
-                onChange={(e) => setCurrentFilters((prev) => ({ ...prev, day: e.target.value }))}
-                forceOpenUpward
-              >
-                <option value="">{t.map.day}</option>
-                {filterOptions.days.map((d) => {
-                  return (
-                    <option key={d} value={d}>{d}</option>
-                  );
-                })}
-              </CustomSelect>
-            </div>
+            <DateRangePicker
+              startDate={currentFilters.dateStart}
+              endDate={currentFilters.dateEnd}
+              onChange={({ start, end }) => setCurrentFilters((prev) => ({ ...prev, dateStart: start, dateEnd: end }))}
+              locale={router.locale}
+              placeholder={t.nft.time}
+              forceOpenUpward
+            />
 
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', color: 'var(--brand-primary)' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>

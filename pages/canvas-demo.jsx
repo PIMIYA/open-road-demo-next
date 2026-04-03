@@ -194,7 +194,7 @@ export default function CanvasDemo() {
         Generative Canvas Demo
       </Typography>
       <Typography variant="body2" sx={{ mb: 4, opacity: 0.6 }}>
-        Each canvas is generated from a user&apos;s NFT collection. Category → geometric shape, Tag → gradient color.
+        Demostrations of different personas with varying NFT collections, showcasing how the generative canvas visualizes their unique tastes and preferences.
       </Typography>
 
       <Divider sx={{ mb: 6 }} />

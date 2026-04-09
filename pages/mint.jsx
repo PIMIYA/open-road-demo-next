@@ -332,13 +332,11 @@ export default function Mint({ organizers, artists, events }) {
 
         const metadataHash = `ipfs://${payload.msg.metadataHash}`;
         const metadataHashes = [metadataHash];
-        const artistWallets = (selectedArtists || []).map((a) => a.address).filter(Boolean);
-        const creators = artistWallets;
 
         const contractCallDetails = {
           contractId,
           tokenQty: mintingTokenQty,
-          creators,
+          creators: [createrAddress],  // recipient = 開路地址，token 送到開路
           tokens: metadataHashes,
         };
 
@@ -401,7 +399,7 @@ export default function Mint({ organizers, artists, events }) {
             endTime: endTime ? endTime.toISOString() : "",
             category: selectedCategory?.label || "",
             tags: (selectedTags || []).map((t) => t.label),
-            creators: artistWallets,
+            creators: (selectedArtists || []).map((a) => a.address).filter(Boolean),
             thumbnailUri: null, // will be resolved from on-chain metadata by nft-sync
           };
 

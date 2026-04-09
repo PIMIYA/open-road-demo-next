@@ -95,6 +95,7 @@ export default function Mint({ organizers, artists, events }) {
 
   const contractAddress = "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM";
   const contractId = 92340; // 正式92340 測試91040
+  const createrAddress = "tz1XBEMJfYoMoMMZafjYv3Q5V9u3QKv1xuBR";
 
   const { address, callcontract } = useConnection();
 

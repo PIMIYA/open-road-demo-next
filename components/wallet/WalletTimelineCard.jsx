@@ -37,11 +37,21 @@ export default function WalletTimelineCard({
 }) {
   const t = useT();
   const { connect } = useConnection();
+  const cardRef = React.useRef(null);
   const contract = data?.contract?.address;
   const tokenId = data?.tokenId;
 
   const isOwner = addressFromURL === myWalletAddress;
   const needsConnect = !myWalletAddress && autoOpenComment;
+
+  // Scroll into view when this is the comment target card
+  React.useEffect(() => {
+    if (autoOpenComment && cardRef.current) {
+      setTimeout(() => {
+        cardRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 500);
+    }
+  }, [autoOpenComment]);
 
   const [messageStatus, setMessageStatus] = useState(false);
   const [openDialog, setOpenDialog] = useState(isOwner && autoOpenComment);
@@ -152,7 +162,7 @@ export default function WalletTimelineCard({
     : tokenImageUrl;
 
   return (
-    <Box mb={10}>
+    <Box ref={cardRef} mb={10}>
       <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
         <Box width={200} sx={{ fontWeight: 300 }}>
           <Typography variant="body1" sx={{ fontWeight: 300 }}>{data.cliamDate}</Typography>

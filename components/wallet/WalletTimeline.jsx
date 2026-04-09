@@ -72,7 +72,7 @@ export default function WalletTimeline({
                 myWalletAddress={myWalletAddress}
                 organizers={organizers}
                 artists={artists}
-                autoOpenComment={commentTokenId && card.tokenId === commentTokenId}
+                autoOpenComment={commentTokenId && String(card.tokenId) === String(commentTokenId)}
               />
             </TimelineContent>
           </TimelineItem>

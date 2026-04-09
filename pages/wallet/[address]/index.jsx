@@ -267,10 +267,26 @@ export default function Wallet({
   };
 
   // Auto-select the initial tab only once when data first arrives
+  // If ?comment=tokenId is present, prefer the tab that contains that token
+  const commentTokenId = router.query.comment || "";
   useEffect(() => {
     if (tabInitialized) return;
-    // Wait until at least one dataset has loaded (non-null)
     if (claimData === null && createdData === null) return;
+
+    if (commentTokenId) {
+      const inClaimed = claimData?.some((d) => String(d.tokenId) === String(commentTokenId));
+      const inCreated = createdData?.some((d) => String(d.tokenId) === String(commentTokenId));
+      if (inClaimed) {
+        setValue(0);
+        setTabInitialized(true);
+        return;
+      }
+      if (inCreated) {
+        setValue(1);
+        setTabInitialized(true);
+        return;
+      }
+    }
 
     if (claimData && claimData.length > 0) {
       setValue(0);
@@ -279,7 +295,7 @@ export default function Wallet({
       setValue(1);
       setTabInitialized(true);
     }
-  }, [claimData, createdData, tabInitialized]);
+  }, [claimData, createdData, tabInitialized, commentTokenId]);
 
   // console.log("filteredData", filteredData);
 
@@ -551,7 +567,7 @@ export default function Wallet({
               myWalletAddress={address}
               organizers={organizers}
               artists={artists}
-              commentTokenId={router.query.comment || ""}
+              commentTokenId={commentTokenId}
             />
           </Box>
         </Stack>

@@ -16,7 +16,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-import { fetchCities, fetchVenues } from "@/lib/map-api";
+import { fetchCities, fetchVenues } from "@/lib/map-api";  // used for event→venue resolution
 import ButtonSpinner from "@/components/ButtonSpinner";
 import { useT } from "@/lib/i18n/useT";
 
@@ -73,17 +73,15 @@ function classifyFile(file) {
 
 /* ------------------------------------------------ */
 
-export default function Mint({ organizers, artists, cities, events }) {
+export default function Mint({ organizers, artists, events }) {
   const t = useT();
   const router = useRouter();
 
-  // Event selection
+  // Event selection → auto-resolves venue and city
   const [selectedEvent, setSelectedEvent] = useState(null);
-
-  // Location: city → venue progressive disclosure
-  const [selectedCity, setSelectedCity] = useState(null);
-  const [venues, setVenues] = useState([]);
-  const [selectedVenue, setSelectedVenue] = useState(null);
+  const [resolvedVenue, setResolvedVenue] = useState(null); // { id, name, lat, lng }
+  const [resolvedCity, setResolvedCity] = useState(null);   // { slug, ... }
+  const [venueError, setVenueError] = useState(null);
 
   // Form states
   let pinningMetadata = false;
@@ -99,10 +97,11 @@ export default function Mint({ organizers, artists, cities, events }) {
   const contractId = 92340; // 正式92340 測試91040
 
   const { address, callcontract } = useConnection();
-  const createrAddress = "tz1XBEMJfYoMoMMZafjYv3Q5V9u3QKv1xuBR";
 
   const titleRef = useRef();
+  const titleEnRef = useRef();
   const descriptionRef = useRef();
+  const descriptionEnRef = useRef();
   const walletRef = useRef();
 
   const [selectedOrganizer, setSelectedOrganizer] = useState(null);
@@ -134,17 +133,36 @@ export default function Mint({ organizers, artists, cities, events }) {
   const [roleData, setRoleData] = useState(null);
   const [isLoadingRole, setLoadingRole] = useState(true);
 
-  // Fetch venues when city changes
+  // Auto-resolve venue and city when event changes
   useEffect(() => {
-    if (!selectedCity) {
-      setVenues([]);
-      setSelectedVenue(null);
+    if (!selectedEvent || !selectedEvent.venue_id) {
+      setResolvedVenue(null);
+      setResolvedCity(null);
+      setVenueError(selectedEvent ? "此活動尚未設定場館" : null);
       return;
     }
-    fetchVenues(selectedCity.slug)
-      .then(setVenues)
-      .catch((err) => console.error("Failed to load venues:", err));
-  }, [selectedCity]);
+    setVenueError(null);
+
+    // Find venue across all cities
+    (async () => {
+      try {
+        const allCities = await fetchCities();
+        for (const city of allCities) {
+          const venues = await fetchVenues(city.slug);
+          const match = venues.find((v) => v.id === selectedEvent.venue_id);
+          if (match) {
+            setResolvedVenue(match);
+            setResolvedCity(city);
+            return;
+          }
+        }
+        setVenueError("找不到此活動的場館資料");
+      } catch (err) {
+        console.error("Failed to resolve venue:", err);
+        setVenueError("無法取得場館資料");
+      }
+    })();
+  }, [selectedEvent]);
 
   useEffect(() => {
     if (!address) return;
@@ -222,23 +240,36 @@ export default function Mint({ organizers, artists, cities, events }) {
 
       // Base metadata
       data.append("title", titleRef.current.value || "");
+      data.append("title_en", titleEnRef.current.value || "");
       data.append("description", descriptionRef.current.value || "");
-      data.append("organizer", selectedOrganizer?.name || "");
+      data.append("description_en", descriptionEnRef.current.value || "");
 
+      // Organizer: wallet address array
+      const organizerAddresses = selectedOrganizer
+        ? selectedOrganizer.map((o) => o.address).filter(Boolean)
+        : [];
+      data.append("organizer", JSON.stringify(organizerAddresses));
+
+      // Artists: names for display metadata
       const resultArtists = (selectedArtists || []).map((a) => a.name);
       data.append("artists", JSON.stringify(resultArtists));
+
+      // Creators: artists wallet addresses (required for on-chain)
+      const artistAddresses = (selectedArtists || []).map((a) => a.address).filter(Boolean);
+      data.append("creators", JSON.stringify(artistAddresses));
+
       data.append("category", selectedCategory?.label || "");
 
       const resultTags = (selectedTags || []).map((t) => t.label);
       data.append("tags", JSON.stringify(resultTags));
 
-      // Location
-      data.append("city_slug", selectedCity?.slug || "");
-      data.append("venue_id", selectedVenue?.id || "");
+      // Location (auto-resolved from event)
+      data.append("city_slug", resolvedCity?.slug || "");
+      data.append("venue_id", resolvedVenue?.id || "");
       data.append(
         "geoLocation",
-        selectedVenue
-          ? JSON.stringify([selectedVenue.lat, selectedVenue.lng])
+        resolvedVenue
+          ? JSON.stringify([resolvedVenue.lat, resolvedVenue.lng])
           : ""
       );
 
@@ -246,7 +277,6 @@ export default function Mint({ organizers, artists, cities, events }) {
       data.append("startTime", startTime ? startTime.toISOString() : "");
       data.append("endTime", endTime ? endTime.toISOString() : "");
 
-      data.append("creator", createrAddress);
       data.append("minter", contractAddress);
       data.append("mintingTool", serverUrl);
       data.append("rights", selectedLicense?.label || "");
@@ -302,7 +332,8 @@ export default function Mint({ organizers, artists, cities, events }) {
 
         const metadataHash = `ipfs://${payload.msg.metadataHash}`;
         const metadataHashes = [metadataHash];
-        const creators = [createrAddress, address];
+        const artistWallets = (selectedArtists || []).map((a) => a.address).filter(Boolean);
+        const creators = artistWallets;
 
         const contractCallDetails = {
           contractId,
@@ -354,19 +385,23 @@ export default function Mint({ organizers, artists, cities, events }) {
           const syncPayload = {
             token_id: tokenId,
             title: titleRef.current.value || "",
+            title_en: titleEnRef.current.value || "",
             description: descriptionRef.current.value || "",
+            description_en: descriptionEnRef.current.value || "",
             event_id: selectedEvent?.id || "",
-            city_slug: selectedCity?.slug || "",
-            venue_id: selectedVenue?.id || "",
-            geoLocation: selectedVenue
-              ? [selectedVenue.lat, selectedVenue.lng]
+            city_slug: resolvedCity?.slug || "",
+            venue_id: resolvedVenue?.id || "",
+            geoLocation: resolvedVenue
+              ? [resolvedVenue.lat, resolvedVenue.lng]
               : null,
-            organizer: selectedOrganizer?.name || "",
+            organizer: selectedOrganizer
+              ? selectedOrganizer.map((o) => o.address).filter(Boolean)
+              : [],
             startTime: startTime ? startTime.toISOString() : "",
             endTime: endTime ? endTime.toISOString() : "",
             category: selectedCategory?.label || "",
             tags: (selectedTags || []).map((t) => t.label),
-            creators: [createrAddress, address],
+            creators: artistWallets,
             thumbnailUri: null, // will be resolved from on-chain metadata by nft-sync
           };
 
@@ -419,24 +454,52 @@ export default function Mint({ organizers, artists, cities, events }) {
             id="title"
             label={t.mint.title}
             fullWidth
+            required
+          />
+          <TextField
+            inputRef={titleEnRef}
+            id="title_en"
+            label={t.mint.titleEn || "Title (English)"}
+            fullWidth
           />
           <TextField
             id="description"
             inputRef={descriptionRef}
             label={t.mint.description}
             multiline
-            maxRows={4}
+            minRows={4}
+            maxRows={12}
+            fullWidth
+          />
+          <TextField
+            id="description_en"
+            inputRef={descriptionEnRef}
+            label={t.mint.descriptionEn || "Description (English)"}
+            multiline
+            minRows={4}
+            maxRows={12}
             fullWidth
           />
           <Autocomplete
+            multiple
             id="organizer"
             options={organizers.data.filter((o) => o.status === "published")}
             getOptionLabel={(o) => o.name}
-            isOptionEqualToValue={(o, v) => o.name === v.name}
+            isOptionEqualToValue={(o, v) => o.id === v.id}
             fullWidth
             onChange={(e, v) => setSelectedOrganizer(v)}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip
+                  variant="outlined"
+                  label={option.name}
+                  {...getTagProps({ index })}
+                  key={option.id}
+                />
+              ))
+            }
             renderInput={(params) => (
-              <TextField {...params} label={t.mint.organizer} />
+              <TextField {...params} label={t.mint.organizer} required />
             )}
           />
           <Autocomplete
@@ -457,7 +520,7 @@ export default function Mint({ organizers, artists, cities, events }) {
               ))
             }
             renderInput={(params) => (
-              <TextField {...params} label={t.mint.artists} />
+              <TextField {...params} label={t.mint.artists} required />
             )}
           />
           <Autocomplete
@@ -492,47 +555,20 @@ export default function Mint({ organizers, artists, cities, events }) {
               <TextField {...params} label={t.mint.tag} />
             )}
           />
-          {/* Location: city → venue progressive disclosure */}
-          <Autocomplete
-            id="city"
-            options={cities}
-            getOptionLabel={(o) =>
-              o.name_zh ? `${o.name_zh} (${o.name_en})` : o.slug
-            }
-            isOptionEqualToValue={(o, v) => o.slug === v.slug}
-            fullWidth
-            value={selectedCity}
-            onChange={(e, v) => {
-              setSelectedCity(v);
-              setSelectedVenue(null);
-            }}
-            renderInput={(params) => (
-              <TextField {...params} label={t.mint.city} />
-            )}
-          />
-          <Autocomplete
-            id="venue"
-            options={venues}
-            getOptionLabel={(o) => o.name}
-            isOptionEqualToValue={(o, v) => o.id === v.id}
-            fullWidth
-            value={selectedVenue}
-            disabled={!selectedCity}
-            noOptionsText={selectedCity ? t.mint.noVenues : t.mint.selectCityFirst}
-            onChange={(e, v) => setSelectedVenue(v)}
-            renderInput={(params) => (
-              <TextField {...params} label={t.mint.venue} />
-            )}
-          />
-
-          {/* lat/lng from selected venue */}
-          {selectedVenue ? (
-            <Box>
+          {/* Location: auto-resolved from event */}
+          {venueError && (
+            <Typography variant="body2" color="error">{venueError}</Typography>
+          )}
+          {resolvedVenue && resolvedCity && (
+            <Box sx={{ p: 2, border: "1px solid", borderColor: "divider", borderRadius: 1 }}>
+              <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                {t.mint.venue || "Venue"}: {resolvedVenue.name}
+              </Typography>
               <Typography variant="body2" sx={{ opacity: 0.6 }}>
-                lat: {selectedVenue.lat} &nbsp; lng: {selectedVenue.lng}
+                {resolvedCity.name_zh || resolvedCity.slug} · lat: {resolvedVenue.lat} lng: {resolvedVenue.lng}
               </Typography>
             </Box>
-          ) : null}
+          )}
 
           {/* time */}
           <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -720,7 +756,13 @@ export default function Mint({ organizers, artists, cities, events }) {
               size="large"
               onClick={upload}
               disabled={
-                miningInProgress || !file || (!!file && !classifyFile(file).isImage && !display)
+                miningInProgress ||
+                !file ||
+                (!!file && !classifyFile(file).isImage && !display) ||
+                !selectedEvent ||
+                !selectedArtists?.length ||
+                !selectedOrganizer?.length ||
+                !!venueError
               }
             >
               {miningInProgress && <ButtonSpinner color="#fff" />}
@@ -734,12 +776,11 @@ export default function Mint({ organizers, artists, cities, events }) {
 }
 
 export async function getServerSideProps() {
-  const [organizers, artists, cities, eventsRes] = await Promise.all([
+  const [organizers, artists, eventsRes] = await Promise.all([
     FetchDirectusData(`/organizers`),
     FetchDirectusData(`/artists`),
-    fetchCities().catch(() => []),
     FetchDirectusData(`/events`),
   ]);
   const events = eventsRes?.data?.filter((e) => e.status === "published") || [];
-  return { props: { organizers, artists, cities, events } };
+  return { props: { organizers, artists, events } };
 }

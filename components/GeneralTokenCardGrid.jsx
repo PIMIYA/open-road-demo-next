@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useT } from "@/lib/i18n/useT";
 
 import {
@@ -17,6 +18,8 @@ import { getRandomObjectType, getRandomPeriod } from "@/lib/dummy";
 import Organizer from "@/components/Organizer";
 
 export default function GeneralTokenCardGrid(props) {
+  const { locale } = useRouter();
+  const isEn = locale === "en";
   const t = useT();
 
   const data = props.data;
@@ -147,7 +150,7 @@ export default function GeneralTokenCardGrid(props) {
                       component="h6"
                       sx={{ fontWeight: 500, mb: 1 }}
                     >
-                      {metadata.name}
+                      {(isEn && metadata.name_en) || metadata.name}
                     </Typography>
                     <Box>
                       <Link
@@ -159,7 +162,7 @@ export default function GeneralTokenCardGrid(props) {
                     </Box>
 
                     <Organizer
-                      organizer={metadata.organizer}
+                      creators={metadata.creators}
                       artists={artists ? artists : null}
                       organizers={organizers ? organizers : null}
                     />

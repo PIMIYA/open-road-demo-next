@@ -75,7 +75,6 @@ async function processEmailInBackground({
   contractAddress,
   claimStatus,
   nftName,
-  nftDescription,
   nftImageUrl,
   locale,
 }) {
@@ -104,7 +103,6 @@ function generateEmailContent({
   contractAddress,
   claimStatus,
   nftName,
-  nftDescription,
   nftImageUrl,
   locale,
 }) {
@@ -187,7 +185,6 @@ function generateEmailContent({
                 </div>
               ` : ""}
               ${nftName ? `<p style="font-size:14px;color:#2483ff;margin:0 0 24px;font-weight:300;">${nftName}</p>` : ""}
-              ${nftDescription ? `<p style="font-size:13px;color:#2483ff99;margin:0 0 24px;font-weight:300;">${nftDescription}</p>` : ""}
 
               <!-- Buttons -->
               <div style="margin:24px 0;">
@@ -249,7 +246,6 @@ function generateEmailContent({
 ${getStatusMessage()}
 
 ${nftName ? `NFT: ${nftName}` : ""}
-${nftDescription ? nftDescription : ""}
 
 ${nftViewUrl ? `${t.claim.viewNft}: ${nftViewUrl}` : ""}
 ${t.claim.viewWallet}: ${walletViewUrl}

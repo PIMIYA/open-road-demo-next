@@ -16,7 +16,7 @@ export default function PaperOverlay() {
         position: "fixed",
         inset: 0,
         pointerEvents: "none",
-        zIndex: 9,
+        zIndex: -1,
         backgroundImage: `url(${noiseUrl})`,
         backgroundRepeat: "repeat",
         mixBlendMode: "multiply",

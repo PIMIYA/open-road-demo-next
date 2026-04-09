@@ -6,7 +6,6 @@ import {
 } from "@/lib/api";
 import { getAkaswapAssetUrl } from "@/lib/stringUtils";
 import KukaiEmbedComponent from "../../components/KukaiEmbedComponent";
-import LanguageToggle from "@/components/LanguageToggle";
 import { useT } from "@/lib/i18n/useT";
 
 const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
@@ -224,7 +223,6 @@ export default function NFTPage({ data, data_from_pool, nftData, error }) {
 
   return (
     <Container maxWidth="sm" sx={{ py: 6, textAlign: "center", position: "relative" }}>
-      <LanguageToggle style={{ position: "absolute", top: 16, right: 16 }} />
       {/* Display image */}
       {imageUrl && (
         <Box sx={{ mb: 4 }}>

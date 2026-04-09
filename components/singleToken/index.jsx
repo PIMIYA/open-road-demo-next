@@ -19,6 +19,7 @@ import Organizer from "@/components/Organizer";
 import TokenComments from "./TokenComments";
 
 import { useState } from "react";
+import { useRouter } from "next/router";
 import { useT } from "@/lib/i18n/useT";
 
 export default function SingleToken({
@@ -43,8 +44,13 @@ export default function SingleToken({
   const mimeType = data.metadata.formats[0].mimeType;
   const src = data.metadata;
 
+  const { locale } = useRouter();
+  const isEn = locale === "en";
   const t = useT();
   const [tabValue, setTabValue] = useState(0);
+
+  const nftName = (isEn && data.metadata.name_en) || data.metadata.name;
+  const nftDescription = (isEn && data.metadata.description_en) || data.metadata.description;
 
   return (
     <Box sx={{ px: { xs: 2, md: 3 }, py: 6 }}>
@@ -63,7 +69,7 @@ export default function SingleToken({
 
           {/* Title */}
           <Typography variant="h1" component="h1">
-            {data.metadata.name}
+            {nftName}
           </Typography>
 
           {data.metadata.projectName && (
@@ -83,6 +89,7 @@ export default function SingleToken({
           <Box sx={{ mb: 3 }}>
             <Organizer
               organizer={data.creator}
+              creators={data.metadata?.creators}
               artists={artists}
               organizers={organizers}
             />
@@ -169,7 +176,7 @@ export default function SingleToken({
 
             {/* Description tab */}
             <Box sx={{ display: tabValue === 0 ? "block" : "none" }}>
-              {data.metadata.description
+              {(nftDescription || "")
                 .split("\n")
                 .map((paragraph, index) => (
                   <Typography key={index} variant="body1" paragraph>

@@ -9,7 +9,6 @@ import {
   TextField,
 } from "@mui/material";
 import ButtonSpinner from "@/components/ButtonSpinner";
-import LanguageToggle from "@/components/LanguageToggle";
 import { getAkaswapAssetUrl } from "@/lib/stringUtils";
 import { useT } from "@/lib/i18n/useT";
 
@@ -214,7 +213,6 @@ export default function ClaimSuccess() {
 
   return (
     <Container maxWidth="sm" sx={{ py: 10, textAlign: "center", position: "relative" }}>
-      <LanguageToggle style={{ position: "absolute", top: 16, right: 16 }} />
       <Stack spacing={5} alignItems="center">
         {/* Status indicator */}
         <Box sx={{ width: 64, height: 64 }}>

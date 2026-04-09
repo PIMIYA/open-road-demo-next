@@ -13,8 +13,8 @@ import TwoColumnLayout, {
 import SidePaper from "@/components/SidePaper";
 import CustomSelect from "@/components/CustomSelect";
 /* Fetch data */
-import { TZKT_API, GetClaimablePoolIDBatch, FetchDirectusData } from "@/lib/api";
-import { fetchCities, fetchVenues } from "@/lib/map-api";
+import { FetchDirectusData } from "@/lib/api";
+import { fetchCities, fetchVenues, fetchEventNfts } from "@/lib/map-api";
 import { formatDateRange } from "@/lib/stringUtils";
 import { useT } from "@/lib/i18n/useT";
 
@@ -97,7 +97,11 @@ export default function Project({ event, organizers, artists, tokens }) {
       (c) =>
         (!catValue || c.metadata.category.includes(catValue)) &&
         (!tagValue || c.metadata.tags.some((tag) => tag.includes(tagValue))) &&
-        (!creatorValue || (c.metadata.organizer && c.metadata.organizer.includes(creatorValue)))
+        (!creatorValue || (c.metadata.organizer && (
+          Array.isArray(c.metadata.organizer)
+            ? c.metadata.organizer.includes(creatorValue)
+            : c.metadata.organizer.includes(creatorValue)
+        )))
     );
     setCurrentPage(1);
     setFilteredData(filtered);
@@ -294,28 +298,44 @@ export async function getStaticPaths() {
   };
 }
 
-const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
-const targetContractAddress = "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW";
+const TARGET_CONTRACT = "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW";
+
+/**
+ * Transform kairos server NFT shape → GeneralTokenCardGrid expected shape.
+ * Maps nfts.json fields to the { tokenId, contract, metadata } structure.
+ */
+const toCardData = (nft, eventName) => ({
+  tokenId: nft.token_id,
+  contract: { address: TARGET_CONTRACT },
+  metadata: {
+    name: nft.name,
+    name_en: nft.name_en || null,
+    description: nft.description,
+    description_en: nft.description_en || null,
+    category: nft.category,
+    tags: nft.tags || [],
+    organizer: nft.organizer || null,
+    thumbnailUri: nft.thumbnailUri,
+    creators: nft.creators || [],
+    event_location: null,
+    start_time: nft.start_time,
+    end_time: nft.end_time,
+    event_id: nft.event_id,
+    projectName: eventName || null,
+    projectId: nft.event_id,
+  },
+});
 
 export async function getStaticProps({ params }) {
-  // Legacy events have different venue name characters (台 vs 臺), hardcode for TZKT matching
-  const legacyVenueNames = {
-    "gm-kairos": "台北市立美術館",
-    "the-interest-from-the-street-corner": "台北當代藝術館",
-  };
-  const legacyVenueName = legacyVenueNames[params.id] || null;
-
-  // --- Parallel group A: all independent fetches ---
-  const [event, burnedData, organizers, artists] = await Promise.all([
+  // --- Parallel: Directus event + kairos server NFTs + organizers + artists ---
+  const [event, eventWithNfts, organizers, artists] = await Promise.all([
     FetchDirectusData(`/events/${params.id}`),
-    TZKT_API(
-      `/v1/tokens/transfers?to.eq=tz1burnburnburnburnburnburnburjAYjjX&token.contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW`
-    ),
+    fetchEventNfts(params.id),
     FetchDirectusData(`/organizers`),
     FetchDirectusData(`/artists`),
   ]);
 
-  // --- Sequential B: venue name (needs event.data.venue_id) ---
+  // --- Venue name from kairos server ---
   let venueName = null;
   if (event.data.venue_id) {
     try {
@@ -330,50 +350,12 @@ export async function getStaticProps({ params }) {
     }
   }
 
-  // --- Sequential C: TZKT NFT queries (needs burned + venue + event) ---
-  const burned_tokenIds =
-    burnedData && Array.isArray(burnedData)
-      ? burnedData.map((item) => item.token.tokenId).join(",")
-      : "";
+  // --- Transform NFTs to card format ---
+  const serverNfts = eventWithNfts?.nfts || [];
+  const eventName = event.data.name || eventWithNfts?.name || null;
+  const tokens = serverNfts.map((nft) => toCardData(nft, eventName));
 
-  // 只用於legacy的nft資料，新的nft資料是直接用event_id抓取
-  const formattedDate = new Date(
-    new Date(event.data.start_time).getTime() - 8 * 60 * 60 * 1000
-  ).toUTCString();
-
-  const baseQuery = `/v1/tokens?contract=KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW&tokenId.ni=${burned_tokenIds}&sort.desc=tokenId`;
-
-  const [dataByEventId, dataByLocation] = await Promise.all([
-    TZKT_API(`${baseQuery}&metadata.event_id=${params.id}`),
-    (legacyVenueName || venueName)
-      ? TZKT_API(`${baseQuery}&metadata.event_location=${legacyVenueName || venueName}&metadata.start_time=${formattedDate}`)
-      : Promise.resolve([]),
-  ]);
-
-  // Merge and deduplicate by tokenId (new NFTs take priority)
-  const seen = new Set();
-  const mergedData = [...(dataByEventId || []), ...(dataByLocation || [])].filter((item) => {
-    if (seen.has(item.tokenId)) return false;
-    seen.add(item.tokenId);
-    return true;
-  });
-
-  // --- Sequential D: pool batch (needs mergedData) ---
-  const tokenIds = mergedData.map((item) => item.tokenId);
-  const poolMap = tokenIds.length > 0
-    ? await GetClaimablePoolIDBatch(contractAddress, targetContractAddress, tokenIds)
-    : {};
-
-  const claimableData = mergedData.map((item) => {
-    const data_from_pool = poolMap[item.tokenId] || null;
-    return {
-      ...item,
-      claimable: !!data_from_pool,
-      poolID: data_from_pool ? data_from_pool[0].key : null,
-    };
-  });
-
-  // Resolve banner URL
+  // --- Resolve banner URL ---
   const directusBaseUrl = "https://data.kairos-mint.art";
   let directusToken = "";
   try {
@@ -399,10 +381,10 @@ export async function getStaticProps({ params }) {
   return {
     props: {
       event: { ...event.data, venue_name: venueName, banner_url },
-      tokens: claimableData,
-      organizers: organizers,
-      artists: artists,
+      tokens,
+      organizers,
+      artists,
     },
-    revalidate: 10, // In seconds
+    revalidate: 10,
   };
 }

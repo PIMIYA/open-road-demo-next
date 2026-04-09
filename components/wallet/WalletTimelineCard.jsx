@@ -22,6 +22,7 @@ import ButtonSpinner from "@/components/ButtonSpinner";
 
 import Organizer from "@/components/Organizer";
 import { useT } from "@/lib/i18n/useT";
+import { useConnection } from "@/packages/providers";
 
 const BRAND = "var(--brand-secondary)";
 
@@ -35,11 +36,16 @@ export default function WalletTimelineCard({
   autoOpenComment = false,
 }) {
   const t = useT();
+  const { connect } = useConnection();
   const contract = data?.contract?.address;
   const tokenId = data?.tokenId;
 
+  const isOwner = addressFromURL === myWalletAddress;
+  const needsConnect = !myWalletAddress && autoOpenComment;
+
   const [messageStatus, setMessageStatus] = useState(false);
-  const [openDialog, setOpenDialog] = useState(autoOpenComment);
+  const [openDialog, setOpenDialog] = useState(isOwner && autoOpenComment);
+  const [connecting, setConnecting] = useState(false);
   const [userMessage, setUserMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -61,8 +67,27 @@ export default function WalletTimelineCard({
     }
   }, [userMessage, tokenId, messageStatus]);
 
+  // Auto-open comment dialog when wallet connects and matches
+  useEffect(() => {
+    if (autoOpenComment && isOwner && !openDialog) {
+      setOpenDialog(true);
+    }
+  }, [isOwner, autoOpenComment]);
+
   const handleClickOpen = () => {
     setOpenDialog(true);
+  };
+
+  const handleConnectAndComment = async () => {
+    setConnecting(true);
+    try {
+      await connect();
+      // After connect, isOwner will update via re-render and the useEffect above will open dialog
+    } catch (err) {
+      console.error("Wallet connect failed:", err);
+    } finally {
+      setConnecting(false);
+    }
   };
 
   const handleCloseDialog = () => {
@@ -177,6 +202,7 @@ export default function WalletTimelineCard({
             )}
             <Organizer
               organizer={data.metadata.organizer}
+              creators={data.metadata?.creators}
               artists={artists ? artists : null}
               organizers={organizers ? organizers : null}
             />
@@ -191,7 +217,7 @@ export default function WalletTimelineCard({
           </Box>
 
           {/* COMMENTS */}
-          {addressFromURL === myWalletAddress ? (
+          {isOwner ? (
             <Box mt={3} mb={2} sx={{ color: "text.secondary" }}>
               {data.comment ? (
                 <Box>
@@ -228,6 +254,34 @@ export default function WalletTimelineCard({
                   </Button>
                 </>
               )}
+            </Box>
+          ) : needsConnect ? (
+            /* From email link: wallet not connected yet — show connect prompt */
+            <Box mt={3} mb={2}>
+              <Typography variant="caption" sx={{ opacity: 0.6, display: "block", mb: 1 }}>
+                {t.comment.connectToComment || "Connect your wallet to leave a message"}
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleConnectAndComment}
+                disabled={connecting}
+                sx={{
+                  color: BRAND,
+                  borderColor: BRAND,
+                  fontSize: 11,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  "@media (hover: hover)": {
+                    "&:hover": {
+                      borderColor: BRAND,
+                      backgroundColor: "rgba(237, 80, 36, 0.05)",
+                    },
+                  },
+                }}
+              >
+                {connecting ? t.common.loading : (t.comment.connectAndComment || "Connect & Comment")}
+              </Button>
             </Box>
           ) : (
             <Box mt={1} mb={2} sx={{ color: "text.secondary" }}>

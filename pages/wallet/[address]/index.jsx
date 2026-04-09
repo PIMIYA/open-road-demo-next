@@ -33,6 +33,70 @@ import CustomSelect from "@/components/CustomSelect";
 import { useRouter } from "next/router";
 import { useT } from "@/lib/i18n/useT";
 
+// Normalize English tags/categories back to canonical Chinese keys
+// so all data uses a single key regardless of mint-time language
+const TAG_NORMALIZE = {
+  "Visual Arts": "視覺藝術", "visual arts": "視覺藝術",
+  "New Media": "新媒體", "new media": "新媒體",
+  "Rap": "說唱", "rap": "說唱",
+  "Theater": "戲劇", "theater": "戲劇", "Theatre": "戲劇",
+  "Dance": "舞蹈", "dance": "舞蹈",
+  "Music": "音樂", "music": "音樂",
+  "Design": "設計", "design": "設計",
+  "Architecture": "建築", "architecture": "建築",
+  "Metaverse": "元宇宙", "metaverse": "元宇宙",
+  "Publishing": "出版", "publishing": "出版",
+  "Film": "電影", "film": "電影",
+  "Humanities": "人文", "humanities": "人文",
+  "Science": "科學", "science": "科學",
+};
+const CAT_NORMALIZE = {
+  "Exhibition": "展覽", "exhibition": "展覽",
+  "Performance": "表演", "performance": "表演",
+  "Course": "課程", "course": "課程",
+  "Guided Tour": "導覽", "guided tour": "導覽",
+  "Workshop": "工作坊", "workshop": "工作坊",
+  "Hackathon": "黑客松", "hackathon": "黑客松",
+  "Seminar / Forum / Talk": "研討會 / 論壇 / 座談",
+  "Festival / Fair / Market": "節祭／展會／市集",
+  "Meetup / Fan Meeting": "分享會／同好會／見面會",
+  "座談": "研討會 / 論壇 / 座談",
+};
+
+function normalizeTag(tag) {
+  if (!tag) return tag;
+  // English → Chinese canonical
+  if (TAG_NORMALIZE[tag]) return TAG_NORMALIZE[tag];
+  // Legacy Chinese compound tags
+  if (tag.includes("視覺")) return "視覺藝術";
+  if (tag.includes("舞蹈")) return "舞蹈";
+  if (tag.includes("音樂")) return "音樂";
+  if (tag.includes("設計")) return "設計";
+  if (tag.includes("科技")) return "元宇宙";
+  if (tag.includes("書籍")) return "出版";
+  if (tag.includes("科學")) return "科學";
+  return tag;
+}
+
+function normalizeCategory(cat) {
+  if (!cat) return cat;
+  return CAT_NORMALIZE[cat] || cat;
+}
+
+/** Normalize tags and category on NFT metadata in-place */
+function normalizeNftData(data) {
+  if (!data) return data;
+  data.forEach((item) => {
+    if (item.metadata.category) {
+      item.metadata.category = normalizeCategory(item.metadata.category);
+    }
+    if (Array.isArray(item.metadata.tags)) {
+      item.metadata.tags = [...new Set(item.metadata.tags.map(normalizeTag).filter(Boolean))];
+    }
+  });
+  return data;
+}
+
 export default function Wallet({
   role,
   pools,
@@ -109,45 +173,27 @@ export default function Wallet({
           data.sort((a, b) => {
             return new Date(b.metadata.date) - new Date(a.metadata.date);
           });
-          // if data's category is "座談", change it to "座談會"
-          data.forEach((item) => {
-            if (item.metadata.category === "座談") {
-              item.metadata.category = "研討會 / 論壇 / 座談";
-            }
-          });
-          // if data's tags, each include "視覺", then combine and change it to one "視覺藝術"
-          data.forEach((item) => {
-            if (item.metadata.tags.some((tag) => tag.includes("視覺"))) {
-              item.metadata.tags = ["視覺藝術"];
-            } else if (item.metadata.tags.some((tag) => tag.includes("舞蹈"))) {
-              item.metadata.tags = ["舞蹈"];
-            } else if (item.metadata.tags.some((tag) => tag.includes("音樂"))) {
-              item.metadata.tags = ["音樂"];
-            } else if (item.metadata.tags.some((tag) => tag.includes("設計"))) {
-              item.metadata.tags = ["設計"];
-            } else if (item.metadata.tags.some((tag) => tag.includes("科技"))) {
-              item.metadata.tags = ["元宇宙"];
-            } else if (item.metadata.tags.some((tag) => tag.includes("書籍"))) {
-              item.metadata.tags = ["出版"];
-            } else if (item.metadata.tags.some((tag) => tag.includes("科學"))) {
-              item.metadata.tags = ["科學"];
-            }
-          });
-          // add projectName to data"
+          normalizeNftData(data);
+          // add projectName to data
           if (data && events) {
             data.forEach((item) => {
+              const meta = item.metadata;
               const matchingProject = events.data.find(
                 (project) =>
-                  project.status === "published" &&
-                  project.location === item.metadata.event_location &&
-                  project.start_time &&
-                  new Date(
-                    new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000
-                  ).toUTCString() === item.metadata.start_time
+                  project.status === "published" && (
+                    // Match by event_id first (new NFTs)
+                    (meta.event_id && project.id === meta.event_id) ||
+                    // Legacy fallback: match by location + start_time
+                    (project.location === meta.event_location &&
+                      project.start_time &&
+                      new Date(
+                        new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000
+                      ).toUTCString() === meta.start_time)
+                  )
               );
               if (matchingProject) {
-                item.metadata.projectName = matchingProject.name;
-                item.metadata.projectId = matchingProject.id;
+                meta.projectName = matchingProject.name;
+                meta.projectId = matchingProject.id;
               }
             });
           }
@@ -177,45 +223,27 @@ export default function Wallet({
           data.sort((a, b) => {
             return new Date(b.metadata.date) - new Date(a.metadata.date);
           });
-          // if data's category is "座談", change it to "座談會"
-          data.forEach((item) => {
-            if (item.metadata.category === "座談") {
-              item.metadata.category = "研討會 / 論壇 / 座談";
-            }
-          });
-          // if data's tags, each include "視覺", then combine and change it to one "視覺藝術"
-          data.forEach((item) => {
-            if (item.metadata.tags.some((tag) => tag.includes("視覺"))) {
-              item.metadata.tags = ["視覺藝術"];
-            } else if (item.metadata.tags.some((tag) => tag.includes("舞蹈"))) {
-              item.metadata.tags = ["舞蹈"];
-            } else if (item.metadata.tags.some((tag) => tag.includes("音樂"))) {
-              item.metadata.tags = ["音樂"];
-            } else if (item.metadata.tags.some((tag) => tag.includes("設計"))) {
-              item.metadata.tags = ["設計"];
-            } else if (item.metadata.tags.some((tag) => tag.includes("科技"))) {
-              item.metadata.tags = ["元宇宙"];
-            } else if (item.metadata.tags.some((tag) => tag.includes("書籍"))) {
-              item.metadata.tags = ["出版"];
-            } else if (item.metadata.tags.some((tag) => tag.includes("科學"))) {
-              item.metadata.tags = ["科學"];
-            }
-          });
+          normalizeNftData(data);
           // add projectName to data
           if (data && events) {
             data.forEach((item) => {
+              const meta = item.metadata;
               const matchingProject = events.data.find(
                 (project) =>
-                  project.status === "published" &&
-                  project.location === item.metadata.event_location &&
-                  project.start_time &&
-                  new Date(
-                    new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000
-                  ).toUTCString() === item.metadata.start_time
+                  project.status === "published" && (
+                    // Match by event_id first (new NFTs)
+                    (meta.event_id && project.id === meta.event_id) ||
+                    // Legacy fallback: match by location + start_time
+                    (project.location === meta.event_location &&
+                      project.start_time &&
+                      new Date(
+                        new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000
+                      ).toUTCString() === meta.start_time)
+                  )
               );
               if (matchingProject) {
-                item.metadata.projectName = matchingProject.name;
-                item.metadata.projectId = matchingProject.id;
+                meta.projectName = matchingProject.name;
+                meta.projectId = matchingProject.id;
               }
             });
           }
@@ -307,11 +335,41 @@ export default function Wallet({
     if (!data) return [];
     return [...new Set(data.map((item) => item.metadata.category).filter(Boolean))];
   }, [value, claimData, createdData]);
-  // console.log("categories", categories);
+
+  /* Events : unique event names from data */
+  const eventOptions = useMemo(() => {
+    const data = value === 0 ? claimData : createdData;
+    if (!data) return [];
+    return [...new Set(data.map((item) => item.metadata.projectName).filter(Boolean))].sort();
+  }, [value, claimData, createdData]);
+
+  /* Creators : unique creator names from data, resolved via artists */
+  const artistNameMap = useMemo(() => {
+    const map = new Map();
+    for (const a of (artists?.data || [])) {
+      if (a.address && a.name) map.set(a.address, a.name);
+    }
+    return map;
+  }, [artists]);
+
+  const creatorOptions = useMemo(() => {
+    const data = value === 0 ? claimData : createdData;
+    if (!data) return [];
+    const names = new Set();
+    data.forEach((item) => {
+      for (const addr of (item.metadata.creators || [])) {
+        const name = artistNameMap.get(addr) || addr;
+        names.add(name);
+      }
+    });
+    return [...names].sort();
+  }, [value, claimData, createdData, artistNameMap]);
 
   /* Selection Filter */
   const [catValue, setCatValue] = useState("");
   const [locValue, setLocValue] = useState("");
+  const [eventValue, setEventValue] = useState("");
+  const [creatorValue, setCreatorValue] = useState("");
 
   // Auto-filter when any filter value changes
   useEffect(() => {
@@ -319,13 +377,17 @@ export default function Wallet({
     if (!dataToFilter) return;
     const filtered = dataToFilter.filter((c) => {
       const loc = resolveLocation(c);
-      return (
-        (!locValue || loc.includes(locValue)) &&
-        (!catValue || (c.metadata.category || "").includes(catValue))
-      );
+      if (locValue && !loc.includes(locValue)) return false;
+      if (catValue && !(c.metadata.category || "").includes(catValue)) return false;
+      if (eventValue && (c.metadata.projectName || "") !== eventValue) return false;
+      if (creatorValue) {
+        const creatorNames = (c.metadata.creators || []).map((addr) => artistNameMap.get(addr) || addr);
+        if (!creatorNames.includes(creatorValue)) return false;
+      }
+      return true;
     });
     setFilteredData(filtered);
-  }, [catValue, locValue, value, claimData, createdData, eventById, venueNameMap]);
+  }, [catValue, locValue, eventValue, creatorValue, value, claimData, createdData, eventById, venueNameMap, artistNameMap]);
 
   /* API route: Client fetch Comments by WALLET ADDRESS at KairosDrop NFT Comments API */
   useEffect(() => {
@@ -421,7 +483,41 @@ export default function Wallet({
           >
             <option value="">{t.wallet.category}</option>
             {categories && categories.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
+              <option key={cat} value={cat}>{t.categoryMap?.[cat] || cat}</option>
+            ))}
+          </CustomSelect>
+
+          <CustomSelect
+            style={{
+              background: 'transparent',
+              padding: '4px',
+              fontSize: 14,
+              color: 'var(--brand-primary)',
+              width: '100%',
+            }}
+            value={eventValue}
+            onChange={(e) => setEventValue(e.target.value)}
+          >
+            <option value="">{t.wallet.event}</option>
+            {eventOptions.map((ev) => (
+              <option key={ev} value={ev}>{ev}</option>
+            ))}
+          </CustomSelect>
+
+          <CustomSelect
+            style={{
+              background: 'transparent',
+              padding: '4px',
+              fontSize: 14,
+              color: 'var(--brand-primary)',
+              width: '100%',
+            }}
+            value={creatorValue}
+            onChange={(e) => setCreatorValue(e.target.value)}
+          >
+            <option value="">{t.wallet.creator}</option>
+            {creatorOptions.map((name) => (
+              <option key={name} value={name}>{name}</option>
             ))}
           </CustomSelect>
         </Box>

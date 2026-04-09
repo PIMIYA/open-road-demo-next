@@ -1,6 +1,26 @@
 import { Box, Container, Typography, Stack, Divider, Chip } from "@mui/material";
-import GenerativeCanvas from "@/components/wallet/GenerativeCanvas";
+import WalletCanvas from "@/components/wallet/WalletCanvas";
 import { calcTagWeights, calcCategoryDist, TAG_COLORS } from "@/lib/canvas/config";
+
+// --- All Categories: one NFT per category + all tags ---
+const userAll = {
+  name: "All Categories & Tags Legend Test",
+  nfts: [
+    { id: "all1",  tags: ["視覺藝術"],         category: "展覽" },
+    { id: "all2",  tags: ["新媒體"],           category: "表演" },
+    { id: "all3",  tags: ["音樂"],             category: "課程" },
+    { id: "all4",  tags: ["設計"],             category: "導覽" },
+    { id: "all5",  tags: ["戲劇"],             category: "工作坊" },
+    { id: "all6",  tags: ["元宇宙"],           category: "黑客松" },
+    { id: "all7",  tags: ["人文"],             category: "研討會／論壇／座談" },
+    { id: "all8",  tags: ["科學"],             category: "節祭／展會／市集" },
+    { id: "all9",  tags: ["舞蹈"],             category: "分享會／同好會／見面會" },
+    { id: "all10", tags: ["建築"],             category: "展覽" },
+    { id: "all11", tags: ["出版"],             category: "表演" },
+    { id: "all12", tags: ["電影"],             category: "課程" },
+    { id: "all13", tags: ["說唱"],             category: "導覽" },
+  ],
+};
 
 // --- User A: Music/Design enthusiast, heavy exhibition-goer ---
 const userA = {
@@ -111,7 +131,7 @@ function UserSection({ user }) {
       </Typography>
 
       <Box sx={{ my: 2 }}>
-        <GenerativeCanvas nfts={user.nfts} width={800} height={400} />
+        <WalletCanvas canvasData={user.nfts.map((nft) => ({ tokenId: nft.id, metadata: nft }))} />
       </Box>
 
       <Typography variant="caption" sx={{ display: "block", mt: 2, opacity: 0.8 }}>
@@ -197,6 +217,9 @@ export default function CanvasDemo() {
         Demostrations of different personas with varying NFT collections, showcasing how the generative canvas visualizes their unique tastes and preferences.
       </Typography>
 
+      <Divider sx={{ mb: 6 }} />
+
+      <UserSection user={userAll} />
       <Divider sx={{ mb: 6 }} />
 
       <UserSection user={userA} />

@@ -72,9 +72,9 @@ export default function MapFrame({ city, cityMap, containerSize, isMobileUI = fa
   const topY = 0.5;
   const bottomY = pixelH - 0.5;
 
-  // North arrow position (fixed top-right, with safe-area consideration on mobile)
+  // North arrow position (bottom-right, above scale bar)
   const northPadding = isMobileUI ? 44 : 34;
-  const north = { x: pixelW - northPadding, y: 28 };
+  const north = { x: pixelW - northPadding, y: pixelH - (isMobileUI ? 100 : 85) };
 
   // Scale bar calculation
   // On mobile: position higher to avoid overlap with bottom longitude labels

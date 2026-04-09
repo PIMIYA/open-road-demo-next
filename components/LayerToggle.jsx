@@ -119,104 +119,112 @@ function ShapeIcon({ shapeName, color, size = 12, rotation = 0, sizeScale = 1, f
   );
 }
 
-/** Shared layer toggles + legend content (used in both desktop and mobile panel) */
-function LayerContent({ layers, onToggle, creatorShapeMap, categoryColorMap, layerVisibility }) {
+/** Shared layer toggles + legend content — Photoshop-style: each layer has its legend beneath it */
+function LayerContent({ layers, onToggle, creatorShapeMap, categoryColorMap, layerVisibility, filteredNftsCount }) {
   const t = useT();
-  const showCreators = layerVisibility.creatorShapes && creatorShapeMap.size > 0;
-  const showCategories = layerVisibility.categoryScatter && categoryColorMap.size > 0;
+
+  const layerStyle = {
+    toggle: {
+      display: "flex",
+      alignItems: "center",
+      gap: "6px",
+      background: "none",
+      border: "none",
+      padding: "3px 0",
+      cursor: "pointer",
+      color: "var(--brand-primary)",
+      fontSize: "12px",
+      fontFamily: '"Manrope", ui-sans-serif, system-ui, sans-serif',
+      textAlign: "left",
+      width: "100%",
+      transition: "opacity 0.2s",
+    },
+    legendItem: {
+      display: "flex",
+      alignItems: "center",
+      gap: "5px",
+      padding: "1px 0",
+      fontSize: "11px",
+      color: "var(--brand-primary)",
+    },
+    count: {
+      marginLeft: "auto",
+      fontSize: "10px",
+      opacity: 0.5,
+      fontFamily: '"Manrope", ui-sans-serif, system-ui, sans-serif',
+      flexShrink: 0,
+    },
+    separator: {
+      borderTop: "1px solid rgba(0,0,0,0.08)",
+      margin: "6px 0 4px",
+    },
+  };
+
+  // Compute category NFT counts for percentage
+  const totalNfts = filteredNftsCount || 0;
 
   return (
     <>
-      {/* Eye toggles */}
-      {layers.map((layer) => (
-        <button
-          key={layer.key}
-          onClick={() => onToggle(layer.key)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            background: "none",
-            border: "none",
-            padding: "3px 0",
-            cursor: "pointer",
-            color: "var(--brand-primary)",
-            fontSize: "12px",
-            fontFamily: '"Manrope", ui-sans-serif, system-ui, sans-serif',
-            textAlign: "left",
-            opacity: layer.visible ? 1 : 0.4,
-            transition: "opacity 0.2s",
-          }}
-        >
-          {layer.visible
-            ? <EyeOpen color="var(--brand-primary)" />
-            : <EyeClosed color="var(--brand-primary)" />}
-          <span>{layer.label}</span>
-        </button>
-      ))}
+      {layers.map((layer) => {
+        const isVisible = layer.visible;
 
-      {/* Creator legend */}
-      {showCreators && (
-        <>
-          <div style={{ borderTop: "1px solid rgba(0,0,0,0.1)", margin: "4px 0" }} />
-          <div style={{ fontSize: "10px", color: "var(--brand-secondary)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            {t.map.creators}
-          </div>
-          {[...creatorShapeMap.values()].map((info) => (
-            <div
-              key={info.address}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "1px 0",
-                fontSize: "11px",
-                color: "var(--brand-primary)",
-              }}
+        return (
+          <div key={layer.key}>
+            {/* Layer toggle */}
+            <button
+              onClick={() => onToggle(layer.key)}
+              style={{ ...layerStyle.toggle, opacity: isVisible ? 1 : 0.4 }}
             >
-              <ShapeIcon shapeName={info.shapeName} color={info.color} rotation={info.rotation} sizeScale={info.sizeScale} fillMode={info.fillMode} />
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: '"Manrope", ui-sans-serif, system-ui, sans-serif' }}>
-                {t.artistMap?.[info.name] || t.organizerMap?.[info.name] || info.name}
-              </span>
-            </div>
-          ))}
-        </>
-      )}
+              {isVisible ? <EyeOpen color="var(--brand-primary)" /> : <EyeClosed color="var(--brand-primary)" />}
+              <span>{layer.label}</span>
+            </button>
 
-      {/* Category legend */}
-      {showCategories && (
-        <>
-          <div style={{ borderTop: "1px solid rgba(0,0,0,0.1)", margin: "4px 0" }} />
-          <div style={{ fontSize: "10px", color: "var(--brand-secondary)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            {t.map.categories}
+            {/* Legend: nested under its layer toggle */}
+            {/* Popularity: no legend needed */}
+
+            {isVisible && layer.key === "creatorShapes" && creatorShapeMap.size > 0 && (
+              <div style={{ paddingLeft: 22, paddingBottom: 2 }}>
+                {[...creatorShapeMap.values()].map((info) => (
+                  <div key={info.address} style={layerStyle.legendItem}>
+                    <span style={{ width: 14, textAlign: "center", flexShrink: 0, fontSize: 10, fontWeight: 700, fontFamily: '"Courier Prime", "Courier New", monospace', color: "#ff3300" }}>
+                      {info.number}
+                    </span>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: '"Manrope", ui-sans-serif, system-ui, sans-serif' }}>
+                      {t.artistMap?.[info.name] || t.organizerMap?.[info.name] || info.name}
+                    </span>
+                    <span style={layerStyle.count}>{info.nftCount || ""}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {isVisible && layer.key === "categoryScatter" && categoryColorMap.size > 0 && (
+              <div style={{ paddingLeft: 22, paddingBottom: 2 }}>
+                {[...categoryColorMap.entries()].map(([cat, entry]) => {
+                  const color = typeof entry === "string" ? entry : entry.color;
+                  const count = typeof entry === "object" ? entry.count : 0;
+                  const shapeName = typeof entry === "object" ? entry.shapeName : "circle";
+                  const pct = totalNfts > 0 ? Math.round((count / totalNfts) * 100) : 0;
+                  return (
+                    <div key={cat} style={layerStyle.legendItem}>
+                      <ShapeIcon shapeName={shapeName} color={color} />
+                      <span style={{ fontFamily: '"Manrope", ui-sans-serif, system-ui, sans-serif' }}>
+                        {t.categoryMap?.[cat] || cat}
+                      </span>
+                      <span style={layerStyle.count}>
+                        {pct > 0 ? `${pct}%` : ""}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Separator between layers */}
+            <div style={layerStyle.separator} />
           </div>
-          {[...categoryColorMap.entries()].map(([cat, color]) => (
-            <div
-              key={cat}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "1px 0",
-                fontSize: "11px",
-                color: "var(--brand-primary)",
-              }}
-            >
-              <span
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  background: color,
-                  flexShrink: 0,
-                  border: "none",
-                }}
-              />
-              <span style={{ fontFamily: '"Manrope", ui-sans-serif, system-ui, sans-serif' }}>{t.categoryMap?.[cat] || cat}</span>
-            </div>
-          ))}
-        </>
-      )}
+        );
+      })}
     </>
   );
 }
@@ -306,6 +314,7 @@ export default function LayerToggle({
               creatorShapeMap={creatorShapeMap}
               categoryColorMap={categoryColorMap}
               layerVisibility={layerVisibility}
+              filteredNftsCount={filteredNftsCount}
             />
           </div>
         )}
@@ -386,6 +395,7 @@ export default function LayerToggle({
           creatorShapeMap={creatorShapeMap}
           categoryColorMap={categoryColorMap}
           layerVisibility={layerVisibility}
+          filteredNftsCount={filteredNftsCount}
         />
       </div>
       {hasOverflow && (

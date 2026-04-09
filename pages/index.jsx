@@ -11,10 +11,11 @@ import { fetchCities as fetchCitiesApi, fetchSpotlightNfts as fetchSpotlightNfts
 import { drawHeatmapLayer } from "@/lib/overlays/drawHeatmap";
 import { drawCreatorShapesLayer, getCreatorShapeMap } from "@/lib/overlays/drawCreatorShapes";
 import { drawCategoryScatterLayer, getCategoryColorMap } from "@/lib/overlays/drawCategoryScatter";
+import { SHAPE_NAMES as OVERLAY_SHAPE_NAMES } from "@/lib/overlays/shapes";
 import { drawBloomLayer } from "@/lib/overlays/drawBloomLayer";
 
 import { useT } from "@/lib/i18n/useT";
-import LanguageToggle from "@/components/LanguageToggle";
+import MapMenu from "@/components/MapMenu";
 import DateRangePicker from "@/components/DateRangePicker";
 
 const nftPointRadius = 20;
@@ -122,6 +123,11 @@ function getWeekNumber(date) {
     1 +
     Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7)
   );
+}
+
+/** Pick English field if locale is "en" and field exists, else fallback to default */
+function nftName(nft, locale) {
+  return (locale === "en" && nft?.name_en) || nft?.name || "";
 }
 
 function resolveNftThumbnail(nft) {
@@ -337,7 +343,7 @@ function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
           <div style={{ marginBottom: 12, display: "flex", justifyContent: "center", maxHeight: 150, overflow: "hidden" }}>
             <Image
               src={resolveNftThumbnail(nft)}
-              alt={nft?.name || "NFT thumbnail"}
+              alt={nftName(nft, router.locale) || "NFT thumbnail"}
               width={150}
               height={150}
               style={{
@@ -360,7 +366,7 @@ function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
               lineHeight: 1.2,
             }}
           >
-            {nft?.name}
+            {nftName(nft, router.locale)}
           </h3>
           <button
             onClick={onClose}
@@ -446,6 +452,7 @@ function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
  * Hidden bubble for measuring size
  */
 function BubbleMeasurer({ nft, onMeasure }) {
+  const { locale } = useRouter();
   const t = useT();
   const ref = useRef(null);
 
@@ -481,7 +488,7 @@ function BubbleMeasurer({ nft, onMeasure }) {
       )}
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
         <h3 style={{ margin: 0, fontSize: 18, fontWeight: "bold", lineHeight: 1.2 }}>
-          {nft?.name}
+          {nftName(nft, locale)}
         </h3>
         <span style={{ width: 22, height: 22, flexShrink: 0 }}>×</span>
       </div>
@@ -844,11 +851,11 @@ function SpotlightStack({ nfts, anchors, onClose }) {
                   }}
                 >
                   {thumbUrl ? (
-                    <Image src={thumbUrl} alt={itemNft.name || "NFT"} width={itemSize * 2} height={itemSize * 2}
+                    <Image src={thumbUrl} alt={nftName(itemNft, router.locale) || "NFT"} width={itemSize * 2} height={itemSize * 2}
                       style={{ objectFit: "contain", width: "100%", height: "100%", pointerEvents: "none" }} />
                   ) : (
                     <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#999", padding: 4, textAlign: "center" }}>
-                      {itemNft.name}
+                      {nftName(itemNft, router.locale)}
                     </div>
                   )}
                 </div>
@@ -866,7 +873,7 @@ function SpotlightStack({ nfts, anchors, onClose }) {
               whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
             }}
           >
-            {nft?.name}
+            {nftName(nft, router.locale)}
           </div>
 
           <div style={{ display: "flex", justifyContent: "center", gap: 4, padding: "6px 0 2px" }}>
@@ -1014,7 +1021,7 @@ function VenueNftCarousel({ nfts, onClose, compact = false }) {
           <div style={{ marginBottom: 8, display: "flex", justifyContent: "center", maxHeight: 150, overflow: "hidden" }}>
             <Image
               src={resolveNftThumbnail(nft)}
-              alt={nft?.name || "NFT"}
+              alt={nftName(nft, router.locale) || "NFT"}
               width={150}
               height={150}
               style={{ objectFit: "contain", width: "100%", maxHeight: 150, borderRadius: 8 }}
@@ -1032,7 +1039,7 @@ function VenueNftCarousel({ nfts, onClose, compact = false }) {
             lineHeight: 1.6,
           }}
         >
-          {nft?.name}
+          {nftName(nft, router.locale)}
         </h3>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -1506,15 +1513,41 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
     };
   }, [currentSlug, cityNfts, selectedVenue, selectedEvent, cityVenues, currentFilters]);
 
-  // Legend data for overlay layers
-  const creatorShapeMap = useMemo(
-    () => (layerVisibility.creatorShapes ? getCreatorShapeMap(filteredNfts, artistNameMap) : new Map()),
-    [filteredNfts, layerVisibility.creatorShapes, artistNameMap]
-  );
-  const categoryColorMap = useMemo(
-    () => (layerVisibility.categoryScatter ? getCategoryColorMap(filteredNfts) : new Map()),
-    [filteredNfts, layerVisibility.categoryScatter]
-  );
+  // Legend data for overlay layers (enriched with NFT counts)
+  const creatorShapeMap = useMemo(() => {
+    if (!layerVisibility.creatorShapes) return new Map();
+    const map = getCreatorShapeMap(filteredNfts, artistNameMap);
+    // Count NFTs per creator
+    const counts = new Map();
+    for (const nft of filteredNfts) {
+      for (const addr of nft.creators || []) {
+        counts.set(addr, (counts.get(addr) || 0) + 1);
+      }
+    }
+    for (const [addr, info] of map) {
+      info.nftCount = counts.get(addr) || 0;
+    }
+    return map;
+  }, [filteredNfts, layerVisibility.creatorShapes, artistNameMap]);
+
+  const categoryColorMap = useMemo(() => {
+    if (!layerVisibility.categoryScatter) return new Map();
+    const map = getCategoryColorMap(filteredNfts);
+    // Count NFTs per category
+    const counts = new Map();
+    for (const nft of filteredNfts) {
+      if (nft.category) counts.set(nft.category, (counts.get(nft.category) || 0) + 1);
+    }
+    // Store count on the map entries (as a separate object to avoid mutating color string)
+    const enriched = new Map();
+    let catIdx = 0;
+    for (const [cat, color] of map) {
+      const c = counts.get(cat) || 0;
+      enriched.set(cat, { color, count: c, shapeName: OVERLAY_SHAPE_NAMES[catIdx % OVERLAY_SHAPE_NAMES.length] });
+      catIdx++;
+    }
+    return enriched;
+  }, [filteredNfts, layerVisibility.categoryScatter]);
 
   const overlayLayers = useMemo(() => [
     { key: "heatmap", label: t.map.popularity, visible: layerVisibility.heatmap },
@@ -2419,7 +2452,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
       style={{ position: 'relative', width: '100%', height: '100dvh', overflow: 'hidden', backgroundColor: 'var(--brand-bg)' }}
       onClick={() => currentSlug && setOpenBubbleNfts((prev) => ({ ...prev, [currentSlug]: [] }))}
     >
-      <LanguageToggle />
+      <MapMenu />
       <MobileGestureTutorial onAnimationStateChange={setIsTutorialAnimating} />
       <div
         style={{
@@ -2532,7 +2565,8 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     resetZoom(slug);
                     restoreSpotlightNfts(slug);
                   }}
-                  style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--brand-primary)', padding: '0.5rem 0', cursor: 'pointer', fontFamily: '"Fraunces", "Noto Sans TC", "PingFang TC", ui-sans-serif, system-ui, sans-serif', whiteSpace: 'nowrap' }}
+                  className="city-title-underline"
+                  style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--brand-primary)', padding: '0.5rem 0', cursor: 'pointer', fontFamily: '"Fraunces", "Noto Sans TC", "PingFang TC", ui-sans-serif, system-ui, sans-serif', whiteSpace: 'nowrap', position: 'relative', width: 'fit-content' }}
                 >{router.locale === "en"
                   ? <>{t.map.whatsOnIn} <em style={{ fontStyle: 'italic' }}>{city.name_en || city.slug}</em></>
                   : (city.name_zh || city.name_en || city.slug)
@@ -2636,8 +2670,14 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                     resetZoom(slug);
                     restoreSpotlightNfts(slug);
                   }}
-                  style={{ fontSize: 14, color: 'var(--brand-primary)', marginTop: '0.25rem', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline', textAlign: 'left' }}
-                >{t.common.reset}</button>
+                  style={{ fontSize: 14, color: 'var(--brand-primary)', marginTop: '0.25rem', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="1 4 1 10 7 10" />
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                  </svg>
+                  {t.common.reset}
+                </button>
               </div>
             </div>
           );
@@ -3137,6 +3177,22 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
           --brand-primary: #2483ff;
           --brand-secondary: #ff3300;
           --brand-bg: #f5f5f5;
+        }
+
+        .city-title-underline::after {
+          content: "";
+          position: absolute;
+          bottom: 6px;
+          height: 2px;
+          background: var(--brand-primary);
+          animation: underline-sweep 3s ease-in-out infinite;
+        }
+
+        @keyframes underline-sweep {
+          0% { left: 0; width: 0%; opacity: 0.4; }
+          40% { left: 0; width: 100%; opacity: 1; }
+          60% { left: 0; width: 100%; opacity: 1; }
+          100% { left: 100%; width: 0%; opacity: 0.4; }
         }
 
         input[type="checkbox"]:checked {

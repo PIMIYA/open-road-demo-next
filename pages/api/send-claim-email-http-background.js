@@ -157,7 +157,7 @@ function generateEmailContent({
       ? `${baseUrl}/wallet/${userAddress}?comment=${tokenId}`
       : null;
 
-  const subject = `${t.email.subject}${nftName || "NFT"}`;
+  const subject = `${t.email.subject}${nftName || "Token"}`;
 
   const html = `
     <!DOCTYPE html>
@@ -181,7 +181,7 @@ function generateEmailContent({
 
               ${resolvedImageUrl ? `
                 <div style="margin:0 0 24px;text-align:center;">
-                  <img src="${resolvedImageUrl}" alt="${nftName || 'NFT'}" style="max-width:100%;max-height:280px;object-fit:contain;" />
+                  <img src="${resolvedImageUrl}" alt="${nftName || 'Token'}" style="max-width:100%;max-height:280px;object-fit:contain;" />
                 </div>
               ` : ""}
               ${nftName ? `<p style="font-size:14px;color:#2483ff;margin:0 0 24px;font-weight:300;">${nftName}</p>` : ""}
@@ -245,7 +245,7 @@ function generateEmailContent({
   const text = `
 ${getStatusMessage()}
 
-${nftName ? `NFT: ${nftName}` : ""}
+${nftName ? `Token: ${nftName}` : ""}
 
 ${nftViewUrl ? `${t.claim.viewNft}: ${nftViewUrl}` : ""}
 ${t.claim.viewWallet}: ${walletViewUrl}

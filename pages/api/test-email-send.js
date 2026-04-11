@@ -35,7 +35,7 @@ export default async function handler(req, res) {
   try {
     const info = await sendWithResend({
       to: testEmail,
-      subject: "NFT Claim Email Test",
+      subject: "Token Claim Email Test",
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2>Test email sent successfully</h2>

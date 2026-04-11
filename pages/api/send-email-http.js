@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         from: process.env.RESEND_FROM_EMAIL,
         to: [testEmail],
-        subject: "🧪 NFT Claim Email Test (Resend API)",
+        subject: "🧪 Token Claim Email Test (Resend API)",
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
               <h2 style="color: #4caf50;">✅ 測試郵件發送成功！</h2>

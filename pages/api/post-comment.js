@@ -42,7 +42,7 @@ export default async function handler(req, res) {
                     comments.some((c) => c.walletAddress === walletAddress);
                 if (alreadyCommented) {
                     return res.status(409).json({
-                        message: 'You have already left a message for this NFT.'
+                        message: 'You have already left a message for this token.'
                     });
                 }
             }

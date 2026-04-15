@@ -34,7 +34,6 @@ export default async function handler(req, res) {
     contractAddress,
     claimStatus,
     nftName,
-    nftDescription,
     nftImageUrl,
     locale = "zh",
   } = req.body;
@@ -60,7 +59,6 @@ export default async function handler(req, res) {
     contractAddress,
     claimStatus,
     nftName,
-    nftDescription,
     nftImageUrl,
     locale,
   }).catch((error) => {
@@ -84,7 +82,6 @@ async function processEmailInBackground({
     contractAddress,
     claimStatus,
     nftName,
-    nftDescription,
     nftImageUrl,
     locale,
   });

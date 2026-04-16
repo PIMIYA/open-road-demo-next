@@ -41,13 +41,18 @@ export default function Project({ event, organizers, artists, tokens }) {
   if (tokens) {
     // sort data by tokenId
     tokens.sort((a, b) => b.tokenId - a.tokenId);
-    // if data's category is "座談", change it to "座談會"
+
+    // Normalize English category values → Chinese canonical
+    const enCatMap = { "Performance": "表演", "Exhibition": "展覽", "Course": "課程", "Workshop": "工作坊", "Guided Tour": "導覽", "Hackathon": "黑客松", "Seminar / Forum / Talk": "研討會／論壇／座談", "Festival / Fair / Market": "節祭／展會／市集", "Meetup / Fan Meeting": "分享會／同好會／見面會" };
+    const enTagMap = { "Visual Arts": "視覺藝術", "New Media": "新媒體", "Music": "音樂", "Dance": "舞蹈", "Theater": "戲劇", "Design": "設計", "Architecture": "建築", "Metaverse": "元宇宙", "Publishing": "出版", "Film": "電影", "Humanities": "人文", "Science": "科學", "Rap": "說唱" };
+
     tokens.forEach((item) => {
-      if (item.metadata.category === "座談") {
-        item.metadata.category = "研討會 / 論壇 / 座談";
-      }
+      if (enCatMap[item.metadata.category]) item.metadata.category = enCatMap[item.metadata.category];
+      if (item.metadata.category === "座談") item.metadata.category = "研討會 / 論壇 / 座談";
+      if (item.metadata.tags) item.metadata.tags = item.metadata.tags.map((t) => enTagMap[t] || t);
     });
-    // if data's tags, each include "視覺", then combine and change it to one "視覺藝術"
+
+    // Normalize compound/variant Chinese tags → canonical
     tokens.forEach((item) => {
       if (item.metadata.tags.some((tag) => tag.includes("視覺"))) {
         item.metadata.tags = ["視覺藝術"];
@@ -80,6 +85,12 @@ export default function Project({ event, organizers, artists, tokens }) {
         .filter((item, index, self) => self.indexOf(item) === index)
     : [];
 
+  // address → display name (for resolving on-chain wallet addresses in organizer field)
+  const addressToName = {};
+  for (const p of [...(artists?.data || []), ...(organizers?.data || [])]) {
+    if (p.address) addressToName[p.address] = locale === "en" ? (p.name_en || p.name) : p.name;
+  }
+
   // Combine artists and organizers for the single-select filter
   const allCreators = [
     ...(artists?.data || []).map(artist => locale === "en" ? (artist.name_en || artist.name) : artist.name),
@@ -102,11 +113,15 @@ export default function Project({ event, organizers, artists, tokens }) {
       (c) =>
         (!catValue || c.metadata.category.includes(catValue)) &&
         (!tagValue || c.metadata.tags.some((tag) => tag.includes(tagValue))) &&
-        (!creatorValue || (c.metadata.organizer && (
-          Array.isArray(c.metadata.organizer)
-            ? c.metadata.organizer.includes(creatorValue)
-            : c.metadata.organizer.includes(creatorValue)
-        )))
+        (!creatorValue || (() => {
+          const matchAddr = (v) => v === creatorValue || addressToName[v] === creatorValue;
+          const org = c.metadata.organizer;
+          const orgMatch = org && (Array.isArray(org)
+            ? org.some(matchAddr)
+            : (org === creatorValue || org.includes(creatorValue)));
+          const creatorsMatch = (c.metadata.creators || []).some(matchAddr);
+          return orgMatch || creatorsMatch;
+        })())
     );
     setCurrentPage(1);
     setFilteredData(filtered);

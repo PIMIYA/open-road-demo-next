@@ -6,6 +6,7 @@
  *   matching the filter FAB style (brand-secondary outlined, white bg).
  */
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/router";
 import { useT } from "@/lib/i18n/useT";
 
 const EyeOpen = ({ color = "currentColor" }) => (
@@ -122,6 +123,7 @@ function ShapeIcon({ shapeName, color, size = 12, rotation = 0, sizeScale = 1, f
 /** Shared layer toggles + legend content — Photoshop-style: each layer has its legend beneath it */
 function LayerContent({ layers, onToggle, creatorShapeMap, categoryColorMap, layerVisibility, filteredNftsCount }) {
   const t = useT();
+  const { locale } = useRouter();
 
   const layerStyle = {
     toggle: {
@@ -190,7 +192,7 @@ function LayerContent({ layers, onToggle, creatorShapeMap, categoryColorMap, lay
                       {info.number}
                     </span>
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: '"Manrope", ui-sans-serif, system-ui, sans-serif' }}>
-                      {t.artistMap?.[info.name] || t.organizerMap?.[info.name] || info.name}
+                      {locale === "en" ? (info.name_en || info.name) : info.name}
                     </span>
                     <span style={layerStyle.count}>{info.nftCount || ""}</span>
                   </div>
@@ -200,7 +202,7 @@ function LayerContent({ layers, onToggle, creatorShapeMap, categoryColorMap, lay
 
             {isVisible && layer.key === "categoryScatter" && categoryColorMap.size > 0 && (
               <div style={{ paddingLeft: 22, paddingBottom: 2 }}>
-                {[...categoryColorMap.entries()].map(([cat, entry]) => {
+                {[...categoryColorMap.entries()].sort((a, b) => (typeof b[1] === "object" ? b[1].count : 0) - (typeof a[1] === "object" ? a[1].count : 0)).map(([cat, entry]) => {
                   const color = typeof entry === "string" ? entry : entry.color;
                   const count = typeof entry === "object" ? entry.count : 0;
                   const shapeName = typeof entry === "object" ? entry.shapeName : "circle";

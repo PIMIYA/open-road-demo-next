@@ -145,7 +145,17 @@ function renderLegendCanvas(canvas, tagWeights, categoryDist, t) {
 export default function WalletCanvas({ canvasData }) {
   const t = useT();
   const [showLegend, setShowLegend] = useState(true);
+  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 450 });
   const legendRef = useRef(null);
+  const containerRef = useRef(null);
+
+  // Detect container width on mount only (no resize re-trigger to avoid animation restart)
+  useEffect(() => {
+    const w = containerRef.current?.clientWidth || window.innerWidth;
+    if (w < 600) {
+      setCanvasSize({ width: w, height: Math.round(w * 1.4) });
+    }
+  }, []);
 
   const nfts = useMemo(() => toCanvasNfts(canvasData), [canvasData]);
   const tagWeights = useMemo(() => calcTagWeights(nfts), [nfts]);
@@ -195,8 +205,8 @@ export default function WalletCanvas({ canvasData }) {
       </button>
 
       {/* Canvas container */}
-      <Box sx={{ position: "relative" }}>
-        <GenerativeCanvas nfts={nfts} width={800} height={450} />
+      <Box ref={containerRef} sx={{ position: "relative" }}>
+        <GenerativeCanvas nfts={nfts} width={canvasSize.width} height={canvasSize.height} />
 
         {/* Legend canvas overlay */}
         {showLegend && (

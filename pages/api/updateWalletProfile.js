@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const DIRECTUS_URL = (process.env.DIRECTUS?.replace("/items", "") || "https://data.kairos-mint.art");
 const DIRECTUS_EMAIL = process.env.NEXT_PUBLIC_DIRECTUS_ADMIN_EMAIL;
 const DIRECTUS_PASSWORD = process.env.NEXT_PUBLIC_DIRECTUS_ADMIN_PASSWORD;
@@ -67,11 +68,31 @@ export default async function handler(req, res) {
         table = "userWallets";
         record = userRes.data[0];
         allowedFields = USER_WALLET_FIELDS;
+      } else {
+        // Auto-create userWallets record for new users
+        const newRecord = await directusFetch(`/items/userWallets`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: crypto.randomUUID(),
+            address,
+            email: fields.email || null,
+          }),
+        });
+        table = "userWallets";
+        record = newRecord.data;
+        allowedFields = USER_WALLET_FIELDS;
       }
     }
 
-    if (!record) {
-      return res.status(404).json({ error: "Wallet not found" });
+    // If address exists but email is empty, and email is provided, update it
+    if (table === "userWallets" && !record.email && fields.email) {
+      await directusFetch(`/items/userWallets/${record.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: fields.email }),
+      });
+      record.email = fields.email;
     }
 
     // Build update body from allowed fields only

@@ -7,21 +7,24 @@ import {
   AccordionDetails,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useRouter } from "next/router";
 import { FetchDirectusData } from "@/lib/api";
 import { useT } from "@/lib/i18n/useT";
 
 export default function Faq({ faqData }) {
   const t = useT();
+  const { locale } = useRouter();
+  const content = locale === "en" && faqData?.content_en ? faqData.content_en : faqData?.content;
   return (
     <Box sx={{ p: 4, maxWidth: "100%", margin: "auto" }}>
       <Typography variant="h1" component="h1" gutterBottom>
         {faqData?.title || t.faq.title}
       </Typography>
 
-      {faqData?.content && (
+      {content && (
         <Box sx={{ mt: 4 }}>
           <Box
-            dangerouslySetInnerHTML={{ __html: faqData.content }}
+            dangerouslySetInnerHTML={{ __html: content }}
             sx={{ mt: 2, mb: 2 }}
           />
         </Box>
@@ -34,14 +37,13 @@ export async function getStaticProps() {
   try {
     const response = await FetchDirectusData("/faq");
 
-    // 確保我們獲取到正確的數據結構
     const faqData = response?.data?.[0] || response?.data || null;
 
     return {
       props: {
         faqData: faqData,
       },
-      revalidate: 60, // Revalidate every 60 seconds
+      revalidate: 60,
     };
   } catch (error) {
     console.error("Error fetching FAQ data:", error);

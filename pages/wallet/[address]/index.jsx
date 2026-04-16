@@ -184,7 +184,8 @@ export default function Wallet({
                     // Match by event_id first (new NFTs)
                     (meta.event_id && project.id === meta.event_id) ||
                     // Legacy fallback: match by location + start_time
-                    (project.location === meta.event_location &&
+                    ((project.location || venueNameMap[project.venue_id] || "").replace("臺", "台") === (meta.event_location || "").replace("臺", "台") &&
+                      meta.event_location &&
                       project.start_time &&
                       new Date(
                         new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000
@@ -234,7 +235,8 @@ export default function Wallet({
                     // Match by event_id first (new NFTs)
                     (meta.event_id && project.id === meta.event_id) ||
                     // Legacy fallback: match by location + start_time
-                    (project.location === meta.event_location &&
+                    ((project.location || venueNameMap[project.venue_id] || "").replace("臺", "台") === (meta.event_location || "").replace("臺", "台") &&
+                      meta.event_location &&
                       project.start_time &&
                       new Date(
                         new Date(project.start_time).getTime() - 8 * 60 * 60 * 1000

@@ -1,10 +1,13 @@
 import { Box, Typography } from "@mui/material";
 import Link from "next/link";
 import { useT } from "@/lib/i18n/useT";
+import { useRouter } from "next/router";
 import { truncateAddress } from "@/lib/stringUtils";
 
 export default function Organizer({ organizer, creators, artists, organizers }) {
   const t = useT();
+  const { locale } = useRouter();
+  const isEn = locale === "en";
 
   const artistList = (artists?.data || []);
   const organizerList = (organizers?.data || []);
@@ -23,23 +26,25 @@ export default function Organizer({ organizer, creators, artists, organizers }) 
   // Fallback: combined lookup for legacy string-based organizer names
   const allPeople = [...organizerList, ...artistList];
 
+  const resolveName = (p) => isEn ? (p.name_en || p.name) : p.name;
+
   const resolveByName = (name) => {
     const normalize = (s) => s.replace(/\s+/g, "").toLowerCase();
     const match = allPeople.find((p) => normalize(p.name) === normalize(name));
-    return match ? { name: match.name, wallet: match.address } : { name, wallet: null };
+    return match ? { name: resolveName(match), wallet: match.address } : { name, wallet: null };
   };
 
   const resolveCreatorByAddress = (addr) => {
     const match = artistByAddress.get(addr);
     return match
-      ? { name: match.name, wallet: match.address }
+      ? { name: resolveName(match), wallet: match.address }
       : { name: truncateAddress(addr), wallet: addr };
   };
 
   const resolveOrganizerByAddress = (addr) => {
     const match = organizerByAddress.get(addr);
     return match
-      ? { name: match.name, wallet: match.address }
+      ? { name: resolveName(match), wallet: match.address }
       : { name: truncateAddress(addr), wallet: addr };
   };
 

@@ -290,7 +290,7 @@ function computeBubblePlacements({ containerW, containerH, anchors, bubbleSizes,
 /**
  * NftCallout - renders a single bubble at a computed position
  */
-function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
+function NftCalloutPositioned({ placement, anchor, nft, onClose, venueNameEnMap = {} }) {
   const router = useRouter();
   const t = useT();
   if (!placement) return null;
@@ -409,7 +409,7 @@ function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
           {nft?.venue && (
             <div>
               <div style={{ fontSize: 10, color: "var(--brand-secondary)", marginBottom: 4 }}>{t.map.venue}</div>
-              <div style={{ fontSize: 14 }}>{t.venueMap?.[nft.venue] || nft.venue}</div>
+              <div style={{ fontSize: 14 }}>{router.locale === "en" ? (venueNameEnMap?.[nft.venue] || nft.venue) : nft.venue}</div>
               {(nft?.start_time || nft?.end_time) && (
                 <div style={{ fontSize: 12, opacity: 0.8, marginTop: 2 }}>
                   {formatDateRange(nft.start_time, nft.end_time)}
@@ -451,7 +451,7 @@ function NftCalloutPositioned({ placement, anchor, nft, onClose }) {
 /**
  * Hidden bubble for measuring size
  */
-function BubbleMeasurer({ nft, onMeasure }) {
+function BubbleMeasurer({ nft, onMeasure, venueNameEnMap = {} }) {
   const { locale } = useRouter();
   const t = useT();
   const ref = useRef(null);
@@ -508,7 +508,7 @@ function BubbleMeasurer({ nft, onMeasure }) {
         {nft?.venue && (
           <div>
             <div style={{ fontSize: 10, marginBottom: 4 }}>{t.map.venue}</div>
-            <div style={{ fontSize: 14 }}>{t.venueMap?.[nft.venue] || nft.venue}</div>
+            <div style={{ fontSize: 14 }}>{locale === "en" ? (venueNameEnMap?.[nft.venue] || nft.venue) : nft.venue}</div>
             {(nft?.start_time || nft?.end_time) && (
               <div style={{ fontSize: 12, marginTop: 2 }}>
                 {formatDateRange(nft.start_time, nft.end_time)}
@@ -900,7 +900,7 @@ function SpotlightStack({ nfts, anchors, onClose }) {
  * Shows one NFT at a time with prev/next navigation and full detail fields.
  * Positioned on the right 1/3 of the screen, vertically centered.
  */
-function VenueNftCarousel({ nfts, onClose, compact = false }) {
+function VenueNftCarousel({ nfts, onClose, compact = false, venueNameEnMap = {} }) {
   const router = useRouter();
   const t = useT();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -1063,7 +1063,7 @@ function VenueNftCarousel({ nfts, onClose, compact = false }) {
           {nft?.venue && (
             <div style={{ fontSize: 12, lineHeight: 1.6 }}>
               <span style={{ color: "var(--brand-secondary)", marginRight: 6 }}>{t.map.venue}</span>
-              {t.venueMap?.[nft.venue] || nft.venue}
+              {router.locale === "en" ? (venueNameEnMap?.[nft.venue] || nft.venue) : nft.venue}
             </div>
           )}
 
@@ -1170,7 +1170,7 @@ function VenueNftCarousel({ nfts, onClose, compact = false }) {
 /**
  * BubbleLayoutManager - measures bubbles and computes optimal placements
  */
-function BubbleLayoutManager({ containerW, containerH, nfts, anchors, onClose }) {
+function BubbleLayoutManager({ containerW, containerH, nfts, anchors, onClose, venueNameEnMap = {} }) {
   const [bubbleSizes, setBubbleSizes] = useState(new Map());
 
   const handleMeasure = useCallback((id, size) => {
@@ -1210,7 +1210,7 @@ function BubbleLayoutManager({ containerW, containerH, nfts, anchors, onClose })
     <>
       {/* Hidden measurers */}
       {nfts.map((nft) => (
-        <BubbleMeasurer key={`measure-${nft.id}`} nft={nft} onMeasure={handleMeasure} />
+        <BubbleMeasurer key={`measure-${nft.id}`} nft={nft} onMeasure={handleMeasure} venueNameEnMap={venueNameEnMap} />
       ))}
 
       {/* Rendered bubbles with computed positions */}
@@ -1226,6 +1226,7 @@ function BubbleLayoutManager({ containerW, containerH, nfts, anchors, onClose })
             anchor={anchor}
             nft={nft}
             onClose={() => onClose(nft.id)}
+            venueNameEnMap={venueNameEnMap}
           />
         );
       })}
@@ -1261,15 +1262,24 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
     const map = new Map();
     for (const a of artists) {
       if (a.address && a.name) {
-        map.set(a.address, a.name);
+        map.set(a.address, { name: a.name, name_en: a.name_en || null });
       }
     }
     return map;
   }, [artists]);
 
-  // Resolve creator addresses to artist names
+  // Chinese name → English name_en (for display in filter options)
+  const artistEnMap = useMemo(() => {
+    const map = new Map();
+    for (const a of artists) {
+      if (a.name && a.name_en) map.set(a.name, a.name_en);
+    }
+    return map;
+  }, [artists]);
+
+  // Resolve creator addresses to artist names (always Chinese for filter matching)
   const resolveCreatorName = useCallback(
-    (address) => artistNameMap.get(address) || address,
+    (address) => artistNameMap.get(address)?.name || address,
     [artistNameMap]
   );
 
@@ -1277,7 +1287,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
   const filterArtistOnly = useCallback(
     (creators) => {
       if (!Array.isArray(creators)) return [];
-      return creators.filter((c) => artistNameMap.has(c)).map((c) => artistNameMap.get(c));
+      return creators.filter((c) => artistNameMap.has(c)).map((c) => artistNameMap.get(c)?.name || c);
     },
     [artistNameMap]
   );
@@ -1296,6 +1306,17 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
   });
   const [cityVenues, setCityVenues] = useState({});
   const [cityEvents, setCityEvents] = useState({});
+
+  // Venue Chinese name → name_en lookup (for nft.venue string from on-chain data)
+  const venueNameEnMap = useMemo(() => {
+    const map = {};
+    for (const slug of Object.keys(cityVenues)) {
+      for (const v of (cityVenues[slug]?.venues || [])) {
+        if (v.name && v.name_en) map[v.name] = v.name_en;
+      }
+    }
+    return map;
+  }, [cityVenues]);
 
   const [selectedVenue, setSelectedVenue] = useState({});
   const [carouselOpen, setCarouselOpen] = useState({});
@@ -2605,7 +2626,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   <option value="">{t.map.allVenues}</option>
                   {venues.map((venue, index) => (
                     <option key={`${venueKey(venue)}-${index}`} value={venueKey(venue)}>
-                      {t.venueMap?.[venue.name] || venue.name}
+                      {router.locale === "en" ? (venue.name_en || venue.name) : venue.name}
                       {Number.isFinite(venue.count) ? ` (${venue.count})` : ""}
                     </option>
                   ))}
@@ -2652,7 +2673,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                   <option value="">{t.map.allEvents}</option>
                   {eventsForThisCity.map((ev, index) => (
                     <option key={`${ev.id}-${index}`} value={ev.id}>
-                      {t.eventMap?.[ev.name] || ev.name}
+                      {router.locale === "en" ? (ev.name_en || ev.name) : ev.name}
                     </option>
                   ))}
                 </CustomSelect>
@@ -2758,6 +2779,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
             nfts={carouselNfts}
             onClose={closeCarousel}
             compact={isSmallViewport}
+            venueNameEnMap={venueNameEnMap}
           />
         );
       })()}
@@ -2972,7 +2994,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
                 >
                   <option value="">{t.map.artist}</option>
                   {filterOptions.creators.map((c) => (
-                    <option key={c} value={c}>{t.artistMap?.[c] || c}</option>
+                    <option key={c} value={c}>{router.locale === "en" ? (artistEnMap.get(c) || c) : c}</option>
                   ))}
                 </CustomSelect>
 
@@ -3110,7 +3132,7 @@ function BoundaryMapPage({ artists = [], directusEvents = [], spotlightByCity = 
             >
               <option value="">{t.map.artist}</option>
               {filterOptions.creators.map((c) => (
-                <option key={c} value={c}>{t.artistMap?.[c] || c}</option>
+                <option key={c} value={c}>{router.locale === "en" ? (artistEnMap.get(c) || c) : c}</option>
               ))}
             </CustomSelect>
 
@@ -3264,7 +3286,7 @@ BoundaryMapPage.displayName = "ShowCase";
 
 export async function getServerSideProps() {
   const [artistsRes, eventsRes, cities] = await Promise.all([
-    FetchDirectusData(`/artists`),
+    FetchDirectusData(`/artists?limit=-1`),
     FetchDirectusData(`/events`),
     fetchCitiesApi().catch(() => []),
   ]);

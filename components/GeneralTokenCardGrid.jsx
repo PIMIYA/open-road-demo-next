@@ -157,7 +157,7 @@ export default function GeneralTokenCardGrid(props) {
                         href="/events/[id]"
                         as={`/events/${metadata.projectId}`}
                       >
-                        {metadata.projectName}
+                        {(isEn && metadata.projectName_en) || metadata.projectName}
                       </Link>
                     </Box>
 

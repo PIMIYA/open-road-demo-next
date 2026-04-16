@@ -250,7 +250,15 @@ export default function WalletProfile({ address, walletInfo }) {
         )}
 
         {/* Address */}
-        <Typography variant="body2" color="text.secondary" sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}>
+        <Typography
+          variant="body2"
+          component="a"
+          href={`https://tzkt.io/${address}/operations/`}
+          target="_blank"
+          rel="noopener noreferrer"
+          color="text.secondary"
+          sx={{ fontFamily: "monospace", fontSize: "0.875rem", textDecoration: "none", "@media (hover: hover)": { "&:hover": { textDecoration: "underline" } } }}
+        >
           {address}
         </Typography>
 

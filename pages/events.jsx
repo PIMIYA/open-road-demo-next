@@ -230,7 +230,7 @@ export async function getStaticProps() {
     const allVenues = (
       await Promise.all(cities.map((c) => fetchVenues(c.slug)))
     ).flat();
-    venueMap = Object.fromEntries(allVenues.map((v) => [v.id, v.name]));
+    venueMap = Object.fromEntries(allVenues.map((v) => [v.id, { name: v.name, name_en: v.name_en || null }]));
   } catch (err) {
     console.error("Failed to fetch venues for events page:", err);
   }
@@ -258,7 +258,8 @@ export async function getStaticProps() {
     ...events,
     data: (events?.data || []).map((event) => ({
       ...event,
-      venue_name: venueMap[event.venue_id] || null,
+      venue_name: venueMap[event.venue_id]?.name || null,
+      venue_name_en: venueMap[event.venue_id]?.name_en || null,
       cover_url: event.cover && directusToken
         ? `${directusBaseUrl}/assets/${event.cover}?access_token=${directusToken}`
         : null,

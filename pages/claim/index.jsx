@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Box, Container, Typography } from "@mui/material";
 import {
   TZKT_API,
@@ -56,7 +56,13 @@ export async function getServerSideProps(context) {
 export default function NFTPage({ data, data_from_pool, nftData, error }) {
   const t = useT();
   const [claimStatus, setClaimStatus] = useState("");
+  const [isOldIOS, setIsOldIOS] = useState(false);
   const embedRef = useRef(null);
+
+  useEffect(() => {
+    const match = navigator.userAgent.match(/OS (\d+)_/);
+    if (match && parseInt(match[1]) < 16) setIsOldIOS(true);
+  }, []);
 
   const handleClaim = async (userInfo) => {
     const {
@@ -241,7 +247,13 @@ export default function NFTPage({ data, data_from_pool, nftData, error }) {
       </Typography>
 
       {/* Claim button */}
-      {poolId !== null ? (
+      {isOldIOS ? (
+        <Box sx={{ mt: 2, p: 3, border: 1, borderColor: "warning.main", borderRadius: 1 }}>
+          <Typography variant="body2" color="warning.main">
+            {t.claim.iosUnsupported}
+          </Typography>
+        </Box>
+      ) : poolId !== null ? (
         <KukaiEmbedComponent ref={embedRef} onLoginSuccess={handleClaim} />
       ) : (
         <Typography variant="caption" color="warning.main">

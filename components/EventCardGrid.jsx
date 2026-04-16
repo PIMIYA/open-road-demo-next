@@ -52,9 +52,14 @@ export default function EventCardGrid(props) {
         {data &&
           data.map(
             (
-              { id, name, start_time, end_time, description, venue_name, cover, cover_url },
+              { id, name, name_en, start_time, end_time, description, description_en, venue_name, venue_name_en, cover, cover_url },
               index
-            ) => (
+            ) => {
+              const { locale } = router;
+              const displayName = locale === "en" ? (name_en || name) : name;
+              const displayVenue = locale === "en" ? (venue_name_en || venue_name) : venue_name;
+              const displayDesc = locale === "en" ? (description_en || description) : description;
+              return (
               <Grid
                 key={index}
                 xs={columnSettings.item.xs}
@@ -106,7 +111,7 @@ export default function EventCardGrid(props) {
                         component="h6"
                         gutterBottom
                       >
-                        {name}
+                        {displayName}
                       </Typography>
                     </Stack>
                   </Box>
@@ -120,20 +125,20 @@ export default function EventCardGrid(props) {
                         : "TBD"}
                     </Typography>
                     <Typography variant="body2">
-                      {venue_name || t.events.locationTbd}
+                      {displayVenue || t.events.locationTbd}
                     </Typography>
                   </Box>
 
-                  {description && (
+                  {displayDesc && (
                     <Box
                       variant="body2"
                       color="text.secondary"
                       mb={2}
                       dangerouslySetInnerHTML={{
                         __html:
-                          description.length > 200
-                            ? `${description.substring(0, 200)}...`
-                            : description,
+                          displayDesc.length > 200
+                            ? `${displayDesc.substring(0, 200)}...`
+                            : displayDesc,
                       }}
                       sx={{
                         fontSize: "0.875rem",
@@ -150,7 +155,8 @@ export default function EventCardGrid(props) {
                   )}
                 </Box>
               </Grid>
-            )
+            );
+            }
           )}
       </Grid>
     </>

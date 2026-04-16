@@ -25,6 +25,8 @@ const contractAddress = "KT1GyHsoewbUGk4wpAVZFUYpP2VjZPqo1qBf";
 
 export default function Id({ ownersData, data, data_from_pool, organizers, artists, events, venueNameMap, airdropTransfers }) {
   /* Hooks must be called unconditionally (before any early return) */
+  const { locale } = useRouter();
+  const resolveVenueName = (entry) => entry ? (locale === "en" ? (entry.name_en || entry.name) : entry.name) : null;
   const [comments, setComments] = useState(null);
   const tokenId = data?.[0]?.tokenId;
 
@@ -52,7 +54,7 @@ export default function Id({ ownersData, data, data_from_pool, organizers, artis
   if (data) {
     data = data.map((d) => {
       d.eventPlace = d.metadata.event_location
-        || (d.metadata.venue_id && venueNameMap?.[d.metadata.venue_id])
+        || (d.metadata.venue_id && resolveVenueName(venueNameMap?.[d.metadata.venue_id]))
         || "";
       d.creator = d.metadata.organizer
         ? d.metadata.organizer
@@ -91,10 +93,11 @@ export default function Id({ ownersData, data, data_from_pool, organizers, artis
       );
       if (matchingProject) {
         item.metadata.projectName = matchingProject.name;
+        item.metadata.projectName_en = matchingProject.name_en || null;
         item.metadata.projectId = matchingProject.id;
         // Fill missing eventPlace from event's venue
         if (!item.eventPlace && matchingProject.venue_id && venueNameMap?.[matchingProject.venue_id]) {
-          item.eventPlace = venueNameMap[matchingProject.venue_id];
+          item.eventPlace = resolveVenueName(venueNameMap[matchingProject.venue_id]);
         }
       }
     });
@@ -155,7 +158,7 @@ export async function getServerSideProps(params) {
           await Promise.all(cities.map((c) => fetchVenues(c.slug)))
         ).flat();
         for (const v of allVenues) {
-          venueNameMap[v.id] = v.name;
+          venueNameMap[v.id] = { name: v.name, name_en: v.name_en || null };
         }
       } catch (err) {
         console.error("Failed to fetch venues for claimsToken:", err);

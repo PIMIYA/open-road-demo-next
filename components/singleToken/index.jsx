@@ -78,7 +78,7 @@ export default function SingleToken({
                 href="/events/[id]"
                 as={`/events/${data.metadata.projectId}`}
               >
-                {data.metadata.projectName}
+                {(isEn && data.metadata.projectName_en) || data.metadata.projectName}
               </Link>
             </Typography>
           )}

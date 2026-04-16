@@ -17,9 +17,14 @@ import { FetchDirectusData } from "@/lib/api";
 import { fetchCities, fetchVenues, fetchEventNfts } from "@/lib/map-api";
 import { formatDateRange } from "@/lib/stringUtils";
 import { useT } from "@/lib/i18n/useT";
+import { useRouter } from "next/router";
 
 export default function Project({ event, organizers, artists, tokens }) {
   const t = useT();
+  const { locale } = useRouter();
+  const eventName = locale === "en" ? (event.name_en || event.name) : event.name;
+  const eventDesc = locale === "en" ? (event.description_en || event.description) : event.description;
+  const eventVenue = locale === "en" ? (event.venue_name_en || event.venue_name) : event.venue_name;
   // format event.start_time to GMT timezone, and subtract 8 hours
   const formattedStartTime = event.start_time
     ? new Date(
@@ -77,8 +82,8 @@ export default function Project({ event, organizers, artists, tokens }) {
 
   // Combine artists and organizers for the single-select filter
   const allCreators = [
-    ...(artists?.data || []).map(artist => artist.name),
-    ...(organizers?.data || []).map(organizer => organizer.name),
+    ...(artists?.data || []).map(artist => locale === "en" ? (artist.name_en || artist.name) : artist.name),
+    ...(organizers?.data || []).map(organizer => locale === "en" ? (organizer.name_en || organizer.name) : organizer.name),
   ].filter((name, index, self) => self.indexOf(name) === index);
 
   const [catValue, setCatValue] = useState("");
@@ -224,7 +229,7 @@ export default function Project({ event, organizers, artists, tokens }) {
               {t.mint.event}
             </Typography>
             <Typography variant="h2">
-              {event.name}
+              {eventName}
             </Typography>
           </Box>
 
@@ -233,7 +238,7 @@ export default function Project({ event, organizers, artists, tokens }) {
               {t.wallet.location}
             </Typography>
             <Typography variant="body1">
-              {event.venue_name || t.events.locationTbd}
+              {eventVenue || t.events.locationTbd}
             </Typography>
           </Box>
 
@@ -248,9 +253,9 @@ export default function Project({ event, organizers, artists, tokens }) {
             </Typography>
           </Box>
 
-          {event.description && (
+          {eventDesc && (
             <Box
-              dangerouslySetInnerHTML={{ __html: event.description }}
+              dangerouslySetInnerHTML={{ __html: eventDesc }}
               sx={{
                 mt: 4,
                 fontSize: "0.875rem",
@@ -304,7 +309,7 @@ const TARGET_CONTRACT = "KT1PTS3pPk4FeneMmcJ3HZVe39wra1bomsaW";
  * Transform kairos server NFT shape → GeneralTokenCardGrid expected shape.
  * Maps nfts.json fields to the { tokenId, contract, metadata } structure.
  */
-const toCardData = (nft, eventName) => ({
+const toCardData = (nft, eventName, eventNameEn) => ({
   tokenId: nft.token_id,
   contract: { address: TARGET_CONTRACT },
   metadata: {
@@ -322,6 +327,7 @@ const toCardData = (nft, eventName) => ({
     end_time: nft.end_time,
     event_id: nft.event_id,
     projectName: eventName || null,
+    projectName_en: eventNameEn || null,
     projectId: nft.event_id,
   },
 });
@@ -337,6 +343,7 @@ export async function getStaticProps({ params }) {
 
   // --- Venue name from kairos server ---
   let venueName = null;
+  let venueNameEn = null;
   if (event.data.venue_id) {
     try {
       const cities = await fetchCities();
@@ -345,6 +352,7 @@ export async function getStaticProps({ params }) {
       ).flat();
       const venue = allVenues.find((v) => v.id === event.data.venue_id);
       venueName = venue?.name || null;
+      venueNameEn = venue?.name_en || null;
     } catch (err) {
       console.error("Failed to fetch venue name:", err);
     }
@@ -353,7 +361,8 @@ export async function getStaticProps({ params }) {
   // --- Transform NFTs to card format ---
   const serverNfts = eventWithNfts?.nfts || [];
   const eventName = event.data.name || eventWithNfts?.name || null;
-  const tokens = serverNfts.map((nft) => toCardData(nft, eventName));
+  const eventNameEn = event.data.name_en || null;
+  const tokens = serverNfts.map((nft) => toCardData(nft, eventName, eventNameEn));
 
   // --- Resolve banner URL ---
   const directusBaseUrl = "https://data.kairos-mint.art";
@@ -380,7 +389,7 @@ export async function getStaticProps({ params }) {
 
   return {
     props: {
-      event: { ...event.data, venue_name: venueName, banner_url },
+      event: { ...event.data, venue_name: venueName, venue_name_en: venueNameEn, banner_url },
       tokens,
       organizers,
       artists,

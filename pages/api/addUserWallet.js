@@ -1,7 +1,8 @@
 const axios = require('axios');
+const crypto = require('crypto');
 
 //get env variables
-const directus_url = process.env.DirectusURL;
+const directus_url = (process.env.DIRECTUS || "").replace("/items", "");
 
 async function getDirectusToken(email, password) {
     const url = `${directus_url}/auth/login`;
@@ -90,6 +91,7 @@ async function addUserWallet(directusToken, email, address, poolID) {
 
     // Add user wallet to the database, include email and wallet address
     const userWalletBody = {
+        id: crypto.randomUUID(),
         email: email,
         address: address,
         NFTdrops: [{ NFTdrops_id: nftDropID.id }]
